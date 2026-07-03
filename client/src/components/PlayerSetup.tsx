@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { PlayerColorPicker } from "./PlayerColorPicker";
-import { ChevronUp, ChevronDown, X } from "lucide-react";
+import { ChevronUp, ChevronDown, X, AlertCircle } from "lucide-react";
 import type { Player } from "@shared/schema";
 import { LOGO_URL, MAX_PLAYERS } from "@/lib/constants";
 
@@ -30,6 +31,8 @@ export function PlayerSetup({
   const [showColorPicker, setShowColorPicker] = useState<string | null>(null);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [insertPosition, setInsertPosition] = useState<string>("end");
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isAddingFromEnter, setIsAddingFromEnter] = useState(false);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -38,7 +41,11 @@ export function PlayerSetup({
   }, []);
 
   const handleAddPlayer = () => {
-    const name = newPlayerName.trim() || `Player ${players.length + 1}`;
+    // Prevent adding if input is empty
+    if (!newPlayerName.trim()) {
+      return;
+    }
+    const name = newPlayerName.trim();
     const position = insertPosition === "end" ? undefined : parseInt(insertPosition);
     onAddPlayer(name, position);
     setNewPlayerName("");
@@ -50,12 +57,24 @@ export function PlayerSetup({
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
+      e.preventDefault();
       handleAddPlayer();
     }
   };
 
   const namedPlayers = players.filter((p) => p.name.trim().length > 0);
   const canStart = players.length > 0 && namedPlayers.length === players.length;
+
+  const handleStartClick = () => {
+    if (canStart) {
+      setShowConfirmation(true);
+    }
+  };
+
+  const handleConfirmStart = () => {
+    setShowConfirmation(false);
+    onStartGame();
+  };
 
   return (
     <div className="flex flex-col min-h-screen p-6 pb-8">
@@ -172,7 +191,7 @@ export function PlayerSetup({
           <Button
             ref={addButtonRef}
             onClick={handleAddPlayer}
-            disabled={players.length >= MAX_PLAYERS}
+            disabled={players.length >= MAX_PLAYERS || !newPlayerName.trim()}
             variant="outline"
             data-testid="button-add-player"
           >
@@ -180,7 +199,7 @@ export function PlayerSetup({
           </Button>
         </div>
         <Button
-          onClick={onStartGame}
+          onClick={handleStartClick}
           disabled={!canStart}
           className="w-full h-12 text-lg font-semibold"
           data-testid="button-start-game"
@@ -188,6 +207,42 @@ export function PlayerSetup({
           Start
         </Button>
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Roster Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please verify that players are entered from <strong>tallest to shortest</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-2 my-4 max-h-48 overflow-y-auto">
+            {players.map((player, index) => (
+              <div key={player.id} className="flex items-center gap-3 p-2 rounded bg-muted/50">
+                <div
+                  className="w-6 h-6 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: player.color }}
+                />
+                <span className="flex-1">{index + 1}. {player.name}</span>
+              </div>
+            ))}
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-confirm-back">
+              Go Back
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmStart}
+              data-testid="button-confirm-start"
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trophy, Users, RefreshCw } from "lucide-react";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Trophy, Users, RefreshCw, Smartphone } from "lucide-react";
 import type { Player, HoleScore } from "@shared/schema";
 import { calculatePlayerTotal, getLeaderboard } from "@/lib/game-utils";
 import { useTournament } from "@/contexts/TournamentContext";
@@ -19,15 +21,27 @@ interface SummaryScreenProps {
 export function SummaryScreen({ players, scores, onNewGame, onSubmitToSheets, isGameOver = false }: SummaryScreenProps) {
   const [isLandscape, setIsLandscape] = useState(false);
   const [activeTab, setActiveTab] = useState<"local" | "tournament">("local");
+  const [showLandscapeHint, setShowLandscapeHint] = useState(false);
+  const [editingScore, setEditingScore] = useState<{ playerId: string; hole: number; value: string } | null>(null);
+  const [localScores, setLocalScores] = useState<Record<string, HoleScore[]>>(scores);
   const tournament = useTournament();
   
   useEffect(() => {
     const checkOrientation = () => {
-      setIsLandscape(window.innerWidth > window.innerHeight);
+      const landscape = window.innerWidth > window.innerHeight;
+      setIsLandscape(landscape);
     };
     checkOrientation();
     window.addEventListener("resize", checkOrientation);
     return () => window.removeEventListener("resize", checkOrientation);
+  }, []);
+
+  // Show landscape hint on first mount when in portrait
+  useEffect(() => {
+    if (!isLandscape && !localStorage.getItem("landscapeHintShown")) {
+      setShowLandscapeHint(true);
+      localStorage.setItem("landscapeHintShown", "true");
+    }
   }, []);
 
   useEffect(() => {
@@ -39,13 +53,48 @@ export function SummaryScreen({ players, scores, onNewGame, onSubmitToSheets, is
       return () => clearInterval(interval);
     }
   }, [tournament.isConnected, activeTab]);
-  
-  const leaderboard = getLeaderboard(players, scores);
+
+  const handleEditScore = (playerId: string, hole: number, currentValue: number) => {
+    setEditingScore({ playerId, hole, value: currentValue.toString() });
+  };
+
+  const handleSaveScore = () => {
+    if (!editingScore) return;
+    const newValue = parseInt(editingScore.value);
+    if (isNaN(newValue) || newValue < 0) return;
+
+    const updated = { ...localScores };
+    const playerScores = updated[editingScore.playerId] || [];
+    const scoreIndex = playerScores.findIndex(s => s.hole === editingScore.hole);
+
+    if (scoreIndex >= 0) {
+      playerScores[scoreIndex] = {
+        ...playerScores[scoreIndex],
+        strokes: newValue,
+      };
+    } else {
+      // Create new score entry
+      const par = playerScores.find(s => s.hole === editingScore.hole)?.par || 3;
+      playerScores.push({
+        hole: editingScore.hole,
+        par,
+        strokes: newValue,
+        scratches: 0,
+        penalties: 0,
+      });
+    }
+
+    updated[editingScore.playerId] = playerScores;
+    setLocalScores(updated);
+    setEditingScore(null);
+  };
+
+  const leaderboard = getLeaderboard(players, localScores);
   const leader = leaderboard[0];
 
   const allHoles = Array.from(
     new Set(
-      Object.values(scores)
+      Object.values(localScores)
         .flat()
         .map((s) => s.hole)
     )
@@ -171,79 +220,79 @@ export function SummaryScreen({ players, scores, onNewGame, onSubmitToSheets, is
       {activeTab === "local" && (
         <>
           {/* Summary Stats */}
-          <Card className="p-4 mb-6">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex justify-between border-b border-dashed pb-2">
-                <span>Total Players:</span>
-                <span className="font-semibold">{players.length}</span>
-              </div>
-              <div className="flex justify-between border-b border-dashed pb-2">
-                <span>Holes Played:</span>
-                <span className="font-semibold">{allHoles.length}</span>
-              </div>
-              <div className="flex justify-between border-b border-dashed pb-2">
-                <span>Total Strokes:</span>
-                <span className="font-semibold">
-                  {Object.values(scores).reduce((sum, playerScores) => 
-                    sum + calculatePlayerTotal(playerScores).totalStrokes, 0
-                  )}
-                </span>
-              </div>
-              <div className="flex justify-between border-b border-dashed pb-2">
-                <span>Total Scratches:</span>
-                <span className="font-semibold">
-                  {Object.values(scores).reduce((sum, playerScores) => 
-                    sum + calculatePlayerTotal(playerScores).totalScratches, 0
-                  )}
-                </span>
-              </div>
-            </div>
-          </Card>
+           <Card className="p-4 mb-6">
+             <div className="grid grid-cols-2 gap-4 text-sm">
+               <div className="flex justify-between border-b border-dashed pb-2">
+                 <span>Total Players:</span>
+                 <span className="font-semibold">{players.length}</span>
+               </div>
+               <div className="flex justify-between border-b border-dashed pb-2">
+                 <span>Holes Played:</span>
+                 <span className="font-semibold">{allHoles.length}</span>
+               </div>
+               <div className="flex justify-between border-b border-dashed pb-2">
+                 <span>Total Strokes:</span>
+                 <span className="font-semibold">
+                   {Object.values(localScores).reduce((sum, playerScores) =>
+                     sum + calculatePlayerTotal(playerScores).totalStrokes, 0
+                   )}
+                 </span>
+               </div>
+               <div className="flex justify-between border-b border-dashed pb-2">
+                 <span>Total Scratches:</span>
+                 <span className="font-semibold">
+                   {Object.values(localScores).reduce((sum, playerScores) =>
+                     sum + calculatePlayerTotal(playerScores).totalScratches, 0
+                   )}
+                 </span>
+               </div>
+             </div>
+           </Card>
 
           {/* Leaderboard - Collapsed View (Portrait) */}
           {!isLandscape && (
             <Card className="p-4 mb-6">
               <h3 className="font-bold mb-3">Leaderboard</h3>
-              <div className="space-y-2">
-                {leaderboard.map((entry, index) => {
-                  const stats = calculatePlayerTotal(scores[entry.player.id] || []);
-                  const isLeader = index === 0;
-                  
-                  return (
-                    <div
-                      key={entry.player.id}
-                      className={cn(
-                        "grid grid-cols-[1.5fr_repeat(4,1fr)] gap-2 items-center p-3 rounded-lg border",
-                        isLeader && "border-primary border-2"
-                      )}
-                      data-testid={`leaderboard-${entry.player.id}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-6 h-6 rounded-full flex-shrink-0" 
-                          style={{ backgroundColor: entry.player.color }}
-                        />
-                        <span className="font-semibold truncate">{entry.player.name}</span>
-                      </div>
-                      <div className="text-center text-sm">
-                        <div className="font-bold">{entry.total}</div>
-                        <div className="text-xs text-muted-foreground">Total</div>
-                      </div>
-                      <div className="text-center text-sm">
-                        <div>{stats.totalScratches}</div>
-                        <div className="text-xs text-muted-foreground">Scratch</div>
-                      </div>
-                      <div className="text-center text-sm">
-                        <div>{stats.totalPenalties}</div>
-                        <div className="text-xs text-muted-foreground">Penalty</div>
-                      </div>
-                      <div className="text-center text-sm font-bold">
-                        #{index + 1}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+               <div className="space-y-2">
+                 {leaderboard.map((entry, index) => {
+                   const stats = calculatePlayerTotal(localScores[entry.player.id] || []);
+                   const isLeader = index === 0;
+
+                   return (
+                     <div
+                       key={entry.player.id}
+                       className={cn(
+                         "grid grid-cols-[1.5fr_repeat(4,1fr)] gap-2 items-center p-3 rounded-lg border",
+                         isLeader && "border-primary border-2"
+                       )}
+                       data-testid={`leaderboard-${entry.player.id}`}
+                     >
+                       <div className="flex items-center gap-2">
+                         <div
+                           className="w-6 h-6 rounded-full flex-shrink-0"
+                           style={{ backgroundColor: entry.player.color }}
+                         />
+                         <span className="font-semibold truncate">{entry.player.name}</span>
+                       </div>
+                       <div className="text-center text-sm">
+                         <div className="font-bold">{entry.total}</div>
+                         <div className="text-xs text-muted-foreground">Total</div>
+                       </div>
+                       <div className="text-center text-sm">
+                         <div>{stats.totalScratches}</div>
+                         <div className="text-xs text-muted-foreground">Scratch</div>
+                       </div>
+                       <div className="text-center text-sm">
+                         <div>{stats.totalPenalties}</div>
+                         <div className="text-xs text-muted-foreground">Penalty</div>
+                       </div>
+                       <div className="text-center text-sm font-bold">
+                         #{index + 1}
+                       </div>
+                     </div>
+                   );
+                 })}
+               </div>
             </Card>
           )}
 
@@ -266,51 +315,53 @@ export function SummaryScreen({ players, scores, onNewGame, onSubmitToSheets, is
                       <TableHead className="text-center min-w-[50px]">Rank</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {leaderboard.map((entry, index) => {
-                      const playerScores = scores[entry.player.id] || [];
-                      const stats = calculatePlayerTotal(playerScores);
-                      const isLeader = index === 0;
-                      const rawStrokes = playerScores.reduce((sum, s) => sum + s.strokes, 0);
-                      
-                      return (
-                        <TableRow key={entry.player.id} className={cn(isLeader && "border-2 border-primary")}>
-                          <TableCell className="font-semibold sticky left-0 bg-card">
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className="w-4 h-4 rounded-full flex-shrink-0" 
-                                style={{ backgroundColor: entry.player.color }}
-                              />
-                              <span className="truncate">{entry.player.name}</span>
-                            </div>
-                          </TableCell>
-                          {allHoles.map((hole) => {
-                            const holeScore = playerScores.find((s) => s.hole === hole);
-                            const par = holeScore?.par || 0;
-                            const strokes = holeScore?.strokes || 0;
-                            const diff = strokes - par;
-                            return (
-                              <TableCell 
-                                key={hole} 
-                                className={cn(
-                                  "text-center",
-                                  diff < 0 && "text-green-500 font-semibold",
-                                  diff > 0 && "text-red-500"
-                                )}
-                              >
-                                {holeScore ? strokes : "-"}
-                              </TableCell>
-                            );
-                          })}
-                          <TableCell className="text-center">{rawStrokes}</TableCell>
-                          <TableCell className="text-center">{stats.totalScratches}</TableCell>
-                          <TableCell className="text-center">{stats.totalPenalties}</TableCell>
-                          <TableCell className="text-center font-bold">{entry.total}</TableCell>
-                          <TableCell className="text-center font-bold">#{index + 1}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
+                   <TableBody>
+                     {leaderboard.map((entry, index) => {
+                       const playerScores = localScores[entry.player.id] || [];
+                       const stats = calculatePlayerTotal(playerScores);
+                       const isLeader = index === 0;
+                       const rawStrokes = playerScores.reduce((sum, s) => sum + s.strokes, 0);
+
+                       return (
+                         <TableRow key={entry.player.id} className={cn(isLeader && "border-2 border-primary")}>
+                           <TableCell className="font-semibold sticky left-0 bg-card">
+                             <div className="flex items-center gap-2">
+                               <div
+                                 className="w-4 h-4 rounded-full flex-shrink-0"
+                                 style={{ backgroundColor: entry.player.color }}
+                               />
+                               <span className="truncate">{entry.player.name}</span>
+                             </div>
+                           </TableCell>
+                           {allHoles.map((hole) => {
+                             const holeScore = playerScores.find((s) => s.hole === hole);
+                             const par = holeScore?.par || 0;
+                             const strokes = holeScore?.strokes || 0;
+                             const diff = strokes - par;
+                             return (
+                               <TableCell
+                                 key={hole}
+                                 className={cn(
+                                   "text-center cursor-pointer hover:bg-muted/50 transition-colors",
+                                   diff < 0 && "text-green-500 font-semibold",
+                                   diff > 0 && "text-red-500"
+                                 )}
+                                 onClick={() => holeScore && handleEditScore(entry.player.id, hole, strokes)}
+                                 data-testid={`score-cell-${entry.player.id}-${hole}`}
+                               >
+                                 {holeScore ? strokes : "-"}
+                               </TableCell>
+                             );
+                           })}
+                           <TableCell className="text-center">{rawStrokes}</TableCell>
+                           <TableCell className="text-center">{stats.totalScratches}</TableCell>
+                           <TableCell className="text-center">{stats.totalPenalties}</TableCell>
+                           <TableCell className="text-center font-bold">{entry.total}</TableCell>
+                           <TableCell className="text-center font-bold">#{index + 1}</TableCell>
+                         </TableRow>
+                       );
+                     })}
+                   </TableBody>
                 </Table>
               </div>
             </Card>
@@ -333,35 +384,40 @@ export function SummaryScreen({ players, scores, onNewGame, onSubmitToSheets, is
                       <TableHead className="text-center min-w-[60px]">Total</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {leaderboard.map((entry, index) => {
-                      const playerScores = scores[entry.player.id] || [];
-                      const isLeader = index === 0;
-                      
-                      return (
-                        <TableRow key={entry.player.id} className={cn(isLeader && "border-2 border-primary")}>
-                          <TableCell className="font-semibold">
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className="w-4 h-4 rounded-full" 
-                                style={{ backgroundColor: entry.player.color }}
-                              />
-                              {entry.player.name}
-                            </div>
-                          </TableCell>
-                          {allHoles.map((hole) => {
-                            const holeScore = playerScores.find((s) => s.hole === hole);
-                            return (
-                              <TableCell key={hole} className="text-center">
-                                {holeScore ? holeScore.strokes : "-"}
-                              </TableCell>
-                            );
-                          })}
-                          <TableCell className="text-center font-bold">{entry.total}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
+                   <TableBody>
+                     {leaderboard.map((entry, index) => {
+                       const playerScores = localScores[entry.player.id] || [];
+                       const isLeader = index === 0;
+
+                       return (
+                         <TableRow key={entry.player.id} className={cn(isLeader && "border-2 border-primary")}>
+                           <TableCell className="font-semibold">
+                             <div className="flex items-center gap-2">
+                               <div
+                                 className="w-4 h-4 rounded-full"
+                                 style={{ backgroundColor: entry.player.color }}
+                               />
+                               {entry.player.name}
+                             </div>
+                           </TableCell>
+                           {allHoles.map((hole) => {
+                             const holeScore = playerScores.find((s) => s.hole === hole);
+                             return (
+                               <TableCell
+                                 key={hole}
+                                 className="text-center cursor-pointer hover:bg-muted/50 transition-colors"
+                                 onClick={() => holeScore && handleEditScore(entry.player.id, hole, holeScore.strokes)}
+                                 data-testid={`score-cell-portrait-${entry.player.id}-${hole}`}
+                               >
+                                 {holeScore ? holeScore.strokes : "-"}
+                               </TableCell>
+                             );
+                           })}
+                           <TableCell className="text-center font-bold">{entry.total}</TableCell>
+                         </TableRow>
+                       );
+                     })}
+                   </TableBody>
                 </Table>
               </div>
             </Card>
@@ -379,8 +435,66 @@ export function SummaryScreen({ players, scores, onNewGame, onSubmitToSheets, is
               </Button>
             )}
           </div>
-        </>
-      )}
-    </div>
-  );
+         </>
+       )}
+     </div>
+
+     {/* Landscape Mode Hint Dialog */}
+     <AlertDialog open={showLandscapeHint} onOpenChange={setShowLandscapeHint}>
+       <AlertDialogContent>
+         <AlertDialogHeader>
+           <AlertDialogTitle className="flex items-center gap-2">
+             <Smartphone className="w-5 h-5" />
+             Landscape Mode Available
+           </AlertDialogTitle>
+           <AlertDialogDescription>
+             Turn your device into landscape mode to view and edit the detailed box score with all player statistics!
+           </AlertDialogDescription>
+         </AlertDialogHeader>
+         <AlertDialogFooter>
+           <AlertDialogCancel data-testid="button-close-landscape-hint">
+             Got it
+           </AlertDialogCancel>
+         </AlertDialogFooter>
+       </AlertDialogContent>
+     </AlertDialog>
+
+     {/* Score Editing Dialog */}
+     <AlertDialog open={editingScore !== null} onOpenChange={(open) => !open && setEditingScore(null)}>
+       <AlertDialogContent>
+         <AlertDialogHeader>
+           <AlertDialogTitle>Edit Score</AlertDialogTitle>
+           <AlertDialogDescription>
+             {editingScore && `Enter new strokes for Hole ${editingScore.hole}`}
+           </AlertDialogDescription>
+         </AlertDialogHeader>
+         {editingScore && (
+           <div className="space-y-4">
+             <Input
+               type="number"
+               inputMode="numeric"
+               min="0"
+               value={editingScore.value}
+               onChange={(e) => setEditingScore({ ...editingScore, value: e.target.value })}
+               placeholder="Enter strokes"
+               autoFocus
+               data-testid="input-edit-score"
+             />
+           </div>
+         )}
+         <AlertDialogFooter>
+           <AlertDialogCancel data-testid="button-cancel-edit">
+             Cancel
+           </AlertDialogCancel>
+           <AlertDialogAction
+             onClick={handleSaveScore}
+             data-testid="button-save-score"
+           >
+             Save
+           </AlertDialogAction>
+         </AlertDialogFooter>
+       </AlertDialogContent>
+     </AlertDialog>
+   </div>
+ );
 }

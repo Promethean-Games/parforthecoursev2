@@ -7,9 +7,10 @@ interface DrawDialogProps {
   onSelectPar: (par: number) => void;
   onClose: () => void;
   isFirstDraw?: boolean;
+  isJoker?: boolean;
 }
 
-export function DrawDialog({ onSelectPar, onClose, isFirstDraw = false }: DrawDialogProps) {
+export function DrawDialog({ onSelectPar, onClose, isFirstDraw = false, isJoker = false }: DrawDialogProps) {
   const [selectedPar, setSelectedPar] = useState<number | null>(null);
 
   const handleConfirm = () => {
@@ -22,37 +23,56 @@ export function DrawDialog({ onSelectPar, onClose, isFirstDraw = false }: DrawDi
   return (
     <div className="fixed inset-0 bg-background/95 z-50 flex items-center justify-center p-6">
       <div className="w-full max-w-md text-center space-y-8">
-        {isFirstDraw && (
-          <div className="space-y-2">
-            <p className="text-muted-foreground text-lg" data-testid="text-first-draw-tip">
-              To begin, the tallest player draws a card at random.
-            </p>
-            <a 
-              href="https://www.thegamecrafter.com/games/par-for-the-course-classic"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary underline text-sm"
-              data-testid="link-buy-cards"
-            >
-              I don't have cards yet.
-            </a>
+        {isJoker ? (
+          <div className="space-y-4">
+            <div className="text-6xl font-extrabold" data-testid="text-joker">
+              JOKER! 🃏
+            </div>
+            <div className="bg-primary/10 border border-primary rounded-lg p-4 space-y-2">
+              <p className="text-lg font-semibold text-primary">Make Up Your Own Course</p>
+              <p className="text-sm text-muted-foreground">
+                You drew a Joker! You now have the opportunity to create and play your own custom hole.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Design a fun, challenging, or silly course within your environment and set your own par.
+              </p>
+            </div>
           </div>
-        )}
-        
-        {isFirstDraw ? (
-          <img 
-            src={drawImage} 
-            alt="DRAW!" 
-            className="w-full max-w-sm mx-auto rounded-lg"
-            data-testid="img-draw-first"
-          />
         ) : (
-          <div className="space-y-2">
-            <h1 className="text-8xl font-extrabold" data-testid="text-draw">DRAW!</h1>
-            <p className="text-muted-foreground text-lg" data-testid="text-lowest-score-tip">
-              The player with the lowest score draws a card at random.
-            </p>
-          </div>
+          <>
+            {isFirstDraw && (
+              <div className="space-y-2">
+                <p className="text-muted-foreground text-lg" data-testid="text-first-draw-tip">
+                  To begin, the tallest player draws a card at random.
+                </p>
+                <a
+                  href="https://www.thegamecrafter.com/games/par-for-the-course-classic"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline text-sm"
+                  data-testid="link-buy-cards"
+                >
+                  I don't have cards yet.
+                </a>
+              </div>
+            )}
+
+            {isFirstDraw ? (
+              <img
+                src={drawImage}
+                alt="DRAW!"
+                className="w-full max-w-sm mx-auto rounded-lg"
+                data-testid="img-draw-first"
+              />
+            ) : (
+              <div className="space-y-2">
+                <h1 className="text-8xl font-extrabold" data-testid="text-draw">DRAW!</h1>
+                <p className="text-muted-foreground text-lg" data-testid="text-lowest-score-tip">
+                  The player with the lowest score draws a card at random.
+                </p>
+              </div>
+            )}
+          </>
         )}
         
         <div className="space-y-4">
@@ -88,7 +108,7 @@ export function DrawDialog({ onSelectPar, onClose, isFirstDraw = false }: DrawDi
             disabled={!selectedPar}
             data-testid="button-confirm-draw"
           >
-            Confirm
+            {isJoker ? "Create My Course" : "Confirm"}
           </Button>
         </div>
       </div>
