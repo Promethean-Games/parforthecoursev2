@@ -95,6 +95,17 @@
     .splash-logo img{width:min(260px,70vw);height:auto}
     .splash-stack{display:flex;flex-direction:column;gap:12px;width:100%;max-width:380px}
     .splash-divider{text-align:center;color:var(--fg3);font-size:13px;margin:4px 0}
+    .splash-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
+    @media(max-width:360px){
+      .splash-tools-grid{grid-template-columns:1fr;gap:8px}
+      .splash-stack{gap:8px;max-width:100%}
+    }
+    @media(max-width:320px){
+      .splash-stack{padding:0 4px}
+      .btn{font-size:13px;padding:0 10px}
+      .btn-lg{min-height:48px}
+      .splash-logo img{width:min(200px,60vw)}
+    }
 
     /* ---- Setup ---- */
     .setup-header{text-align:center;margin-bottom:20px}
@@ -263,6 +274,14 @@
     #privacy-overlay h2{font-size:16px;margin:16px 0 6px;color:var(--fg)}
     #privacy-overlay p,#privacy-overlay li{font-size:14px;color:var(--fg2);line-height:1.7}
     #privacy-overlay a{color:var(--primary)}
+    #splash-settings-overlay{
+      position:fixed;inset:0;background:var(--bg);z-index:300;display:none;
+      flex-direction:column;overflow-y:auto;padding:16px;
+    }
+    #splash-settings-overlay.open{display:flex}
+    @media(min-width:361px){
+      #splash-settings-overlay{padding:24px}
+    }
 
     /* ---- CueMaster dropdown ---- */
     .cuemaster-menu{position:relative;width:100%}
@@ -372,26 +391,28 @@
     <div class="splash-stack">
       <button class="btn btn-primary btn-lg" onclick="gotoSetup()">New Game</button>
       <button class="btn btn-outline" onclick="gotoLoad()">Load Game</button>
-      <div class="cuemaster-menu">
-        <button class="btn btn-outline" onclick="toggleCueMaster()" id="cuemaster-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-          CueMaster Tools
-          <svg id="cuemaster-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <div class="cuemaster-dropdown" id="cuemaster-dropdown">
-          <button onclick="openLeveler();closeCueMaster()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            Table Leveler
+      <div class="splash-tools-grid">
+        <div class="cuemaster-menu">
+          <button class="btn btn-outline" onclick="toggleCueMaster()" id="cuemaster-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+            CueMaster Tools
+            <svg id="cuemaster-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
-          <button onclick="openEmulator();closeCueMaster()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>
-            Cueing Emulator
-          </button>
-          <button onclick="openSplashSettings();closeCueMaster()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"/></svg>
-            Settings
-          </button>
+          <div class="cuemaster-dropdown" id="cuemaster-dropdown">
+            <button onclick="openLeveler();closeCueMaster()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Table Leveler
+            </button>
+            <button onclick="openEmulator();closeCueMaster()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>
+              Cueing Emulator
+            </button>
+          </div>
         </div>
+        <button class="btn btn-outline" onclick="openSplashSettings()" id="settings-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"/></svg>
+          Settings
+        </button>
       </div>
     </div>
   </div>
@@ -662,10 +683,10 @@
 </div>
 
 <!-- ===================== SPLASH SETTINGS ===================== -->
-<div id="splash-settings-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:300;overflow:auto;padding:16px">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;position:sticky;top:0;background:var(--bg);padding-top:4px;z-index:10">
-    <h1 style="margin:0;font-size:24px">Settings</h1>
-    <button class="btn btn-ghost btn-icon" onclick="closeSplashSettings()">
+<div id="splash-settings-overlay">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;position:sticky;top:0;background:var(--bg);padding-top:4px;z-index:10;gap:12px">
+    <h1 style="margin:0;font-size:22px;flex:1">Settings</h1>
+    <button class="btn btn-ghost btn-icon" onclick="closeSplashSettings()" style="flex-shrink:0">
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
   </div>
@@ -677,28 +698,41 @@
         <h4>Reviewer Mode</h4>
         <p id="reviewer-status-splash"></p>
       </div>
-      <span class="access-badge" id="reviewer-badge-splash" style="display:none"></span>
+      <span class="access-badge" id="reviewer-badge-splash" style="display:none;flex-shrink:0"></span>
     </div>
     <button class="btn btn-outline w-full" id="splash-reviewer-btn" onclick="openReviewerAccess()">Enter Reviewer Code</button>
   </div>
 
-  <div class="card settings-card">
-    <h3 style="margin:0 0 8px;font-size:14px;font-weight:600">Privacy Policy</h3>
-    <div style="color:var(--fg2);font-size:13px;margin-bottom:12px">Promethean Games LLC · Effective October 23, 2025</div>
-    <div style="font-size:14px;line-height:1.6;color:var(--fg)">
-      <h4 style="font-size:14px;font-weight:600;margin:12px 0 8px">Information We Collect</h4>
-      <p>Par for the Course is a local-first application. All game data (player names, scores, settings) is stored exclusively on your device using browser localStorage. We do not collect, transmit, or store any personal information on external servers.</p>
-      <h4 style="font-size:14px;font-weight:600;margin:12px 0 8px">Device Permissions</h4>
-      <p>The Table Leveler feature uses your device's accelerometer/gyroscope sensor (DeviceOrientation API). This data is processed locally and never transmitted. No camera, microphone, or location access is required.</p>
-      <h4 style="font-size:14px;font-weight:600;margin:12px 0 8px">Purchases</h4>
-      <p>Full-game unlock purchases are processed by Stripe, Inc. We do not store payment card information. Stripe's privacy policy applies to payment processing. Purchase status is stored locally on your device.</p>
-      <h4 style="font-size:14px;font-weight:600;margin:12px 0 8px">Data Deletion</h4>
-      <p>To delete all app data, tap the button below. This will remove all saved games, settings, and purchase records from your device.</p>
-      <button class="btn btn-destructive" style="margin:12px 0" onclick="deleteAllData()">Delete All App Data</button>
-      <h4 style="font-size:14px;font-weight:600;margin:12px 0 8px">Contact</h4>
-      <p>For privacy inquiries: <a href="mailto:support@promethean-games.com">support@promethean-games.com</a></p>
+  <div class="card settings-card" style="margin-bottom:16px;padding-bottom:24px">
+    <h3 style="margin:0 0 12px;font-size:14px;font-weight:600">Privacy Policy</h3>
+    <div style="color:var(--fg2);font-size:12px;margin-bottom:12px">Promethean Games LLC · Effective October 23, 2025</div>
+    <div style="font-size:13px;line-height:1.6;color:var(--fg);display:flex;flex-direction:column;gap:12px">
+      <div>
+        <h4 style="font-size:13px;font-weight:600;margin:0 0 6px">Information We Collect</h4>
+        <p style="margin:0;font-size:12px;color:var(--fg2)">Par for the Course is a local-first application. All game data (player names, scores, settings) is stored exclusively on your device using browser localStorage. We do not collect, transmit, or store any personal information on external servers.</p>
+      </div>
+      <div>
+        <h4 style="font-size:13px;font-weight:600;margin:0 0 6px">Device Permissions</h4>
+        <p style="margin:0;font-size:12px;color:var(--fg2)">The Table Leveler feature uses your device's accelerometer/gyroscope sensor (DeviceOrientation API). This data is processed locally and never transmitted. No camera, microphone, or location access is required.</p>
+      </div>
+      <div>
+        <h4 style="font-size:13px;font-weight:600;margin:0 0 6px">Purchases</h4>
+        <p style="margin:0;font-size:12px;color:var(--fg2)">Full-game unlock purchases are processed by Stripe, Inc. We do not store payment card information. Stripe's privacy policy applies to payment processing. Purchase status is stored locally on your device.</p>
+      </div>
+      <div>
+        <h4 style="font-size:13px;font-weight:600;margin:0 0 6px">Data Deletion</h4>
+        <p style="margin:0 0 8px;font-size:12px;color:var(--fg2)">To delete all app data, tap the button below. This will remove all saved games, settings, and purchase records from your device.</p>
+        <button class="btn btn-destructive" style="margin:0" onclick="deleteAllData()">Delete All App Data</button>
+      </div>
+      <div>
+        <h4 style="font-size:13px;font-weight:600;margin:0 0 6px">Contact</h4>
+        <p style="margin:0;font-size:12px;color:var(--fg2)">For privacy inquiries: <a href="mailto:support@promethean-games.com" style="color:var(--primary)">support@promethean-games.com</a></p>
+      </div>
     </div>
-    <button class="btn btn-outline w-full" style="margin-top:16px" onclick="closeSplashSettings()">Close</button>
+  </div>
+
+  <div style="display:flex;gap:8px;padding-top:8px">
+    <button class="btn btn-outline w-full" onclick="closeSplashSettings()">Close</button>
   </div>
 </div>
 
@@ -1046,11 +1080,11 @@ function submitReviewerCode(){
 function openSplashSettings(){
   updateSplashSettingsStatus();
   const overlay=document.getElementById('splash-settings-overlay');
-  if(overlay) overlay.style.display='flex';
+  if(overlay) overlay.classList.add('open');
 }
 function closeSplashSettings(){
   const overlay=document.getElementById('splash-settings-overlay');
-  if(overlay) overlay.style.display='none';
+  if(overlay) overlay.classList.remove('open');
 }
 function updateSplashSettingsStatus(){
   const statusEl=document.getElementById('reviewer-status-splash');
@@ -2117,7 +2151,8 @@ document.addEventListener('click',e=>{
     closeCueMaster();
   }
   const settingsOverlay=document.getElementById('splash-settings-overlay');
-  if(settingsOverlay&&settingsOverlay.style.display==='flex'&&e.target===settingsOverlay){
+  const settingsBtn=document.getElementById('settings-btn');
+  if(settingsOverlay?.classList.contains('open')&&e.target===settingsOverlay){
     closeSplashSettings();
   }
 });
