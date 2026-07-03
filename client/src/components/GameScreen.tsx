@@ -46,6 +46,7 @@ export function GameScreen({
   const [showDrawDialog, setShowDrawDialog] = useState(false);
   const [showTableSetupDialog, setShowTableSetupDialog] = useState(false);
   const [pendingPar, setPendingPar] = useState<number | null>(null);
+  const [isJokerDraw, setIsJokerDraw] = useState(false);
   const [drawConfirmTime, setDrawConfirmTime] = useState<number | null>(null);
   const [lastHole, setLastHole] = useState(currentHole);
   const isInitialMount = useRef(true);
@@ -232,6 +233,12 @@ export function GameScreen({
   
   const shooterInfo = `${shootersRemaining} shooter${shootersRemaining !== 1 ? "s" : ""} remaining`;
 
+  const handleNextCard = () => {
+    const jokerSelected = typeof window !== "undefined" && window.confirm("Did the player draw a Joker card? Click OK for Yes, Cancel for No.");
+    setIsJokerDraw(Boolean(jokerSelected));
+    onNextCard();
+  };
+
   return (
     <div 
       className={cn("flex flex-col min-h-screen p-4 pb-6", leftHandedMode && "left-handed")}
@@ -388,7 +395,7 @@ export function GameScreen({
         </Button>
         <Button
           className="flex-1 h-12 text-base"
-          onClick={onNextCard}
+          onClick={handleNextCard}
           disabled={!canAdvance}
           data-testid="button-next-card"
         >
@@ -401,6 +408,7 @@ export function GameScreen({
           onSelectPar={handleDrawPar}
           onClose={() => setShowDrawDialog(false)}
           isFirstDraw={currentHole === 1}
+          isJoker={isJokerDraw}
         />
       )}
 

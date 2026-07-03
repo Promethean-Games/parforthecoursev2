@@ -14,11 +14,19 @@ interface SummaryScreenProps {
   players: Player[];
   scores: Record<string, HoleScore[]>;
   onNewGame: () => void;
+  onUpdateHoleScore?: (playerId: string, hole: number, strokes: number) => void;
   onSubmitToSheets?: () => void;
   isGameOver?: boolean;
 }
 
-export function SummaryScreen({ players, scores, onNewGame, onSubmitToSheets, isGameOver = false }: SummaryScreenProps) {
+export function SummaryScreen({
+  players,
+  scores,
+  onNewGame,
+  onUpdateHoleScore,
+  onSubmitToSheets,
+  isGameOver = false,
+}: SummaryScreenProps) {
   const [isLandscape, setIsLandscape] = useState(false);
   const [activeTab, setActiveTab] = useState<"local" | "tournament">("local");
   const [showLandscapeHint, setShowLandscapeHint] = useState(false);
@@ -42,7 +50,11 @@ export function SummaryScreen({ players, scores, onNewGame, onSubmitToSheets, is
       setShowLandscapeHint(true);
       localStorage.setItem("landscapeHintShown", "true");
     }
-  }, []);
+  }, [isLandscape]);
+
+  useEffect(() => {
+    setLocalScores(scores);
+  }, [scores]);
 
   useEffect(() => {
     if (tournament.isConnected && activeTab === "tournament") {
@@ -63,9 +75,11 @@ export function SummaryScreen({ players, scores, onNewGame, onSubmitToSheets, is
     const newValue = parseInt(editingScore.value);
     if (isNaN(newValue) || newValue < 0) return;
 
+    const { playerId, hole } = editingScore;
+
     const updated = { ...localScores };
-    const playerScores = updated[editingScore.playerId] || [];
-    const scoreIndex = playerScores.findIndex(s => s.hole === editingScore.hole);
+    const playerScores = [...(updated[playerId] || [])];
+    const scoreIndex = playerScores.findIndex((s) => s.hole === hole);
 
     if (scoreIndex >= 0) {
       playerScores[scoreIndex] = {
@@ -74,9 +88,9 @@ export function SummaryScreen({ players, scores, onNewGame, onSubmitToSheets, is
       };
     } else {
       // Create new score entry
-      const par = playerScores.find(s => s.hole === editingScore.hole)?.par || 3;
+      const par = playerScores.find((s) => s.hole === hole)?.par || 3;
       playerScores.push({
-        hole: editingScore.hole,
+        hole,
         par,
         strokes: newValue,
         scratches: 0,
@@ -84,8 +98,9 @@ export function SummaryScreen({ players, scores, onNewGame, onSubmitToSheets, is
       });
     }
 
-    updated[editingScore.playerId] = playerScores;
+    updated[playerId] = playerScores;
     setLocalScores(updated);
+    onUpdateHoleScore?.(playerId, hole, newValue);
     setEditingScore(null);
   };
 
@@ -101,6 +116,7 @@ export function SummaryScreen({ players, scores, onNewGame, onSubmitToSheets, is
   ).sort((a, b) => a - b);
 
   return (
+    <>
     <div className="flex flex-col min-h-screen p-6 pb-8">
       <h1 className="text-3xl font-bold text-center mb-2">Session Summary</h1>
       
@@ -495,6 +511,6 @@ export function SummaryScreen({ players, scores, onNewGame, onSubmitToSheets, is
          </AlertDialogFooter>
        </AlertDialogContent>
      </AlertDialog>
-   </div>
+   </>
  );
 }

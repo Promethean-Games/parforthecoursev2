@@ -186,6 +186,9 @@ function GameApp() {
           players={game.players}
           scores={game.scores}
           onNewGame={handleNewGame}
+          onUpdateHoleScore={(playerId, hole, strokes) =>
+            game.updateScore(playerId, hole, { hole, strokes })
+          }
           isGameOver={game.isComplete}
         />
       )}
