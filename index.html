@@ -1303,11 +1303,29 @@ function prevPlayer(){
   const g=S.game;
   g.pi=(g.pi-1+g.players.length)%g.players.length;
   renderGame();
+
+  // If there are multiple players and the new player has a score of 0, show the course
+  if(g.players.length>1){
+    const newPlayer=curPlayer();
+    const currentScore=getScore(newPlayer.id, g.hole);
+    if(currentScore.strokes===0){
+      setTimeout(()=>openCourseViewer(),200);
+    }
+  }
 }
 function nextPlayer(){
   const g=S.game;
   g.pi=(g.pi+1)%g.players.length;
   renderGame();
+
+  // If there are multiple players and the new player has a score of 0, show the course
+  if(g.players.length>1){
+    const newPlayer=curPlayer();
+    const currentScore=getScore(newPlayer.id, g.hole);
+    if(currentScore.strokes===0){
+      setTimeout(()=>openCourseViewer(),200);
+    }
+  }
 }
 function addStroke(){
   const cs=getCurrentScore();
