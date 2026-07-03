@@ -2,8 +2,8 @@
   "name": "Par for the Course",
   "short_name": "PFTC",
   "description": "Mobile-first billiards training card game with score tracking, CueMaster tools, and local-first gameplay.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/parforthecoursev2/",
+  "scope": "/parforthecoursev2/",
   "display": "standalone",
   "background_color": "#0f0f0f",
   "theme_color": "#131313",
@@ -13,7 +13,7 @@
       "src": "favicon.png",
       "sizes": "400x400",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }
