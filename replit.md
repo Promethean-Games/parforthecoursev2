@@ -122,9 +122,11 @@ When running inside a Trusted Web Activity on Android, the Digital Goods API is 
   - Stripe paywall: holes 1-3 free; holes 4-18 locked behind `https://buy.stripe.com/7sYeVc82N7czdPqaQ20Jq00`; unlock stored in `localStorage.pftc_unlocked = "true"`
 
 ### CueMaster Tools
-- **Entry Point**: A single dark-green "CueMaster Tools" button (bg `#15803d`, Wrench icon, placed beneath the Buy Now button on the splash screen) opens a full-screen tool selector overlay (`CueMasterTools.tsx`). Each tool card has a gradient background and launches the tool as its own full-screen overlay. Both React and standalone versions share the same flow.
+- **Entry Point**: On the splash screen, a dedicated `CueMaster Tools` dropdown button opens quick access to tools, and a standalone `Settings` button sits directly below it for Privacy Policy and Reviewer Access.
   - **Components**: `CueMasterTools.tsx` (selector overlay), `CoinFlip.tsx`, `CueingEmulator.tsx`, `CueingEmulatorTour.tsx` (interactive onboarding walkthrough — 8 steps, auto-shown on first visit, auto-advances on real actions, `localStorage: pftc_emulator_tutorial_seen`), `TableLeveler.tsx`
   - **Standalone**: `rCueMasterTools()`, `rCoinFlip()`, `rEmulator()`, `rLeveler()` render functions; `COIN` state object + `doFlip()` for the coin flip animation
+
+- **Current Version**: `3.14`
 
 - **Coin Flip**: Billiards-themed coin flip tool to decide who breaks
   - 3D CSS perspective flip animation — accumulated rotation state ensures smooth re-flips without DOM resets
@@ -215,7 +217,7 @@ When running inside a Trusted Web Activity on Android, the Digital Goods API is 
 - **No Account System**: No PII collection; player names stored locally only
 - **Children's Privacy**: Compliant — no personal data collected or transmitted; suitable for all ages
 - **Payment Disclosure**: Stripe payment processing disclosed; links to Stripe's privacy policy
-- **Contact Info**: support@promethean-games.com and Promethean-Games.com listed in policy
+- **Contact Info**: info@promethean-games.com and Promethean-Games.com listed in policy
 - **Component**: `client/src/components/PrivacyPolicy.tsx` — full-screen overlay with print support
 - **Standalone**: `rPrivacy()` function + `deleteAllAppData()` mirror the React version
 
