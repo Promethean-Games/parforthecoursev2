@@ -892,7 +892,7 @@
    CONSTANTS
    ============================================================ */
 const MAX_HOLES = 18;
-const FREE_HOLES = 3;
+const FREE_HOLES = MAX_HOLES;
 const MAX_PLAYERS = 8;
 const STRIPE_LINK = 'https://buy.stripe.com/7sYeVc82N7czdPqaQ20Jq00';
 const CARD_BACK_SRC = 'cards/back.png';
@@ -1031,7 +1031,7 @@ function isReviewerMode(){
   return localStorage.getItem(REVIEWER_MODE_KEY)==='true';
 }
 function hasPremiumAccess(){
-  return isReviewerMode() || localStorage.getItem('pftc_unlocked')==='true';
+  return true;
 }
 function isUnlocked(){
   return hasPremiumAccess();
