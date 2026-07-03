@@ -1,0 +1,133 @@
+uploads = []
+
+[[generated]]
+id = "OM-xxrnsWWYeBa-L0k8Ur"
+uri = "file://attached_assets/achievements/off_the_tee.png"
+type = "image"
+title = "off the tee achievement"
+
+[[generated]]
+id = "iSsH9teuPXYgfas8CEvIB"
+uri = "file://attached_assets/achievements/table_read.png"
+type = "image"
+title = "table read achievement book"
+
+[[generated]]
+id = "PVvXfGnauCyMwKl7SfaUq"
+uri = "file://attached_assets/achievements/front_nine.png"
+type = "image"
+title = "front nine scorecard achievement"
+
+[[generated]]
+id = "-2lKMDFDF_C3-En5z_rmB"
+uri = "file://attached_assets/achievements/birdie.png"
+type = "image"
+title = "birdie achievement"
+
+[[generated]]
+id = "z23ALJ8LOE-ydOBjb4Lub"
+uri = "file://attached_assets/achievements/full_round.png"
+type = "image"
+title = "full round 18 scorecard achievement"
+
+[[generated]]
+id = "J21mt4CwnkiBZnt6Ygy49"
+uri = "file://attached_assets/achievements/cuemaster.png"
+type = "image"
+title = "cuemaster achievement"
+
+[[generated]]
+id = "SKMVngCynG4LokN7M_Z9V"
+uri = "file://attached_assets/achievements/eagle.png"
+type = "image"
+title = "eagle achievement"
+
+[[generated]]
+id = "ft0B6y8-BsiJIjp3uyPf_"
+uri = "file://attached_assets/achievements/bogey_free.png"
+type = "image"
+title = "bogey free achievement"
+
+[[generated]]
+id = "IjwQDCRcgKqLjPQmxiafP"
+uri = "file://attached_assets/achievements/ace.png"
+type = "image"
+title = "ace achievement"
+
+[[generated]]
+id = "KrImxbDouHFUZFct2_rdc"
+uri = "file://attached_assets/achievements/tour_champion.png"
+type = "image"
+title = "tour champion achievement"
+
+[[generated]]
+id = "F0ythSVRPHNTbXrbCbKIr"
+uri = "file://attached_assets/achievements/scratch_golfer.png"
+type = "image"
+title = "scratch golfer achievement"
+
+[[outputs]]
+id = "B7xpY4PCjXJJtem3MRBoG"
+uri = "file://attached_assets/achievements/off_the_tee.png"
+type = "image"
+title = "Off the Tee (regenerated)"
+
+[[outputs]]
+id = "ljKBwC9fIEe0pKEZxHnEq"
+uri = "file://attached_assets/achievements/table_read.png"
+type = "image"
+title = "Table Read (regenerated)"
+
+[[outputs]]
+id = "LiZcV1v2eBIqM_21fg0M6"
+uri = "file://attached_assets/achievements/front_nine.png"
+type = "image"
+title = "Front Nine (scorecard)"
+
+[[outputs]]
+id = "KDtA2zT0f9npxTiBuM0wD"
+uri = "file://attached_assets/achievements/birdie.png"
+type = "image"
+title = "Birdie"
+
+[[outputs]]
+id = "8bPbcGOvAuzjj9iPqthJM"
+uri = "file://attached_assets/achievements/full_round.png"
+type = "image"
+title = "Full Round (scorecard with 18)"
+
+[[outputs]]
+id = "sigG0KUecOQ-JbN0bwbL8"
+uri = "file://attached_assets/achievements/cuemaster.png"
+type = "image"
+title = "CueMaster (regenerated)"
+
+[[outputs]]
+id = "T-fJ1t8bEd-R62Yu0jPWN"
+uri = "file://attached_assets/achievements/eagle.png"
+type = "image"
+title = "Eagle (regenerated)"
+
+[[outputs]]
+id = "dCFysRBXWoRKcsFpqKB5I"
+uri = "file://attached_assets/achievements/bogey_free.png"
+type = "image"
+title = "Bogey Free"
+
+[[outputs]]
+id = "95Uu2TNMo6zP1etBlb68H"
+uri = "file://attached_assets/achievements/ace.png"
+type = "image"
+title = "Ace (regenerated)"
+
+[[outputs]]
+id = "z2gT9WCooyuIPGcZ6GBN1"
+uri = "file://attached_assets/achievements/tour_champion.png"
+type = "image"
+title = "Tour Champion"
+
+[[outputs]]
+id = "aTe1mP1AabcCgzp6ET6Pr"
+uri = "file://attached_assets/achievements/scratch_golfer.png"
+type = "image"
+title = "Scratch Golfer (regenerated)"
