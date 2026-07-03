@@ -422,13 +422,13 @@
     <div class="player-list" id="player-list"></div>
     <div style="margin-top:auto">
       <div class="add-player-row">
-        <input type="text" id="new-player-name" placeholder="Player name" maxlength="20" onkeydown="if(event.key==='Enter')addPlayer()"/>
+        <input type="text" id="new-player-name" placeholder="Player name" maxlength="20" onkeydown="if(event.key==='Enter')addPlayer(event)"/>
         <select id="insert-pos" style="width:110px">
           <option value="end">At End</option>
         </select>
         <button class="btn btn-outline" style="width:80px" onclick="addPlayer()" id="add-player-btn">Add</button>
       </div>
-      <button class="btn btn-primary btn-lg" onclick="startGame()" id="start-btn" disabled>Start</button>
+      <button class="btn btn-primary btn-lg" onclick="openStartConfirm()" id="start-btn" disabled>Start</button>
     </div>
   </div>
 
@@ -569,6 +569,8 @@
   <div class="overlay-inner">
     <h2 style="font-size:28px;font-weight:800;margin:0">JOKER!</h2>
     <img src="" id="joker-overlay-img" alt="Joker" style="width:180px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.5);margin:0 auto"/>
+    <p class="text-muted" style="margin:0 0 4px;text-align:center">Make up your own course for this hole.</p>
+    <p class="text-muted text-sm" style="margin:0 0 8px;text-align:center">Set the layout, then choose a par below.</p>
     <div style="width:100%">
       <label style="font-size:16px;font-weight:600;display:block;margin-bottom:8px">Select Par for This Hole</label>
       <select id="joker-par-select" style="width:100%;height:52px;font-size:18px">
@@ -582,6 +584,19 @@
   </div>
 </div>
 
+<!-- ===================== START CONFIRM ===================== -->
+<div class="dialog-overlay" id="start-confirm-dialog" style="display:none">
+  <div class="dialog">
+    <h3>Confirm Roster Order</h3>
+    <p>Please confirm players are entered from tallest to shortest.</p>
+    <div id="start-confirm-list" style="max-height:220px;overflow:auto;margin:10px 0"></div>
+    <div class="dialog-actions">
+      <button class="btn btn-ghost" onclick="closeStartConfirm()">Go Back</button>
+      <button class="btn btn-primary" onclick="confirmStartGame()">Continue</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===================== FINISH CONFIRM ===================== -->
 <div class="dialog-overlay" id="finish-dialog" style="display:none">
   <div class="dialog">
@@ -590,6 +605,17 @@
     <div class="dialog-actions">
       <button class="btn btn-ghost" onclick="closeFinish()">Go Back</button>
       <button class="btn btn-primary" onclick="doFinish()">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== LEADERBOARD HINT ===================== -->
+<div class="dialog-overlay" id="landscape-hint-dialog" style="display:none">
+  <div class="dialog">
+    <h3>Tip: Rotate Device</h3>
+    <p>Landscape mode makes it easier to edit the box score.</p>
+    <div class="dialog-actions">
+      <button class="btn btn-primary" onclick="closeLandscapeHint()">Got it</button>
     </div>
   </div>
 </div>
@@ -800,6 +826,7 @@ const LEADER_ICON_URL = 'https://prometheangamescom.wordpress.com/wp-content/upl
 const COLORS = ['#ef4444','#3b82f6','#22c55e','#f59e0b','#a855f7','#ec4899','#14b8a6','#f97316'];
 const PAR_LABELS = ['','Ace!','Eagle!','Birdie!','Par!','Bogey','Double Bogey','Triple Bogey'];
 const VERSION = '2.1.0';
+const SUMMARY_HINT_KEY = 'pftc_summary_landscape_hint_seen';
 
 /* ============================================================
    CARD DECK
@@ -1079,6 +1106,11 @@ function getDrawnCard(hole){
   if(!id) return null;
   return ALL_CARDS.find(c=>c.id===id)||null;
 }
+function isJokerCard(card){
+  if(!card) return false;
+  if(card.isJoker===true) return true;
+  return String(card.img||'').toLowerCase().includes('joker');
+}
 function drawCard(hole){
   const deck=S.game.deck;
   if(!deck||!deck.length) return null;
@@ -1300,6 +1332,36 @@ function startGame(){
   resumeTimer();
   renderGame();
 }
+function openStartConfirm(){
+  const g=S.game;
+  const namedAll=g.players.length>0&&g.players.every(p=>p.name.trim());
+  if(!namedAll) return;
+  const list=document.getElementById('start-confirm-list');
+  if(list){
+    list.innerHTML=g.players.map((p,i)=>`
+      <div class="lb-row" style="padding:8px 10px;margin-bottom:6px">
+        <div class="lb-color" style="background:${p.color}"></div>
+        <div class="lb-name">${i+1}. ${esc(p.name)}</div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('start-confirm-dialog').style.display='flex';
+}
+function closeStartConfirm(){
+  document.getElementById('start-confirm-dialog').style.display='none';
+}
+function confirmStartGame(){
+  closeStartConfirm();
+  startGame();
+}
+function maybeShowLandscapeHint(){
+  if(localStorage.getItem(SUMMARY_HINT_KEY)==='true') return;
+  document.getElementById('landscape-hint-dialog').style.display='flex';
+}
+function closeLandscapeHint(){
+  localStorage.setItem(SUMMARY_HINT_KEY,'true');
+  document.getElementById('landscape-hint-dialog').style.display='none';
+}
 function setTab(tab){
   if(S.viewOnly&&(tab==='game'||tab==='save')) return;
   S.tab=tab;
@@ -1309,6 +1371,7 @@ function setTab(tab){
     if(btn) btn.classList.toggle('active', id==='nav-'+tab);
   });
   if(tab==='game') resumeTimer(); else pauseTimer();
+  if(tab==='summary') maybeShowLandscapeHint();
 }
 
 /* ============================================================
@@ -1346,10 +1409,12 @@ function renderSetup(){
   document.getElementById('start-btn').disabled=!namedAll;
   document.getElementById('add-player-btn').disabled=g.players.length>=MAX_PLAYERS;
 }
-function addPlayer(){
+function addPlayer(ev){
+  if(ev&&typeof ev.preventDefault==='function') ev.preventDefault();
   const nameEl=document.getElementById('new-player-name');
   const posEl=document.getElementById('insert-pos');
-  const name=nameEl.value.trim()||`Player ${S.game.players.length+1}`;
+  const name=nameEl.value.trim();
+  if(!name) return;
   if(S.game.players.length>=MAX_PLAYERS) return;
   const pos=posEl.value==='end'?undefined:parseInt(posEl.value);
   const player={id:genId(),name,color:nextColor(),order:S.game.players.length};
@@ -1413,7 +1478,7 @@ function renderGameTab(){
   const hole=g.hole;
   const holeLocked=!hasPremiumAccess()&&hole>FREE_HOLES;
   const card=getDrawnCard(hole);
-  const isJoker=card&&card.isJoker;
+  const isJoker=isJokerCard(card);
 
   // Joker background
   const jokerBg=document.getElementById('joker-bg');
@@ -1539,11 +1604,12 @@ function renderDraw(){
     const card=S.drawnCard;
     setImageWithFallback(frontImg, card.img, getCardFaceFallback(card));
     flipper.style.transform='rotateY(180deg)';
-    title.textContent=card.isJoker?'JOKER!':'Par '+card.par;
-    hint.textContent=card.isJoker?'You choose the par for this hole!':'Set up your table to match the course below.';
+    const joker=isJokerCard(card);
+    title.textContent=joker?'JOKER!':'Par '+card.par;
+    hint.textContent=joker?'Make up your own course for this hole, then choose the par.':'Set up your table to match the course below.';
     tapHint.style.display='none';
     flipper.onclick=null;
-    actionArea.innerHTML=`<button class="btn btn-primary btn-lg w-full" onclick="confirmDraw()" style="margin-top:8px">${card.isJoker?'Choose Par':'Click to Continue'}</button>`;
+    actionArea.innerHTML=`<button class="btn btn-primary btn-lg w-full" onclick="confirmDraw()" style="margin-top:8px">${joker?'Choose Par':'Click to Continue'}</button>`;
   }
 }
 function tapDraw(){
@@ -1569,7 +1635,7 @@ function tapDraw(){
 }
 function confirmDraw(){
   if(!S.drawnCard) return;
-  if(S.drawnCard.isJoker){
+  if(isJokerCard(S.drawnCard)){
     closeDraw();
     document.getElementById('joker-overlay').style.display='flex';
   } else {
@@ -1597,7 +1663,7 @@ function openCourseViewer(){
   if(!card) return;
   const viewer=document.getElementById('course-viewer');
   document.getElementById('course-viewer-title').textContent=
-    `Hole ${S.game.hole} ${card.isJoker?'- Joker':'- Par '+card.par}`;
+    `Hole ${S.game.hole} ${isJokerCard(card)?'- Joker':'- Par '+card.par}`;
   setImageWithFallback(document.getElementById('course-viewer-img'), card.img, getCardFaceFallback(card));
   viewer.classList.add('open');
 }
@@ -1644,7 +1710,7 @@ function renderSummaryTab(){
       if(!hs) return '<td>-</td>';
       const diff=hs.strokes-hs.par;
       const cls=diff<0?'under-par':diff>0?'over-par':'';
-      return `<td class="${cls}">${hs.strokes}</td>`;
+      return `<td class="${cls}"><input type="number" min="0" step="1" value="${hs.strokes}" style="width:56px;text-align:center" onchange="updateBoxScoreCell('${e.player.id}',${h},this.value)"/></td>`;
     }).join('');
     return `<tr><td style="text-align:left;padding-left:8px;white-space:nowrap">
       <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${e.player.color};margin-right:6px"></span>${esc(e.player.name)}
@@ -1683,6 +1749,17 @@ function renderSummaryTab(){
       </div>`:''}
       ${g.done?`<button class="btn btn-primary mb-3" onclick="gotoSetup()">Start New Game</button>`:''}
     </div>`;
+}
+function updateBoxScoreCell(playerId,hole,value){
+  const parsed=parseInt(value,10);
+  if(Number.isNaN(parsed)||parsed<0){
+    renderSummaryTab();
+    return;
+  }
+  const current=getScore(playerId,hole);
+  setScore(playerId,hole,{...current,strokes:parsed});
+  autoSave();
+  renderSummaryTab();
 }
 
 /* ============================================================
@@ -1831,7 +1908,8 @@ function renderSettingsTab(){
 }
 function addMidPlayer(){
   const inp=document.getElementById('mid-player-name');
-  const name=inp?.value?.trim()||`Player ${S.game.players.length+1}`;
+  const name=inp?.value?.trim();
+  if(!name) return;
   if(S.game.players.length>=MAX_PLAYERS) return;
   S.game.players.push({id:genId(),name,color:nextColor(),order:S.game.players.length});
   if(inp) inp.value='';
@@ -1949,7 +2027,7 @@ function openPrivacy(){document.getElementById('privacy-overlay').classList.add(
 function closePrivacy(){document.getElementById('privacy-overlay').classList.remove('open');}
 function deleteAllData(){
   if(!confirm('Delete ALL app data? This cannot be undone.')) return;
-  const keys=['currentGame','savedGames','pftc_unlocked','pftc_reviewer_mode','appScreen','appActiveTab','appViewOnly','setupTimes','pftc_leveler_tutorial_seen'];
+  const keys=['currentGame','savedGames','pftc_unlocked','pftc_reviewer_mode','appScreen','appActiveTab','appViewOnly','setupTimes','pftc_leveler_tutorial_seen',SUMMARY_HINT_KEY];
   keys.forEach(k=>localStorage.removeItem(k));
   for(let i=0;i<localStorage.length;i++){
     const k=localStorage.key(i);
@@ -2721,10 +2799,7 @@ function init(){
   // Ensure core game visuals still render when card image assets are unavailable.
   applyStaticImageFallbacks();
 
-  // Keyboard support for add player
-  document.getElementById('new-player-name')?.addEventListener('keydown',e=>{
-    if(e.key==='Enter') addPlayer();
-  });
+  // Setup Enter behavior is handled inline on the setup input element.
 }
 
 init();
