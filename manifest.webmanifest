@@ -10,11 +10,10 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "favicon.png",
-      "sizes": "400x400",
+      "src": "client/public/favicon.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ]
 }
-
