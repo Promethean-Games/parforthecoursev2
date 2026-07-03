@@ -135,7 +135,10 @@
     .hole-batter-label{font-size:16px;font-weight:700}
     .batter-info{font-size:12px;color:var(--fg2)}
     .par-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-    .par-row select{width:100px}
+    .par-value{
+      min-width:92px;height:40px;padding:0 12px;border:1px solid var(--border);border-radius:var(--radius);
+      display:inline-flex;align-items:center;justify-content:center;background:var(--bg2);font-weight:700;
+    }
     .sp-row{display:flex;gap:8px;margin-bottom:12px}
     .score-area{display:flex;align-items:center;gap:12px;margin-bottom:12px}
     .score-display{flex:1;text-align:center}
@@ -506,13 +509,8 @@
             </div>
           </div>
           <div id="par-row" class="par-row" style="display:none">
-            <label for="par-select" style="font-size:15px;font-weight:500">Par:</label>
-            <select id="par-select" style="width:100px" onchange="onParChange(this.value)">
-              <option value="">--</option>
-              <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-              <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-              <option value="7">7</option><option value="8">8</option>
-            </select>
+            <span style="font-size:15px;font-weight:500">Par:</span>
+            <div id="par-value" class="par-value">-</div>
             <button class="btn btn-outline" id="mercy-btn" onclick="doMercy()" style="display:none;width:auto;padding:0 14px">Mercy (+5)</button>
           </div>
           <div id="game-input-area">
@@ -1347,13 +1345,6 @@ function doPenalty(){
   setScore(curPlayer().id, S.game.hole, {...cs, penalties:cs.penalties+1});
   renderGame();
 }
-function onParChange(v){
-  const par=parseInt(v)||0;
-  const cs=getCurrentScore();
-  setScore(curPlayer().id, S.game.hole, {...cs, par});
-  setParForAll(S.game.hole, par);
-  renderGame();
-}
 function doMercy(){
   const cs=getCurrentScore();
   if(cs.par>0){
@@ -1662,8 +1653,8 @@ function renderGameTab(){
     if(drawBanner) drawBanner.style.display=cs.par===0?'block':'none';
     if(parRowEl) parRowEl.style.display=cs.par>0?'flex':'none';
     if(cs.par>0){
-      const parSel=document.getElementById('par-select');
-      if(parSel) parSel.value=cs.par;
+      const parValueEl=document.getElementById('par-value');
+      if(parValueEl) parValueEl.textContent=String(cs.par);
     }
     // Score display
     const total=cs.strokes+cs.scratches+cs.penalties;
