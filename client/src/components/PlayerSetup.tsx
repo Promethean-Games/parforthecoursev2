@@ -214,7 +214,7 @@ export function PlayerSetup({
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Roster Order</AlertDialogTitle>
             <AlertDialogDescription>
-              Please verify that players are entered from <strong>tallest to shortest</strong>.
+              Please verify that players are entered from <strong>tallest to shortest height</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
