@@ -199,6 +199,12 @@
     .box-score tr.lb-leader td{font-weight:800}
     td.under-par{color:#22c55e;font-weight:600}
     td.over-par{color:#ef4444}
+    .box-score td:not(:first-child):not(:last-child){cursor:pointer;user-select:none;transition:background 0.2s;padding:8px 4px}
+    .box-score td:not(:first-child):not(:last-child):hover{background:var(--muted);opacity:0.8}
+    .box-score td:not(:first-child):not(:last-child):active{opacity:0.6}
+    @media(min-width:600px){
+      .box-score td:not(:first-child):not(:last-child){padding:12px 8px}
+    }
 
     /* ---- Save/Load ---- */
     .save-slot{margin-bottom:12px}
@@ -1803,23 +1809,23 @@ function renderSummaryTab(){
     </div>`;
   }).join('');
 
-  // Box score
-  const hdrCols=allHoles.map(h=>`<th>H${h}</th>`).join('');
-  const bodyRows=lb.map(e=>{
-    const ps=g.scores[e.player.id]||[];
-    const holeCells=allHoles.map(h=>{
-      const locked=!hasPremiumAccess()&&h>FREE_HOLES;
-      if(locked) return '<td>🔒</td>';
-      const hs=ps.find(s=>s.hole===h);
-      if(!hs) return '<td>-</td>';
-      const diff=hs.strokes-hs.par;
-      const cls=diff<0?'under-par':diff>0?'over-par':'';
-      return `<td class="${cls}"><input type="number" min="0" step="1" value="${hs.strokes}" style="width:56px;text-align:center" onchange="updateBoxScoreCell('${e.player.id}',${h},this.value)"/></td>`;
-    }).join('');
-    return `<tr><td style="text-align:left;padding-left:8px;white-space:nowrap">
-      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${e.player.color};margin-right:6px"></span>${esc(e.player.name)}
-    </td>${holeCells}<td style="font-weight:700">${e.total}</td></tr>`;
-  }).join('');
+   // Box score
+   const hdrCols=allHoles.map(h=>`<th>H${h}</th>`).join('');
+   const bodyRows=lb.map(e=>{
+     const ps=g.scores[e.player.id]||[];
+     const holeCells=allHoles.map(h=>{
+       const locked=!hasPremiumAccess()&&h>FREE_HOLES;
+       if(locked) return '<td>🔒</td>';
+       const hs=ps.find(s=>s.hole===h);
+       if(!hs) return '<td>-</td>';
+       const diff=hs.strokes-hs.par;
+       const cls=diff<0?'under-par':diff>0?'over-par':'';
+       return `<td class="${cls}" onclick="editBoxScoreCell('${e.player.id}',${h})" style="cursor:pointer;user-select:none;min-width:48px;padding:8px;font-weight:600">${hs.strokes}</td>`;
+     }).join('');
+     return `<tr><td style="text-align:left;padding-left:8px;white-space:nowrap">
+       <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${e.player.color};margin-right:6px"></span>${esc(e.player.name)}
+     </td>${holeCells}<td style="font-weight:700">${e.total}</td></tr>`;
+   }).join('');
 
   el.innerHTML=`
     <div style="min-height:100vh;padding:0 0 80px">
@@ -1854,13 +1860,18 @@ function renderSummaryTab(){
       ${g.done?`<button class="btn btn-primary mb-3" onclick="gotoSetup()">Start New Game</button>`:''}
     </div>`;
 }
-function updateBoxScoreCell(playerId,hole,value){
-  const parsed=parseInt(value,10);
+function editBoxScoreCell(playerId,hole){
+  const current=getScore(playerId,hole);
+  const currentValue=current.strokes;
+  const playerName=S.game.players.find(p=>p.id===playerId)?.name||'Player';
+  const message=`Edit strokes for ${playerName} on Hole ${hole}\n\nCurrent: ${currentValue}\n\nEnter new value (0 or higher):`;
+  const input=prompt(message, currentValue);
+  if(input===null) return;
+  const parsed=parseInt(input,10);
   if(Number.isNaN(parsed)||parsed<0){
-    renderSummaryTab();
+    alert('Please enter a valid number (0 or higher).');
     return;
   }
-  const current=getScore(playerId,hole);
   setScore(playerId,hole,{...current,strokes:parsed});
   autoSave();
   renderSummaryTab();
