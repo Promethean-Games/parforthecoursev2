@@ -1,0 +1,26 @@
+# Jekyll configuration for GitHub Pages deployment
+# Only the static app files are needed (index.html and cards/)
+# Source code is excluded from the built site.
+
+exclude:
+  - server/
+  - client/
+  - shared/
+  - par-for-the-course-export/
+  - node_modules/
+  - dist/
+  - package.json
+  - package-lock.json
+  - tsconfig.json
+  - vite.config.ts
+  - tailwind.config.ts
+  - drizzle.config.ts
+  - postcss.config.js
+  - render.yaml
+  - components.json
+  - Dockerfile
+  - .dockerignore
+  - replit.md
+  - design_guidelines.md
+  - BILLING_SETUP.md
+  - DEPLOYMENT.md
