@@ -73,7 +73,7 @@ export function TDSignInModal({ isOpen, onClose, onSuccess }: TDSignInModalProps
               <Shield className="w-5 h-5 text-muted-foreground" />
               <Input
                 id="director-pin"
-                type="password"
+                type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 value={pin}

@@ -196,7 +196,7 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
               </h3>
               <div className="flex gap-2">
                 <Input
-                  type="password"
+                  type="text"
                   value={directorPinInput}
                   onChange={(e) => setDirectorPinInput(e.target.value)}
                   placeholder="Enter director PIN"
@@ -311,7 +311,14 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
             <p className="text-xs text-muted-foreground">Version 2.1.0</p>
           </Card>
 
-          <div className="pt-4">
+          <div className="pt-4 space-y-3">
+            <button
+              onClick={() => window.open("https://forms.gle/dss9Ksbenx3WTzh29", "_blank")}
+              className="w-full text-sm text-muted-foreground hover:text-primary transition-colors py-2"
+              data-testid="button-submit-feedback-settings"
+            >
+              Submit Feedback
+            </button>
             <Button
               variant="destructive"
               className="w-full h-12"
