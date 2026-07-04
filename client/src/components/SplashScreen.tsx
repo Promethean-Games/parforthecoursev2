@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Trophy, Settings, Shield, MessageCircle } from "lucide-react";
+import { Trophy, Settings } from "lucide-react";
 import { LOGO_URL } from "@/lib/constants";
 import { useTournament } from "@/contexts/TournamentContext";
 import { PlayerSelectionDialog } from "./PlayerSelectionDialog";
@@ -74,15 +74,19 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
               onClick={() => setShowTDSignIn(true)}
               data-testid="menu-item-td-signin"
             >
-              <Shield className="w-4 h-4 mr-2 text-green-600" />
               TD Sign-In
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => window.open("https://forms.gle/41CE3SGQLPukQcw17", "_blank")}
               data-testid="menu-item-send-feedback"
             >
-              <MessageCircle className="w-4 h-4 mr-2" />
               Send Feedback
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => window.open("https://forms.gle/dss9Ksbenx3WTzh29", "_blank")}
+              data-testid="menu-item-submit-feedback"
+            >
+              Submit Feedback
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
