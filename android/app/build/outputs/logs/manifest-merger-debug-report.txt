@@ -119,7 +119,7 @@ ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidMani
 	android:theme
 		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:19:13-57
 	android:name
-		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:17:13-41
+		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:17:13-60
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
 ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:20:13-23:29
 action#android.intent.action.MAIN

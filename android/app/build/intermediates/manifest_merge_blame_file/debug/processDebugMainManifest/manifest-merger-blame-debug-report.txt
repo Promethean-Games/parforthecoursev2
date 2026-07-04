@@ -47,7 +47,7 @@
 30        <activity
 30-->H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:16:9-24:20
 31            android:name="com.parforthecourse.MainActivity"
-31-->H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:17:13-41
+31-->H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:17:13-60
 32            android:exported="true"
 32-->H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:18:13-36
 33            android:theme="@style/Theme.ParForTheCourse" >

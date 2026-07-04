@@ -13,6 +13,7 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "3.14"
+        buildConfigField("String", "APP_URL", "\"https://par-for-the-course.onrender.com\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
