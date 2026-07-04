@@ -7,6 +7,10 @@ android {
     namespace = "com.parforthecourse"
     compileSdk = 34
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.parforthecourse"
         minSdk = 24
