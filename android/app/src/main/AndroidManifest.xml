@@ -14,7 +14,7 @@
         android:theme="@style/Theme.ParForTheCourse">
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.parforthecourse.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.ParForTheCourse">
             <intent-filter>

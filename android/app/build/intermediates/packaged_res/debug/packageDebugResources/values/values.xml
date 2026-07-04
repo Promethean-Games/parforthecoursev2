@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="accent">#22c55e</color>
+    <color name="background">#0f0f0f</color>
+    <color name="primary">#22c55e</color>
+    <color name="primary_dark">#16a34a</color>
+    <color name="surface">#1a1a1a</color>
+    <string name="app_name">Par for the Course</string>
+    <string name="app_version">3.14</string>
+    <style name="Theme.ParForTheCourse" parent="android:Theme.Material.Light.DarkActionBar">
+        <item name="android:colorPrimary">@color/primary</item>
+        <item name="android:colorPrimaryDark">@color/primary_dark</item>
+        <item name="android:colorAccent">@color/accent</item>
+    </style>
+</resources>
