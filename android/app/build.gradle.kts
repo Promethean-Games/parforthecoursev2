@@ -17,7 +17,7 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "3.14"
-        buildConfigField("String", "APP_URL", "\"https://par-for-the-course.onrender.com\"")
+        buildConfigField("String", "APP_URL", "\"https://promethean-games.github.io/parforthecoursev2/\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
