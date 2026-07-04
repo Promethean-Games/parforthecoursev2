@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.promethean_games.parforthecourse"
+    namespace = "com.parforthecourse"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.promethean_games.parforthecourse"
+        applicationId = "com.parforthecourse"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
