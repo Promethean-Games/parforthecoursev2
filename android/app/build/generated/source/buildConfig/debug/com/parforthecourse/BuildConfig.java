@@ -10,5 +10,5 @@ public final class BuildConfig {
   public static final int VERSION_CODE = 1;
   public static final String VERSION_NAME = "3.14";
   // Field from default config.
-  public static final String APP_URL = "https://par-for-the-course.onrender.com";
+  public static final String APP_URL = "https://promethean-games.github.io/parforthecoursev2/";
 }

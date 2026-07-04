@@ -975,6 +975,7 @@ string off
 string on
 string range_end
 string range_start
+string retry_button
 string search_bar_search
 string search_menu_title
 string selected
@@ -998,6 +999,8 @@ string time_picker_period_toggle_description
 string time_picker_pm
 string tooltip_long_press_label
 string tooltip_pane_description
+string web_suspended_message
+string web_unavailable_message
 style AlertDialog_AppCompat
 style AlertDialog_AppCompat_Light
 style Animation_AppCompat_Dialog

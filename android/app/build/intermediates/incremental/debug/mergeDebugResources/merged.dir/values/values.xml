@@ -375,6 +375,7 @@
     <string name="on">On</string>
     <string name="range_end">"Range end"</string>
     <string name="range_start">"Range start"</string>
+    <string name="retry_button">Try again</string>
     <string name="search_bar_search">Search</string>
     <string name="search_menu_title">Search</string>
     <string name="selected">Selected</string>
@@ -398,6 +399,8 @@
     <string name="time_picker_pm">PM</string>
     <string name="tooltip_long_press_label">Show tooltip</string>
     <string name="tooltip_pane_description">Tooltip</string>
+    <string name="web_suspended_message">The online service for this app is currently suspended. Please restore hosting and try again.</string>
+    <string name="web_unavailable_message">The app is temporarily unavailable. Please check your connection and try again.</string>
     <style name="AlertDialog.AppCompat" parent="Base.AlertDialog.AppCompat"/>
     <style name="AlertDialog.AppCompat.Light" parent="Base.AlertDialog.AppCompat.Light"/>
     <style name="Animation.AppCompat.Dialog" parent="Base.Animation.AppCompat.Dialog"/>

@@ -11,4 +11,7 @@ mipmap ic_launcher
 mipmap ic_launcher_round
 string app_name
 string app_version
+string retry_button
+string web_suspended_message
+string web_unavailable_message
 style Theme.ParForTheCourse

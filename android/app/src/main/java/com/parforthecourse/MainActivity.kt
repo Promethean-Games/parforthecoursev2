@@ -11,6 +11,10 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
+    companion object {
+        private const val WEBVIEW_STATE_KEY = "webview_state"
+    }
+
     private lateinit var webView: WebView
     private var showingFallback = false
 
@@ -71,11 +75,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             webChromeClient = WebChromeClient()
-
-            loadUrl(BuildConfig.APP_URL)
         }
 
         setContentView(webView)
+
+        val restored = savedInstanceState?.getBundle(WEBVIEW_STATE_KEY)?.let { state ->
+            webView.restoreState(state)
+        }
+        if (restored == null) {
+            loadAppUrl()
+        }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -89,9 +98,24 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        val webViewState = Bundle()
+        webView.saveState(webViewState)
+        outState.putBundle(WEBVIEW_STATE_KEY, webViewState)
+    }
+
     override fun onDestroy() {
-        webView.destroy()
+        if (isFinishing) {
+            webView.destroy()
+        }
         super.onDestroy()
+    }
+
+    private fun loadAppUrl() {
+        showingFallback = false
+        webView.loadUrl(BuildConfig.APP_URL)
     }
 
     private fun showFallbackPage(message: String) {

@@ -7,6 +7,9 @@
     <color name="surface">#1a1a1a</color>
     <string name="app_name">Par for the Course</string>
     <string name="app_version">3.14</string>
+    <string name="retry_button">Try again</string>
+    <string name="web_suspended_message">The online service for this app is currently suspended. Please restore hosting and try again.</string>
+    <string name="web_unavailable_message">The app is temporarily unavailable. Please check your connection and try again.</string>
     <style name="Theme.ParForTheCourse" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
