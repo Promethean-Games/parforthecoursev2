@@ -29,6 +29,7 @@
         android:theme="@style/Theme.ParForTheCourse" >
         <activity
             android:name="com.parforthecourse.MainActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="true"
             android:theme="@style/Theme.ParForTheCourse" >
             <intent-filter>

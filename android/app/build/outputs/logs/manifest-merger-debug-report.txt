@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:2:1-28:12
-INJECTED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:2:1-28:12
-INJECTED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:2:1-28:12
-INJECTED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:2:1-28:12
+ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:2:1-29:12
+INJECTED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:2:1-29:12
+INJECTED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:2:1-29:12
+INJECTED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:2:1-29:12
 MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\alana\.gradle\caches\8.10\transforms\fc313f59f01f4b0410d99fd1a960242c\transformed\jetified-appcompat-resources-1.6.1\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.appcompat:appcompat:1.6.1] C:\Users\alana\.gradle\caches\8.10\transforms\90d6a0f36794208e7460316af7e2319f\transformed\appcompat-1.6.1\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] C:\Users\alana\.gradle\caches\8.10\transforms\a6dc2baf1506338c09f835c7c990f4d7\transformed\drawerlayout-1.0.0\AndroidManifest.xml:17:1-22:12
@@ -78,8 +78,8 @@ ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidMani
 	android:name
 		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:6:22-76
 application
-ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:8:5-26:19
-INJECTED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:8:5-26:19
+ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:8:5-27:19
+INJECTED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:8:5-27:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.5.0] C:\Users\alana\.gradle\caches\8.10\transforms\a53c25aa2f1cfa245c15c7619c740298\transformed\jetified-ui-tooling-release\AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.5.0] C:\Users\alana\.gradle\caches\8.10\transforms\a53c25aa2f1cfa245c15c7619c740298\transformed\jetified-ui-tooling-release\AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-test-manifest:1.5.0] C:\Users\alana\.gradle\caches\8.10\transforms\28dc323309eef50630a1e7dd86814bb9\transformed\jetified-ui-test-manifest-1.5.0\AndroidManifest.xml:22:5-26:19
@@ -113,23 +113,25 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\alana\.gradle\cach
 	android:theme
 		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:14:9-53
 activity#com.parforthecourse.MainActivity
-ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:16:9-24:20
+ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:16:9-25:20
 	android:exported
-		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:18:13-36
+		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:19:13-36
+	android:configChanges
+		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:18:13-74
 	android:theme
-		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:19:13-57
+		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:20:13-57
 	android:name
 		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:17:13-60
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:20:13-23:29
+ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:21:13-24:29
 action#android.intent.action.MAIN
-ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:21:17-69
+ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:22:17-69
 	android:name
-		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:21:25-66
+		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:22:25-66
 category#android.intent.category.LAUNCHER
-ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:22:17-77
+ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:23:17-77
 	android:name
-		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:22:27-74
+		ADDED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:23:27-74
 uses-sdk
 INJECTED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml
