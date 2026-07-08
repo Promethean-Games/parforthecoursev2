@@ -405,9 +405,7 @@
       <div class="splash-tools-grid">
         <div class="cuemaster-menu">
           <button class="btn btn-outline" onclick="toggleCueMaster()" id="cuemaster-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
             CueMaster Tools
-            <svg id="cuemaster-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="cuemaster-dropdown" id="cuemaster-dropdown">
             <button onclick="openLeveler();closeCueMaster()">
@@ -421,7 +419,6 @@
           </div>
         </div>
         <button class="btn btn-outline" onclick="openSplashSettings()" id="settings-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"/></svg>
           Settings
         </button>
       </div>
@@ -2230,7 +2227,7 @@ function toggleCueMaster(){
   const dd=document.getElementById('cuemaster-dropdown');
   dd.classList.toggle('open');
   const chevron=document.getElementById('cuemaster-chevron');
-  chevron.style.transform=dd.classList.contains('open')?'rotate(180deg)':'';
+  if(chevron) chevron.style.transform=dd.classList.contains('open')?'rotate(180deg)':'';
 }
 function closeCueMaster(){
   document.getElementById('cuemaster-dropdown').classList.remove('open');
