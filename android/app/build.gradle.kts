@@ -15,7 +15,7 @@ android {
         applicationId = "com.parforthecourse.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2
+        versionCode = 2026070801
         versionName = "3.14"
         buildConfigField("String", "APP_URL", "\"https://promethean-games.github.io/parforthecoursev2/\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
