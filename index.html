@@ -649,7 +649,7 @@
   <div class="dialog">
     <h3>Reviewer Access</h3>
     <p>Enter the Google Play reviewer code to unlock every edition, premium feature, and ad-free access on this device.</p>
-    <input type="password" class="input" id="reviewer-code-input" aria-label="Reviewer code" placeholder="Reviewer code" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')submitReviewerCode()"/>
+    <input type="text" class="input" id="reviewer-code-input" aria-label="Reviewer code" placeholder="Reviewer code" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="characters" onkeydown="if(event.key==='Enter')submitReviewerCode()"/>
     <p id="reviewer-error" class="text-sm" style="display:none;margin:0;color:var(--destructive)"></p>
     <div class="dialog-actions">
       <button class="btn btn-ghost" onclick="closeReviewerAccess()">Cancel</button>
