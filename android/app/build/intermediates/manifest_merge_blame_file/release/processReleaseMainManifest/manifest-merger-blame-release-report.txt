@@ -1,6 +1,6 @@
 1<?xml version="1.0" encoding="utf-8"?>
 2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-3    package="com.parforthecourse"
+3    package="com.parforthecourse.app"
 4    android:versionCode="1"
 5    android:versionName="3.14" >
 6
@@ -17,12 +17,12 @@
 13
 14    <permission
 14-->[androidx.core:core:1.10.1] C:\Users\alana\.gradle\caches\8.10\transforms\80ac122f2bb490e8acce6535c4eae394\transformed\core-1.10.1\AndroidManifest.xml:22:5-24:47
-15        android:name="com.parforthecourse.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+15        android:name="com.parforthecourse.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
 15-->[androidx.core:core:1.10.1] C:\Users\alana\.gradle\caches\8.10\transforms\80ac122f2bb490e8acce6535c4eae394\transformed\core-1.10.1\AndroidManifest.xml:23:9-81
 16        android:protectionLevel="signature" />
 16-->[androidx.core:core:1.10.1] C:\Users\alana\.gradle\caches\8.10\transforms\80ac122f2bb490e8acce6535c4eae394\transformed\core-1.10.1\AndroidManifest.xml:24:9-44
 17
-18    <uses-permission android:name="com.parforthecourse.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+18    <uses-permission android:name="com.parforthecourse.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
 18-->[androidx.core:core:1.10.1] C:\Users\alana\.gradle\caches\8.10\transforms\80ac122f2bb490e8acce6535c4eae394\transformed\core-1.10.1\AndroidManifest.xml:26:5-97
 18-->[androidx.core:core:1.10.1] C:\Users\alana\.gradle\caches\8.10\transforms\80ac122f2bb490e8acce6535c4eae394\transformed\core-1.10.1\AndroidManifest.xml:26:22-94
 19
@@ -45,8 +45,8 @@
 28-->H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:14:9-53
 29        <activity
 29-->H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:16:9-25:20
-30            android:name="com.parforthecourse.MainActivity"
-30-->H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:17:13-60
+30            android:name="com.parforthecourse.app.MainActivity"
+30-->H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:17:13-64
 31            android:configChanges="orientation|screenSize|keyboardHidden"
 31-->H:\My Drive\04 APP\parforthecoursev2\android\app\src\main\AndroidManifest.xml:18:13-74
 32            android:exported="true"
@@ -69,7 +69,7 @@
 41-->[androidx.emoji2:emoji2:1.4.0] C:\Users\alana\.gradle\caches\8.10\transforms\6104db9714f7ae0c7382ae7a4430e853\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:24:9-32:20
 42            android:name="androidx.startup.InitializationProvider"
 42-->[androidx.emoji2:emoji2:1.4.0] C:\Users\alana\.gradle\caches\8.10\transforms\6104db9714f7ae0c7382ae7a4430e853\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:25:13-67
-43            android:authorities="com.parforthecourse.androidx-startup"
+43            android:authorities="com.parforthecourse.app.androidx-startup"
 43-->[androidx.emoji2:emoji2:1.4.0] C:\Users\alana\.gradle\caches\8.10\transforms\6104db9714f7ae0c7382ae7a4430e853\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:26:13-68
 44            android:exported="false" >
 44-->[androidx.emoji2:emoji2:1.4.0] C:\Users\alana\.gradle\caches\8.10\transforms\6104db9714f7ae0c7382ae7a4430e853\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:27:13-37

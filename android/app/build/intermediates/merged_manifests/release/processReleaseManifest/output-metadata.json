@@ -4,7 +4,7 @@
     "type": "MERGED_MANIFESTS",
     "kind": "Directory"
   },
-  "applicationId": "com.parforthecourse",
+  "applicationId": "com.parforthecourse.app",
   "variantName": "release",
   "elements": [
     {

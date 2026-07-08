@@ -7,7 +7,6 @@ color primary_dark
 color surface
 drawable ic_launcher_background
 drawable ic_launcher_foreground
-drawable pool_table_icon
 mipmap ic_launcher
 mipmap ic_launcher_round
 string app_name

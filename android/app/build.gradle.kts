@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.parforthecourse.app"
-    compileSdk = 34
+    compileSdk = 35
 
     buildFeatures {
         buildConfig = true
@@ -14,7 +14,7 @@ android {
     defaultConfig {
         applicationId = "com.parforthecourse.app"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "3.14"
         buildConfigField("String", "APP_URL", "\"https://promethean-games.github.io/parforthecoursev2/\"")

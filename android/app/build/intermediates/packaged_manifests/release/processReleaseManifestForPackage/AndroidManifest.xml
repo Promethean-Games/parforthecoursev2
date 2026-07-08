@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.parforthecourse"
+    package="com.parforthecourse.app"
     android:versionCode="1"
     android:versionName="3.14" >
 
@@ -12,10 +12,10 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <permission
-        android:name="com.parforthecourse.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        android:name="com.parforthecourse.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
         android:protectionLevel="signature" />
 
-    <uses-permission android:name="com.parforthecourse.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+    <uses-permission android:name="com.parforthecourse.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
 
     <application
         android:allowBackup="true"
@@ -27,7 +27,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ParForTheCourse" >
         <activity
-            android:name="com.parforthecourse.MainActivity"
+            android:name="com.parforthecourse.app.MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="true"
             android:theme="@style/Theme.ParForTheCourse" >
@@ -40,7 +40,7 @@
 
         <provider
             android:name="androidx.startup.InitializationProvider"
-            android:authorities="com.parforthecourse.androidx-startup"
+            android:authorities="com.parforthecourse.app.androidx-startup"
             android:exported="false" >
             <meta-data
                 android:name="androidx.emoji2.text.EmojiCompatInitializer"
