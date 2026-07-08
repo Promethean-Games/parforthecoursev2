@@ -3,6 +3,7 @@
 # Source code is excluded from the built site.
 
 exclude:
+  - android/
   - server/
   - client/
   - shared/
