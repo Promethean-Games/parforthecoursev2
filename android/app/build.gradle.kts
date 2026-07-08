@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.parforthecourse"
+    namespace = "com.parforthecourse.app"
     compileSdk = 34
 
     buildFeatures {
@@ -12,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.parforthecourse"
+        applicationId = "com.parforthecourse.app"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

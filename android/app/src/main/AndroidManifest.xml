@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.parforthecourse">
+    package="com.parforthecourse.app">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -14,7 +14,7 @@
         android:theme="@style/Theme.ParForTheCourse">
 
         <activity
-            android:name="com.parforthecourse.MainActivity"
+            android:name="com.parforthecourse.app.MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="true"
             android:theme="@style/Theme.ParForTheCourse">

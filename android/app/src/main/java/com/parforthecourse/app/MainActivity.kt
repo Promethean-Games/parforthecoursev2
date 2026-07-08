@@ -1,4 +1,4 @@
-package com.parforthecourse
+package com.parforthecourse.app
 
 import android.os.Bundle
 import android.view.WindowManager
