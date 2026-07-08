@@ -1,6 +1,8 @@
 package com.parforthecourse
 
 import android.os.Bundle
+import android.view.WindowManager
+import android.webkit.JavascriptInterface
 import android.webkit.WebResourceError
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -17,6 +19,28 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
     private var showingFallback = false
+    private val secureOverlayKeys = mutableSetOf<String>()
+
+    private inner class ScreenSecurityBridge {
+        @JavascriptInterface
+        fun setCardVisibility(key: String?, visible: Boolean) {
+            if (key.isNullOrBlank()) return
+            runOnUiThread {
+                if (visible) {
+                    secureOverlayKeys.add(key)
+                } else {
+                    secureOverlayKeys.remove(key)
+                }
+                applySecureFlag()
+            }
+        }
+
+        // Backward-compatible fallback used by older web bundles.
+        @JavascriptInterface
+        fun setCardsVisible(visible: Boolean) {
+            setCardVisibility("cards", visible)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,6 +50,7 @@ class MainActivity : AppCompatActivity() {
             settings.domStorageEnabled = true
             settings.loadWithOverviewMode = true
             settings.useWideViewPort = true
+            addJavascriptInterface(ScreenSecurityBridge(), "AndroidScreenSecurity")
 
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(
@@ -108,6 +133,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         if (isFinishing) {
+            secureOverlayKeys.clear()
+            applySecureFlag()
             webView.destroy()
         }
         super.onDestroy()
@@ -115,7 +142,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadAppUrl() {
         showingFallback = false
+        secureOverlayKeys.clear()
+        applySecureFlag()
         webView.loadUrl(BuildConfig.APP_URL)
+    }
+
+    private fun applySecureFlag() {
+        if (secureOverlayKeys.isNotEmpty()) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
     }
 
     private fun showFallbackPage(message: String) {

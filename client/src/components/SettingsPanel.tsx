@@ -194,24 +194,27 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
                 <Shield className="w-4 h-4" />
                 Director Access
               </h3>
-              <div className="flex gap-2">
+              <div className="space-y-3">
                 <Input
                   type="text"
                   value={directorPinInput}
                   onChange={(e) => setDirectorPinInput(e.target.value)}
                   placeholder="Enter director PIN"
-                  className="flex-1"
+                  className="w-full"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleVerifyPin();
                   }}
                   data-testid="input-director-pin"
+                  autoFocus
                 />
-                <Button onClick={handleVerifyPin} data-testid="button-verify-pin">
-                  Verify
-                </Button>
-                <Button variant="ghost" onClick={() => setShowPinPrompt(false)}>
-                  Cancel
-                </Button>
+                <div className="flex gap-2">
+                  <Button className="flex-1" onClick={handleVerifyPin} data-testid="button-verify-pin">
+                    Verify
+                  </Button>
+                  <Button className="flex-1" variant="ghost" onClick={() => setShowPinPrompt(false)}>
+                    Cancel
+                  </Button>
+                </div>
               </div>
             </Card>
           )}

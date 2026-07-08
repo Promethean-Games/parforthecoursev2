@@ -909,6 +909,39 @@ const PAR_LABELS = ['','Ace!','Eagle!','Birdie!','Par!','Bogey','Double Bogey','
 const VERSION = '3.14';
 const SUMMARY_HINT_KEY = 'pftc_summary_landscape_hint_seen';
 
+const CARD_PROTECTION_STATE = {
+  draw: false,
+  joker: false,
+  course: false,
+};
+
+function notifyAndroidCardProtection(){
+  const bridge = window.AndroidScreenSecurity;
+  if(!bridge) return;
+  const isAnyCardVisible = Object.values(CARD_PROTECTION_STATE).some(Boolean);
+
+  if(typeof bridge.setCardVisibility === 'function'){
+    bridge.setCardVisibility('cards', isAnyCardVisible);
+    return;
+  }
+  if(typeof bridge.setCardsVisible === 'function'){
+    bridge.setCardsVisible(isAnyCardVisible);
+  }
+}
+
+function setCardProtectionState(key, visible){
+  if(!(key in CARD_PROTECTION_STATE)) return;
+  CARD_PROTECTION_STATE[key] = Boolean(visible);
+  notifyAndroidCardProtection();
+}
+
+function clearCardProtection(){
+  CARD_PROTECTION_STATE.draw = false;
+  CARD_PROTECTION_STATE.joker = false;
+  CARD_PROTECTION_STATE.course = false;
+  notifyAndroidCardProtection();
+}
+
 /* ============================================================
    CARD DECK
    ============================================================ */
@@ -1417,6 +1450,7 @@ function persistScreen(){localStorage.setItem('appScreen',S.screen);localStorage
    SCREEN NAVIGATION
    ============================================================ */
 function showScreen(id){
+  clearCardProtection();
   ['splash','load-screen','setup-screen','game-screen'].forEach(s=>{
     const el=document.getElementById(s);
     if(el) el.classList.toggle('active', s===id);
@@ -1723,10 +1757,12 @@ function openDraw(){
   if(S.drawnCard){ S.drawPhase='reveal'; }
   renderDraw();
   document.getElementById('draw-overlay').style.display='flex';
+  setCardProtectionState('draw', true);
 }
 function closeDraw(){
   document.getElementById('draw-overlay').style.display='none';
   S.drawPhase=null; S.drawnCard=null; S.flipping=false;
+  setCardProtectionState('draw', false);
 }
 function renderDraw(){
   const hole=S.game.hole;
@@ -1784,6 +1820,7 @@ function confirmDraw(){
   if(isJokerCard(S.drawnCard)){
     closeDraw();
     document.getElementById('joker-overlay').style.display='flex';
+    setCardProtectionState('joker', true);
   } else {
     const par=S.drawnCard.par;
     setParForAll(S.game.hole, par);
@@ -1798,6 +1835,7 @@ function confirmJoker(){
   if(!par) return;
   setParForAll(S.game.hole, par);
   document.getElementById('joker-overlay').style.display='none';
+  setCardProtectionState('joker', false);
   renderGame();
 }
 
@@ -1812,9 +1850,11 @@ function openCourseViewer(){
     `Hole ${S.game.hole} ${isJokerCard(card)?'- Joker':'- Par '+card.par}`;
   setImageWithFallback(document.getElementById('course-viewer-img'), card.img, getCardFaceFallback(card));
   viewer.classList.add('open');
+  setCardProtectionState('course', true);
 }
 function closeCourseViewer(){
   document.getElementById('course-viewer').classList.remove('open');
+  setCardProtectionState('course', false);
 }
 
 /* ============================================================
