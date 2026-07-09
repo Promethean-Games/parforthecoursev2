@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.parforthecourse.app"
-    android:versionCode="2026070901"
+    android:versionCode="2026070902"
     android:versionName="3.14.1" >
 
     <uses-sdk
