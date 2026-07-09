@@ -1,0 +1,150 @@
+# QUICK REFERENCE CARD - Print This!
+
+```
+┌─────────────────────────────────────────┐
+│  PAR FOR THE COURSE - PLAYSTORE FIX     │
+│  🔴 CRITICAL | ⏱️ 1 Hour | ⭐ Easy     │
+└─────────────────────────────────────────┘
+
+THE PROBLEM:
+  App crashes on launch (ClassNotFoundException)
+  + Missing content policy compliance items
+
+THE ROOT CAUSE:
+  3 conflicting Java packages, should be 1
+
+THE FIX (4 STEPS):
+
+  1️⃣  DELETE OLD FOLDERS (5 min)
+      Location: android/app/src/main/java/com/
+      Delete: ❌ promethean_games/
+      Delete: ❌ prometheangames/
+      Keep:   ✅ parforthecourse/
+
+  2️⃣  REBUILD (15 min)
+      cd android
+      ./gradlew clean
+      ./gradlew build
+      ./gradlew assembleRelease
+
+  3️⃣  TEST (10 min)
+      adb install -r android/app/release/app-release.apk
+      Verify: App launches, no crash ✅
+
+  4️⃣  POLICY COMPLIANCE (20 min)
+      Google Play Console:
+      ✓ Add privacy policy URL
+      ✓ Complete data safety form
+      ✓ Complete content rating
+      ✓ Resubmit APK
+
+GUIDES:
+  📖 Quick:    PLAYSTORE_QUICK_FIX.md
+  📖 Detailed: ANDROID_PLAYSTORE_FIX.md
+  📖 Explained: PLAYSTORE_ISSUE_EXPLAINED.md
+  🤖 Auto:     .\android\cleanup.ps1
+
+TIMELINE:
+  30 min: Delete + rebuild + test
+  30 min: Policy compliance forms
+  5 min:  Resubmit
+  ─────────────────
+  1 hour: Your work
+  1-5 days: Google review
+  ─────────────────
+  Total to launch: ~1-6 days
+
+STATUS:
+  [ ] Step 1 - Delete folders
+  [ ] Step 2 - Rebuild
+  [ ] Step 3 - Test
+  [ ] Step 4 - Compliance & resubmit
+  [ ] ✅ Submitted to Play Store
+
+KEY FACTS:
+  • Doesn't affect iOS development
+  • Won't break existing user installs
+  • You have git to revert if needed
+  • Very low risk, high confidence
+
+START NOW:
+  1. Read: PLAYSTORE_QUICK_FIX.md
+  2. Execute: Delete 2 folders
+  3. Run: gradlew commands
+  4. Test: APK on device
+  5. Submit: New APK to Play Store
+
+Questions? See ANDROID_PLAYSTORE_FIX.md
+```
+
+---
+
+## Commands Copy-Paste
+
+```bash
+# Delete old folders (Windows Explorer or):
+rm -r android\app\src\main\java\com\promethean_games
+rm -r android\app\src\main\java\com\prometheangames
+
+# Or run automated script:
+.\android\cleanup.ps1
+
+# Rebuild
+cd android
+./gradlew clean
+./gradlew build
+./gradlew assembleRelease
+
+# Test
+adb install -r android\app\release\app-release.apk
+adb logcat | grep parforthecourse  # Check for crashes
+```
+
+---
+
+## Folders to Delete (Visual Reference)
+
+Find and delete these:
+```
+✅ KEEP:  H:\...\android\app\src\main\java\com\parforthecourse\app\
+❌ DELETE: H:\...\android\app\src\main\java\com\promethean_games\
+❌ DELETE: H:\...\android\app\src\main\java\com\prometheangames\
+```
+
+After deletion, only `parforthecourse` should exist.
+
+---
+
+## Success = (No Errors + App Launches)
+
+```
+gradlew assembleRelease
+    ↓
+BUILD SUCCESSFUL ✅
+    ↓
+adb install app-release.apk
+    ↓
+App opens on phone ✅
+    ↓
+No crash ✅
+    ↓
+YOU'RE GOOD! Submit to Play Store
+```
+
+---
+
+## Failure = (See Error Message)
+
+If any step fails:
+  1. Note EXACT error
+  2. Google it
+  3. Common: Old folders not fully deleted → Try again
+  4. Common: gradle cache → Run clean again
+  5. Report exact error if still stuck
+
+---
+
+**Created:** July 8, 2026
+**For:** Emergency Play Store Fix
+**Status:** 🟢 Ready to Execute
+

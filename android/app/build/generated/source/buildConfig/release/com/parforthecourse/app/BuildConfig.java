@@ -7,7 +7,7 @@ public final class BuildConfig {
   public static final boolean DEBUG = false;
   public static final String APPLICATION_ID = "com.parforthecourse.app";
   public static final String BUILD_TYPE = "release";
-  public static final int VERSION_CODE = 2;
+  public static final int VERSION_CODE = 2026070801;
   public static final String VERSION_NAME = "3.14";
   // Field from default config.
   public static final String APP_URL = "https://promethean-games.github.io/parforthecoursev2/";

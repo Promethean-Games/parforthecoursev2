@@ -716,10 +716,11 @@
   <div class="card settings-card" style="margin-bottom:16px;padding-bottom:24px">
     <h3 style="margin:0 0 12px;font-size:14px;font-weight:600">Privacy Policy</h3>
     <div style="color:var(--fg2);font-size:12px;margin-bottom:12px">Promethean Games LLC · Effective October 23, 2025</div>
+    <p style="margin:0 0 12px;font-size:12px;color:var(--fg2)">Full policy: <a href="https://promethean-games.github.io/par-privacy-policy/" target="_blank" rel="noopener" style="color:var(--primary)">https://promethean-games.github.io/par-privacy-policy/</a></p>
     <div style="font-size:13px;line-height:1.6;color:var(--fg);display:flex;flex-direction:column;gap:12px">
       <div>
         <h4 style="font-size:13px;font-weight:600;margin:0 0 6px">Information We Collect</h4>
-        <p style="margin:0;font-size:12px;color:var(--fg2)">Par for the Course is a local-first application. All game data (player names, scores, settings) is stored exclusively on your device using browser localStorage. We do not collect, transmit, or store any personal information on external servers.</p>
+        <p style="margin:0;font-size:12px;color:var(--fg2)">Par for the Course is local-first. Game state is stored on your device. If you use online tournament or billing features, the app sends limited data to our servers (for example device identifier, room code, player names, scores, and purchase verification metadata) to provide those features.</p>
       </div>
       <div>
         <h4 style="font-size:13px;font-weight:600;margin:0 0 6px">Device Permissions</h4>
@@ -727,7 +728,7 @@
       </div>
       <div>
         <h4 style="font-size:13px;font-weight:600;margin:0 0 6px">Purchases</h4>
-        <p style="margin:0;font-size:12px;color:var(--fg2)">Full-game unlock purchases are processed by Stripe, Inc. We do not store payment card information. Stripe's privacy policy applies to payment processing. Purchase status is stored locally on your device.</p>
+        <p style="margin:0;font-size:12px;color:var(--fg2)">Android purchases are processed by Google Play Billing. We do not receive or store your payment card details. We store purchase verification metadata (such as purchase token/transaction identifiers and entitlement status) so your unlock can be validated.</p>
       </div>
       <div>
         <h4 style="font-size:13px;font-weight:600;margin:0 0 6px">Data Deletion</h4>
@@ -754,13 +755,14 @@
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
   </div>
-  <p style="color:var(--fg2);font-size:13px;margin-bottom:20px">Promethean Games LLC · Effective October 23, 2025</p>
+  <p style="color:var(--fg2);font-size:13px;margin-bottom:8px">Promethean Games LLC · Effective October 23, 2025</p>
+  <p style="color:var(--fg2);font-size:13px;margin-bottom:20px">Full policy: <a href="https://promethean-games.github.io/par-privacy-policy/" target="_blank" rel="noopener">https://promethean-games.github.io/par-privacy-policy/</a></p>
   <h2>Information We Collect</h2>
-  <p>Par for the Course is a local-first application. All game data (player names, scores, settings) is stored exclusively on your device using browser localStorage. We do not collect, transmit, or store any personal information on external servers.</p>
+  <p>Par for the Course is local-first. Game state is stored on your device. If you use online tournament or billing features, the app sends limited data to our servers (for example device identifier, room code, player names, scores, and purchase verification metadata) to provide those features.</p>
   <h2>Device Permissions</h2>
   <p>The Table Leveler feature uses your device's accelerometer/gyroscope sensor (DeviceOrientation API). This data is processed locally and never transmitted. No camera, microphone, or location access is required.</p>
   <h2>Purchases</h2>
-  <p>Full-game unlock purchases are processed by Stripe, Inc. We do not store payment card information. Stripe's privacy policy applies to payment processing. Purchase status is stored locally on your device.</p>
+  <p>Android purchases are processed by Google Play Billing. We do not receive or store your payment card details. We store purchase verification metadata (such as purchase token/transaction identifiers and entitlement status) so your unlock can be validated.</p>
   <h2>Data Deletion</h2>
   <p>To delete all app data, tap the button below. This will remove all saved games, settings, and purchase records from your device.</p>
   <button class="btn btn-destructive" style="margin:12px 0" onclick="deleteAllData()">Delete All App Data</button>

@@ -77,25 +77,33 @@ export async function initializeDatabase() {
         penalties INTEGER NOT NULL DEFAULT 0
       );
 
-      CREATE TABLE IF NOT EXISTS billing_entitlements (
-        device_id TEXT PRIMARY KEY,
-        trial_started_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        trial_ends_at TIMESTAMP NOT NULL,
-        is_purchased BOOLEAN NOT NULL DEFAULT false,
-        purchase_token TEXT,
-        product_id TEXT,
-        package_name TEXT,
-        purchase_state INTEGER,
-        play_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
-        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-      );
+       CREATE TABLE IF NOT EXISTS billing_entitlements (
+         device_id TEXT PRIMARY KEY,
+         platform TEXT NOT NULL DEFAULT 'google',
+         trial_started_at TIMESTAMP NOT NULL DEFAULT NOW(),
+         trial_ends_at TIMESTAMP NOT NULL,
+         is_purchased BOOLEAN NOT NULL DEFAULT false,
+         purchase_token TEXT,
+         product_id TEXT,
+         package_name TEXT,
+         purchase_state INTEGER,
+         play_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+         apple_transaction_id TEXT,
+         apple_bundle_id TEXT,
+         apple_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+       );
 
-      -- Migrate old schema if it exists (subscription -> one-time)
-      ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMP NOT NULL DEFAULT NOW();
-      ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP;
-      ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS is_purchased BOOLEAN NOT NULL DEFAULT false;
-      ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS product_id TEXT;
-      ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS purchase_state INTEGER;
+       -- Migrate old schema if it exists (subscription -> one-time)
+       ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMP NOT NULL DEFAULT NOW();
+       ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP;
+       ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS is_purchased BOOLEAN NOT NULL DEFAULT false;
+       ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS product_id TEXT;
+       ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS purchase_state INTEGER;
+       ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS platform TEXT NOT NULL DEFAULT 'google';
+       ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS apple_transaction_id TEXT;
+       ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS apple_bundle_id TEXT;
+       ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS apple_payload JSONB NOT NULL DEFAULT '{}'::jsonb;
     `);
     
     console.log("Database tables ready!");
