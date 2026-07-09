@@ -1,0 +1,80 @@
+name: Android Release Build
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & sign release APK/AAB
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── Checkout ───────────────────────────────────────────────────────────
+      - uses: actions/checkout@v4
+
+      # ── Java 17 (required for AGP 8+) ──────────────────────────────────────
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      # ── Gradle wrapper permissions ──────────────────────────────────────────
+      - name: Grant execute permission for gradlew
+        run: chmod +x android/gradlew
+
+      # ── (Optional) Write keystore from secret ───────────────────────────────
+      # Decode KEYSTORE_BASE64 secret → keystore.jks
+      # Only runs when the secret is present (allows unsigned dev builds too).
+      - name: Decode release keystore
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+
+      # ── Build ──────────────────────────────────────────────────────────────
+      - name: Build release APK
+        working-directory: android
+        env:
+          KEYSTORE_PATH: ${{ secrets.KEYSTORE_BASE64 != '' && 'app/keystore.jks' || '' }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Build release AAB (Play Store)
+        working-directory: android
+        run: ./gradlew bundleRelease --no-daemon
+
+      # ── Upload artifacts ───────────────────────────────────────────────────
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+      # ── Verify package structure (catch regressions) ───────────────────────
+      - name: Verify single Java package
+        run: |
+          count=$(find android/app/src/main/java/com -mindepth 1 -maxdepth 1 -type d | wc -l)
+          if [ "$count" -ne 1 ]; then
+            echo "❌ Expected 1 Java package directory, found $count"
+            find android/app/src/main/java/com -mindepth 1 -maxdepth 1 -type d
+            exit 1
+          fi
+          echo "✅ Single Java package confirmed"
+
