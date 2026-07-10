@@ -4,15 +4,15 @@
     "type": "PACKAGED_MANIFESTS",
     "kind": "Directory"
   },
-  "applicationId": "com.parforthecourse",
+  "applicationId": "com.parforthecourse.app",
   "variantName": "debug",
   "elements": [
     {
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 1,
-      "versionName": "3.14",
+      "versionCode": 2026070902,
+      "versionName": "3.14.1",
       "outputFile": "AndroidManifest.xml"
     }
   ],

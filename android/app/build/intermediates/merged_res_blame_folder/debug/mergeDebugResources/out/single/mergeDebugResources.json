@@ -1,23 +1,15 @@
 [
     {
-        "merged": "C:\\Users\\alana\\.gradle\\daemon\\8.10\\com.parforthecourse.app-debug-49:\\drawable_ic_launcher_background.xml.flat",
-        "source": "C:\\Users\\alana\\.gradle\\daemon\\8.10\\com.parforthecourse.app-main-51:\\drawable\\ic_launcher_background.xml"
+        "merged": "com.parforthecourse.app-debug-49:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.parforthecourse.app-main-51:/drawable/ic_launcher_background.xml"
     },
     {
-        "merged": "C:\\Users\\alana\\.gradle\\daemon\\8.10\\com.parforthecourse.app-debug-49:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "C:\\Users\\alana\\.gradle\\daemon\\8.10\\com.parforthecourse.app-main-51:\\mipmap-anydpi-v26\\ic_launcher.xml"
+        "merged": "com.parforthecourse.app-debug-49:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.parforthecourse.app-main-51:/mipmap-anydpi-v26/ic_launcher_round.xml"
     },
     {
-        "merged": "C:\\Users\\alana\\.gradle\\daemon\\8.10\\com.parforthecourse.app-debug-49:\\drawable_ic_launcher_foreground.png.flat",
-        "source": "C:\\Users\\alana\\.gradle\\daemon\\8.10\\com.parforthecourse.app-main-51:\\drawable\\ic_launcher_foreground.png"
-    },
-    {
-        "merged": "C:\\Users\\alana\\.gradle\\daemon\\8.10\\com.parforthecourse.app-debug-49:\\drawable_ic_launcher_foreground.xml.flat",
-        "source": "C:\\Users\\alana\\.gradle\\daemon\\8.10\\com.parforthecourse.app-main-51:\\drawable\\ic_launcher_foreground.xml"
-    },
-    {
-        "merged": "C:\\Users\\alana\\.gradle\\daemon\\8.10\\com.parforthecourse.app-debug-49:\\mipmap-anydpi-v26_ic_launcher_round.xml.flat",
-        "source": "C:\\Users\\alana\\.gradle\\daemon\\8.10\\com.parforthecourse.app-main-51:\\mipmap-anydpi-v26\\ic_launcher_round.xml"
+        "merged": "com.parforthecourse.app-debug-49:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.parforthecourse.app-main-51:/mipmap-anydpi-v26/ic_launcher.xml"
     },
     {
         "merged": "com.parforthecourse.app-debug-49:/drawable_ic_launcher_foreground.png.flat",
