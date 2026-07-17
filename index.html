@@ -1509,11 +1509,6 @@ function openStartConfirm(){
   const g=S.game;
   const namedAll=g.players.length>0&&g.players.every(p=>p.name.trim());
   if(!namedAll) return;
-  if(g.players.length===1){
-    showSetupStartMessage('Single Player Mode Enabled');
-    setTimeout(()=>startGame(),300);
-    return;
-  }
   const list=document.getElementById('start-confirm-list');
   if(list){
     list.innerHTML=g.players.map((p,i)=>`
