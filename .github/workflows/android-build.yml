@@ -32,17 +32,23 @@ jobs:
 
       # ── (Optional) Write keystore from secret ───────────────────────────────
       # Decode KEYSTORE_BASE64 secret → keystore.jks
-      # Only runs when the secret is present (allows unsigned dev builds too).
+      # Uses shell conditional so secrets context is not evaluated in if/ternary.
       - name: Decode release keystore
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > android/app/keystore.jks
+            echo "KEYSTORE_PATH=app/keystore.jks" >> $GITHUB_ENV
+          else
+            echo "No keystore secret found — building unsigned (debug signing)"
+            echo "KEYSTORE_PATH=" >> $GITHUB_ENV
+          fi
 
       # ── Build ──────────────────────────────────────────────────────────────
       - name: Build release APK
         working-directory: android
         env:
-          KEYSTORE_PATH: ${{ secrets.KEYSTORE_BASE64 != '' && 'app/keystore.jks' || '' }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
