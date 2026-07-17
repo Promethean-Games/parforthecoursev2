@@ -30,6 +30,16 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
+      # ── Ensure gradle-wrapper.jar is present (fails fast with clear message) ─
+      - name: Verify gradle-wrapper.jar
+        run: |
+          JAR=android/gradle/wrapper/gradle-wrapper.jar
+          if [ ! -f "$JAR" ]; then
+            echo "❌ gradle-wrapper.jar is missing. Commit android/gradle/wrapper/gradle-wrapper.jar to the repo."
+            exit 1
+          fi
+          echo "✅ gradle-wrapper.jar present ($(du -h $JAR | cut -f1))"
+
       # ── (Optional) Write keystore from secret ───────────────────────────────
       # Decode KEYSTORE_BASE64 secret → keystore.jks
       # Uses shell conditional so secrets context is not evaluated in if/ternary.
