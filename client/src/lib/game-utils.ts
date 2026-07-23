@@ -30,14 +30,22 @@ export function getScoreCallout(strokes: number, par: number): string {
 
 export function getLeaderboard(
   players: Player[],
-  scores: Record<string, HoleScore[]>
+  scores: Record<string, HoleScore[]>,
+  round: number
 ): Array<{ player: Player; total: number }> {
   return players
     .map((player) => ({
       player,
       total: calculatePlayerTotal(scores[player.id] || []).totalStrokes,
     }))
-    .sort((a, b) => a.total - b.total);
+    .sort((a, b) => {
+      if (round === 1) {
+        // Sort by height (assuming height is a property of Player)
+        return a.player.height - b.player.height;
+      }
+      // Sort by score for subsequent rounds
+      return a.total - b.total;
+    });
 }
 
 export function isLeader(

@@ -21,6 +21,7 @@ interface TournamentContextValue {
   error: string | null;
   deviceId: string;
   isDirector: boolean;
+  isScreenAwake: boolean;
 
   joinRoom: (code: string) => Promise<boolean>;
   leaveRoom: () => void;
@@ -38,6 +39,7 @@ interface TournamentContextValue {
   closeTournament: () => Promise<void>;
   startTournament: () => Promise<boolean>;
   batchUpdatePlayerGroups: (updates: { playerId: number; groupName: string | null }[]) => Promise<boolean>;
+  setIsScreenAwake: (value: boolean) => void;
 }
 
 const TournamentContext = createContext<TournamentContextValue | null>(null);
@@ -70,6 +72,7 @@ export function TournamentProvider({ children }: { children: ReactNode }) {
   const [isDirector, setIsDirector] = useState(false);
   const [directorPin, setDirectorPin] = useState<string | null>(null);
   const deviceId = getDeviceId();
+  const [isScreenAwake, setIsScreenAwake] = useState(false);
 
   const refreshLeaderboard = useCallback(async () => {
     if (!roomCode) return;
@@ -302,6 +305,35 @@ export function TournamentProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  useEffect(() => {
+    let wakeLock: WakeLockSentinel | null = null;
+
+    const requestWakeLock = async () => {
+      try {
+        if (isScreenAwake && 'wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.error('Failed to acquire wake lock:', err);
+      }
+    };
+
+    const releaseWakeLock = () => {
+      if (wakeLock) {
+        wakeLock.release();
+        wakeLock = null;
+      }
+    };
+
+    if (isScreenAwake) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+
+    return () => releaseWakeLock();
+  }, [isScreenAwake]);
+
   return (
     <TournamentContext.Provider
       value={{
@@ -315,6 +347,7 @@ export function TournamentProvider({ children }: { children: ReactNode }) {
         error,
         deviceId,
         isDirector,
+        isScreenAwake,
         joinRoom,
         leaveRoom,
         setIsDirector,
@@ -331,6 +364,7 @@ export function TournamentProvider({ children }: { children: ReactNode }) {
         closeTournament,
         startTournament,
         batchUpdatePlayerGroups,
+        setIsScreenAwake,
       }}
     >
       {children}
