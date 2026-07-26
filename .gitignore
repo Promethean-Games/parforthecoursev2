@@ -32,3 +32,6 @@ android/app/keystore.jks
 # Never exclude the Gradle wrapper jar - CI needs it
 !android/gradle/wrapper/gradle-wrapper.jar
 
+# Android generated outputs
+android/.gradle/
+android/app/build/
