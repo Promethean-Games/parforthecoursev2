@@ -1,5 +1,5 @@
 plugins {
-    id("com.android.application")
+    id("com.android.application") version "8.9.0"
     id("org.jetbrains.kotlin.android")
 }
 
@@ -15,10 +15,24 @@ android {
         applicationId = "com.parforthecourse.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2026070902
+        versionCode = 202607090
         versionName = "3.14.1"
         buildConfigField("String", "APP_URL", "\"https://promethean-games.github.io/parforthecoursev2/\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            val keystoreFile = file("keystore.jks")
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = "your-store-password" // Replace with your keystore password
+                keyAlias = "your-key-alias" // Replace with your key alias
+                keyPassword = "your-key-password" // Replace with your key password
+            } else {
+                println("Warning: keystore.jks file not found. Release signing configuration will be skipped.")
+            }
+        }
     }
 
     buildTypes {
@@ -28,7 +42,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 

@@ -15,10 +15,12 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
     companion object {
         private const val WEBVIEW_STATE_KEY = "webview_state"
+        private const val SHOWING_FALLBACK_KEY = "showing_fallback"
     }
 
     private lateinit var webView: WebView
     private var showingFallback = false
+    private var retriedInitialLoad = false
     private val secureOverlayKeys = mutableSetOf<String>()
 
     private inner class ScreenSecurityBridge {
@@ -67,7 +69,7 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     super.onReceivedError(view, request, error)
                     if (request?.isForMainFrame == true) {
-                        showFallbackPage(getString(R.string.web_unavailable_message))
+                        handleMainFrameLoadFailure(getString(R.string.web_unavailable_message))
                     }
                 }
 
@@ -78,7 +80,7 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     super.onReceivedHttpError(view, request, errorResponse)
                     if (request?.isForMainFrame == true && (errorResponse?.statusCode ?: 200) >= 400) {
-                        showFallbackPage(getString(R.string.web_unavailable_message))
+                        handleMainFrameLoadFailure(getString(R.string.web_unavailable_message))
                     }
                 }
 
@@ -104,8 +106,13 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(webView)
 
-        val restored = savedInstanceState?.getBundle(WEBVIEW_STATE_KEY)?.let { state ->
-            webView.restoreState(state)
+        val restoringFallback = savedInstanceState?.getBoolean(SHOWING_FALLBACK_KEY) == true
+        val restored = if (!restoringFallback) {
+            savedInstanceState?.getBundle(WEBVIEW_STATE_KEY)?.let { state ->
+                webView.restoreState(state)
+            }
+        } else {
+            null
         }
         if (restored == null) {
             loadAppUrl()
@@ -126,6 +133,9 @@ class MainActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
+        outState.putBoolean(SHOWING_FALLBACK_KEY, showingFallback)
+        if (showingFallback) return
+
         val webViewState = Bundle()
         webView.saveState(webViewState)
         outState.putBundle(WEBVIEW_STATE_KEY, webViewState)
@@ -142,9 +152,25 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadAppUrl() {
         showingFallback = false
+        retriedInitialLoad = false
         secureOverlayKeys.clear()
         applySecureFlag()
+        webView.stopLoading()
+        webView.clearHistory()
         webView.loadUrl(BuildConfig.APP_URL)
+    }
+
+    private fun handleMainFrameLoadFailure(message: String) {
+        if (!retriedInitialLoad) {
+            retriedInitialLoad = true
+            webView.postDelayed({
+                if (!showingFallback) {
+                    webView.loadUrl(BuildConfig.APP_URL)
+                }
+            }, 600)
+            return
+        }
+        showFallbackPage(message)
     }
 
     private fun applySecureFlag() {
