@@ -18,7 +18,8 @@ android {
         // Keep this higher than every production artifact versionCode in Play Console.
         versionCode = 2026072601
         versionName = "3.14.1"
-        buildConfigField("String", "APP_URL", "\"https://promethean-games.github.io/parforthecoursev2/\"")
+        // Use the full-stack production host so WebView and /api share one origin.
+        buildConfigField("String", "APP_URL", "\"https://par-for-the-course.onrender.com/\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

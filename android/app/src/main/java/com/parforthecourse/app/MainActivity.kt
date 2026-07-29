@@ -1,6 +1,7 @@
 package com.parforthecourse.app
 
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceError
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
     companion object {
+        private const val TAG = "PFTCWebView"
         private const val WEBVIEW_STATE_KEY = "webview_state"
         private const val SHOWING_FALLBACK_KEY = "showing_fallback"
     }
@@ -55,6 +57,11 @@ class MainActivity : AppCompatActivity() {
             addJavascriptInterface(ScreenSecurityBridge(), "AndroidScreenSecurity")
 
             webViewClient = object : WebViewClient() {
+                override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                    super.onPageStarted(view, url, favicon)
+                    Log.i(TAG, "onPageStarted url=$url")
+                }
+
                 override fun shouldOverrideUrlLoading(
                     view: WebView?,
                     request: WebResourceRequest?
@@ -69,7 +76,9 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     super.onReceivedError(view, request, error)
                     if (request?.isForMainFrame == true) {
-                        handleMainFrameLoadFailure(getString(R.string.web_unavailable_message))
+                        val detail = "errorCode=${error?.errorCode}, description=${error?.description}, url=${request.url}"
+                        Log.e(TAG, "Main frame load error: $detail")
+                        handleMainFrameLoadFailure(getString(R.string.web_unavailable_message), detail)
                     }
                 }
 
@@ -80,7 +89,9 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     super.onReceivedHttpError(view, request, errorResponse)
                     if (request?.isForMainFrame == true && (errorResponse?.statusCode ?: 200) >= 400) {
-                        handleMainFrameLoadFailure(getString(R.string.web_unavailable_message))
+                        val detail = "status=${errorResponse?.statusCode}, reason=${errorResponse?.reasonPhrase}, url=${request.url}"
+                        Log.e(TAG, "Main frame HTTP error: $detail")
+                        handleMainFrameLoadFailure(getString(R.string.web_unavailable_message), detail)
                     }
                 }
 
@@ -96,7 +107,11 @@ class MainActivity : AppCompatActivity() {
                         "document.body ? document.body.innerText.toLowerCase() : ''"
                     ) { bodyText ->
                         if (bodyText.contains("service has been suspended by its owner")) {
-                            showFallbackPage(getString(R.string.web_suspended_message))
+                            Log.e(TAG, "Host suspension marker found on page body for url=$url")
+                            showFallbackPage(
+                                getString(R.string.web_suspended_message),
+                                "Service suspension marker detected on hosted page body"
+                            )
                         }
                     }
                 }
@@ -115,6 +130,7 @@ class MainActivity : AppCompatActivity() {
             null
         }
         if (restored == null) {
+            Log.i(TAG, "No restorable WebView state; loading app URL")
             loadAppUrl()
         }
 
@@ -157,20 +173,24 @@ class MainActivity : AppCompatActivity() {
         applySecureFlag()
         webView.stopLoading()
         webView.clearHistory()
+        Log.i(TAG, "Loading APP_URL=${BuildConfig.APP_URL}")
         webView.loadUrl(BuildConfig.APP_URL)
     }
 
-    private fun handleMainFrameLoadFailure(message: String) {
+    private fun handleMainFrameLoadFailure(message: String, detail: String? = null) {
         if (!retriedInitialLoad) {
             retriedInitialLoad = true
+            Log.w(TAG, "Main frame failed. Retrying once in 600ms. detail=$detail")
             webView.postDelayed({
                 if (!showingFallback) {
+                    Log.i(TAG, "Retrying APP_URL load")
                     webView.loadUrl(BuildConfig.APP_URL)
                 }
             }, 600)
             return
         }
-        showFallbackPage(message)
+        Log.e(TAG, "Main frame failed after retry. Showing fallback. detail=$detail")
+        showFallbackPage(message, detail)
     }
 
     private fun applySecureFlag() {
@@ -181,9 +201,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showFallbackPage(message: String) {
+    private fun showFallbackPage(message: String, detail: String? = null) {
         if (showingFallback) return
         showingFallback = true
+
+        val debugDetailHtml = if (BuildConfig.DEBUG && !detail.isNullOrBlank()) {
+            "<p style=\"color:#fbbf24;font-size:12px;word-break:break-word\">$detail</p>"
+        } else {
+            ""
+        }
 
         val html = """
             <!doctype html>
@@ -202,6 +228,7 @@ class MainActivity : AppCompatActivity() {
               <div class=\"card\">
                 <h1>${getString(R.string.app_name)}</h1>
                 <p>$message</p>
+                $debugDetailHtml
                 <button onclick=\"location.href='${BuildConfig.APP_URL}'\">${getString(R.string.retry_button)}</button>
               </div>
             </body>
