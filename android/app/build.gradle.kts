@@ -20,6 +20,9 @@ android {
         versionName = "3.14.1"
         // Use the full-stack production host so WebView and /api share one origin.
         buildConfigField("String", "APP_URL", "\"https://par-for-the-course.onrender.com/\"")
+        // Startup Diagnostic Mode: enabled by default for all non-release builds.
+        // Set to false in the release block below (or manually flip to true for a beta release build).
+        buildConfigField("Boolean", "DIAGNOSTIC_MODE", "true")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -38,6 +41,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // DIAGNOSTIC_MODE already true from defaultConfig; kept explicit for clarity.
+            buildConfigField("Boolean", "DIAGNOSTIC_MODE", "true")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -45,6 +52,8 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+            // Disable the diagnostic panel in production builds.
+            buildConfigField("Boolean", "DIAGNOSTIC_MODE", "false")
         }
     }
 
