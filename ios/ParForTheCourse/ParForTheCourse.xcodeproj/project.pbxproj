@@ -1,0 +1,327 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000102A8D00010000A001 /* ParForTheCourseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000202A8D00010000A001 /* ParForTheCourseApp.swift */; };
+		A10000112A8D00010000A001 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000212A8D00010000A001 /* ContentView.swift */; };
+		A10000122A8D00010000A001 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000222A8D00010000A001 /* AppConfig.swift */; };
+		A10000132A8D00010000A001 /* StartupDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000232A8D00010000A001 /* StartupDiagnostics.swift */; };
+		A10000142A8D00010000A001 /* WebViewContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000242A8D00010000A001 /* WebViewContainer.swift */; };
+		A10000152A8D00010000A001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000252A8D00010000A001 /* Assets.xcassets */; };
+		A10000162A8D00010000A001 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A10000262A8D00010000A001 /* LaunchScreen.storyboard */; };
+		A10000172A8D00010000A001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A10000272A8D00010000A001 /* PrivacyInfo.xcprivacy */; };
+		A10000182A8D00010000A001 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A10000282A8D00010000A001 /* WebKit.framework */; };
+		A10000192A8D00010000A001 /* Network.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A10000292A8D00010000A001 /* Network.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A10000002A8D00010000A001 /* ParForTheCourse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ParForTheCourse.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000202A8D00010000A001 /* ParForTheCourseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParForTheCourseApp.swift; sourceTree = "<group>"; };
+		A10000212A8D00010000A001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A10000222A8D00010000A001 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		A10000232A8D00010000A001 /* StartupDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupDiagnostics.swift; sourceTree = "<group>"; };
+		A10000242A8D00010000A001 /* WebViewContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewContainer.swift; sourceTree = "<group>"; };
+		A10000252A8D00010000A001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A10000262A8D00010000A001 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Resources/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		A10000272A8D00010000A001 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Resources/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A10000282A8D00010000A001 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		A10000292A8D00010000A001 /* Network.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Network.framework; path = System/Library/Frameworks/Network.framework; sourceTree = SDKROOT; };
+		A10000302A8D00010000A001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Resources/Info.plist; sourceTree = "<group>"; };
+		A10000312A8D00010000A001 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		A10000322A8D00010000A001 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A100000E2A8D00010000A001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000182A8D00010000A001 /* WebKit.framework in Frameworks */,
+				A10000192A8D00010000A001 /* Network.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A10000012A8D00010000A001 = {
+			isa = PBXGroup;
+			children = (
+				A10000022A8D00010000A001 /* ParForTheCourse */,
+				A10000032A8D00010000A001 /* Frameworks */,
+				A10000042A8D00010000A001 /* Products */,
+				A10000052A8D00010000A001 /* Config */,
+			);
+			sourceTree = "<group>";
+		};
+		A10000022A8D00010000A001 /* ParForTheCourse */ = {
+			isa = PBXGroup;
+			children = (
+				A10000202A8D00010000A001 /* ParForTheCourseApp.swift */,
+				A10000212A8D00010000A001 /* ContentView.swift */,
+				A10000062A8D00010000A001 /* Web */,
+				A10000072A8D00010000A001 /* Config */,
+				A10000302A8D00010000A001 /* Info.plist */,
+				A10000272A8D00010000A001 /* PrivacyInfo.xcprivacy */,
+				A10000262A8D00010000A001 /* LaunchScreen.storyboard */,
+				A10000252A8D00010000A001 /* Assets.xcassets */,
+			);
+			path = ParForTheCourse;
+			sourceTree = "<group>";
+		};
+		A10000032A8D00010000A001 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A10000282A8D00010000A001 /* WebKit.framework */,
+				A10000292A8D00010000A001 /* Network.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A10000042A8D00010000A001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A10000002A8D00010000A001 /* ParForTheCourse.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A10000052A8D00010000A001 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				A10000312A8D00010000A001 /* Debug.xcconfig */,
+				A10000322A8D00010000A001 /* Release.xcconfig */,
+			);
+			name = Config;
+			path = Config;
+			sourceTree = "<group>";
+		};
+		A10000062A8D00010000A001 /* Web */ = {
+			isa = PBXGroup;
+			children = (
+				A10000232A8D00010000A001 /* StartupDiagnostics.swift */,
+				A10000242A8D00010000A001 /* WebViewContainer.swift */,
+			);
+			path = Web;
+			sourceTree = "<group>";
+		};
+		A10000072A8D00010000A001 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				A10000222A8D00010000A001 /* AppConfig.swift */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A100000B2A8D00010000A001 /* ParForTheCourse */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A100001C2A8D00010000A001 /* Build configuration list for PBXNativeTarget "ParForTheCourse" */;
+			buildPhases = (
+				A100000D2A8D00010000A001 /* Sources */,
+				A100000E2A8D00010000A001 /* Frameworks */,
+				A100000F2A8D00010000A001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ParForTheCourse;
+			productName = ParForTheCourse;
+			productReference = A10000002A8D00010000A001 /* ParForTheCourse.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A100000A2A8D00010000A001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					A100000B2A8D00010000A001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = A100000C2A8D00010000A001 /* Build configuration list for PBXProject "ParForTheCourse" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A10000012A8D00010000A001;
+			productRefGroup = A10000042A8D00010000A001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A100000B2A8D00010000A001 /* ParForTheCourse */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A100000F2A8D00010000A001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000152A8D00010000A001 /* Assets.xcassets in Resources */,
+				A10000162A8D00010000A001 /* LaunchScreen.storyboard in Resources */,
+				A10000172A8D00010000A001 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A100000D2A8D00010000A001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000102A8D00010000A001 /* ParForTheCourseApp.swift in Sources */,
+				A10000112A8D00010000A001 /* ContentView.swift in Sources */,
+				A10000122A8D00010000A001 /* AppConfig.swift in Sources */,
+				A10000132A8D00010000A001 /* StartupDiagnostics.swift in Sources */,
+				A10000142A8D00010000A001 /* WebViewContainer.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A100001A2A8D00010000A001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A10000312A8D00010000A001 /* Debug.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A100001B2A8D00010000A001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A10000322A8D00010000A001 /* Release.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		A100001D2A8D00010000A001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A10000312A8D00010000A001 /* Debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ParForTheCourse/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.parforthecourse.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A100001E2A8D00010000A001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A10000322A8D00010000A001 /* Release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ParForTheCourse/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.parforthecourse.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A100000C2A8D00010000A001 /* Build configuration list for PBXProject "ParForTheCourse" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A100001A2A8D00010000A001 /* Debug */,
+				A100001B2A8D00010000A001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A100001C2A8D00010000A001 /* Build configuration list for PBXNativeTarget "ParForTheCourse" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A100001D2A8D00010000A001 /* Debug */,
+				A100001E2A8D00010000A001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A100000A2A8D00010000A001 /* Project object */;
+}
+
+

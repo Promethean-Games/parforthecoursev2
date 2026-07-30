@@ -1,0 +1,11 @@
+# Xcode user-local files
+**/xcuserdata/
+**/*.xcuserstate
+
+# Build artifacts
+build/
+DerivedData/
+
+# CocoaPods (none currently used, but safe defaults)
+Pods/
+
