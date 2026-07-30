@@ -18,8 +18,8 @@ android {
         // Keep this higher than every production artifact versionCode in Play Console.
         versionCode = 2026072601
         versionName = "3.14.1"
-        // Use the full-stack production host so WebView and /api share one origin.
-        buildConfigField("String", "APP_URL", "\"https://par-for-the-course.onrender.com/\"")
+        // Front-end-only production host (GitHub Pages).
+        buildConfigField("String", "APP_URL", "\"https://promethean-games.github.io/parforthecoursev2/\"")
         // Startup Diagnostic Mode: enabled by default for all non-release builds.
         // Set to false in the release block below (or manually flip to true for a beta release build).
         buildConfigField("Boolean", "DIAGNOSTIC_MODE", "true")
