@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import type { Player, HoleScore, GameSession, Settings, SetupTime } from "@shared/schema";
 import { PLAYER_COLORS } from "@/lib/constants";
+import type { EditionId } from "@/lib/editions";
+import type { PlayMode } from "@/lib/play-mode";
 
 interface GameState {
   players: Player[];
@@ -9,6 +11,8 @@ interface GameState {
   scores: Record<string, HoleScore[]>;
   isComplete: boolean;
   settings: Settings;
+  selectedEditionId: EditionId;
+  playMode: PlayMode;
 }
 
 interface GameContextValue extends GameState {
@@ -34,9 +38,33 @@ interface GameContextValue extends GameState {
   setParForAllPlayers: (hole: number, par: number) => void;
   recordSetupTime: (setupTime: SetupTime) => void;
   getSetupTimes: () => SetupTime[];
+  setGameExperience: (editionId: EditionId, playMode: PlayMode) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
+
+const LEGACY_DEFAULT_EDITION: EditionId = "classic";
+const LEGACY_DEFAULT_MODE: PlayMode = "physical";
+const DEFAULT_SETTINGS: Settings = {
+  theme: "dark",
+  leftHandedMode: false,
+  autoSave: true,
+};
+
+function toGameState(raw: unknown): GameState {
+  const parsed = (raw && typeof raw === "object" ? raw : {}) as Partial<GameState>;
+
+  return {
+    players: Array.isArray(parsed.players) ? parsed.players : [],
+    currentHole: typeof parsed.currentHole === "number" ? parsed.currentHole : 1,
+    currentPlayerIndex: typeof parsed.currentPlayerIndex === "number" ? parsed.currentPlayerIndex : 0,
+    scores: parsed.scores && typeof parsed.scores === "object" ? parsed.scores : {},
+    isComplete: Boolean(parsed.isComplete),
+    settings: parsed.settings ? { ...DEFAULT_SETTINGS, ...parsed.settings } : { ...DEFAULT_SETTINGS },
+    selectedEditionId: parsed.selectedEditionId || LEGACY_DEFAULT_EDITION,
+    playMode: parsed.playMode || LEGACY_DEFAULT_MODE,
+  };
+}
 
 export function useGame() {
   const context = useContext(GameContext);
@@ -49,22 +77,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem("currentGame");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        return toGameState(JSON.parse(saved));
       } catch {
-        // Fallback to default
+        // Fall back to default state
       }
     }
+
     return {
       players: [],
       currentHole: 1,
       currentPlayerIndex: 0,
       scores: {},
       isComplete: false,
-      settings: {
-        theme: "dark",
-        leftHandedMode: false,
-        autoSave: true,
-      },
+      settings: { ...DEFAULT_SETTINGS },
+      selectedEditionId: LEGACY_DEFAULT_EDITION,
+      playMode: LEGACY_DEFAULT_MODE,
     };
   });
 
@@ -73,7 +100,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (gameState.settings.autoSave && gameState.players.length > 0) {
       localStorage.setItem("currentGame", JSON.stringify(gameState));
-      // Also save to the autosave slot in savedGames for the load dialog
       const games = JSON.parse(localStorage.getItem("savedGames") || "{}");
       games["__autosave__"] = {
         id: "autosave",
@@ -97,22 +123,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
       color: PLAYER_COLORS[gameState.players.length % PLAYER_COLORS.length],
       order: position ?? gameState.players.length,
     };
-    
+
     setGameState((prev) => {
       let newPlayers: Player[];
-      
+
       if (position !== undefined && position >= 0 && position < prev.players.length) {
-        // Insert at specific position
         newPlayers = [
           ...prev.players.slice(0, position),
           newPlayer,
           ...prev.players.slice(position),
-        ].map((p, i) => ({ ...p, order: i }));
+        ].map((player, index) => ({ ...player, order: index }));
       } else {
-        // Add at end
         newPlayers = [...prev.players, newPlayer];
       }
-      
+
       return {
         ...prev,
         players: newPlayers,
@@ -124,37 +148,37 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const removePlayer = (id: string) => {
     setGameState((prev) => ({
       ...prev,
-      players: prev.players.filter((p) => p.id !== id).map((p, i) => ({ ...p, order: i })),
+      players: prev.players.filter((player) => player.id !== id).map((player, index) => ({ ...player, order: index })),
     }));
   };
 
   const updatePlayerName = (id: string, name: string) => {
     setGameState((prev) => ({
       ...prev,
-      players: prev.players.map((p) => (p.id === id ? { ...p, name } : p)),
+      players: prev.players.map((player) => (player.id === id ? { ...player, name } : player)),
     }));
   };
 
   const updatePlayerColor = (id: string, color: string) => {
     setGameState((prev) => ({
       ...prev,
-      players: prev.players.map((p) => (p.id === id ? { ...p, color } : p)),
+      players: prev.players.map((player) => (player.id === id ? { ...player, color } : player)),
     }));
   };
 
   const movePlayer = (id: string, direction: "up" | "down") => {
     setGameState((prev) => {
       const players = [...prev.players];
-      const index = players.findIndex((p) => p.id === id);
+      const index = players.findIndex((player) => player.id === id);
       if (index === -1) return prev;
-      
+
       const newIndex = direction === "up" ? index - 1 : index + 1;
       if (newIndex < 0 || newIndex >= players.length) return prev;
-      
+
       [players[index], players[newIndex]] = [players[newIndex], players[index]];
       return {
         ...prev,
-        players: players.map((p, i) => ({ ...p, order: i })),
+        players: players.map((player, playerIndex) => ({ ...player, order: playerIndex })),
       };
     });
   };
@@ -172,12 +196,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     saveHistory(gameState);
     setGameState((prev) => {
       const playerScores = prev.scores[playerId] || [];
-      const holeIndex = playerScores.findIndex((s) => s.hole === hole);
-      
-      let newScores;
+      const holeIndex = playerScores.findIndex((score) => score.hole === hole);
+
+      let newScores: HoleScore[];
       if (holeIndex >= 0) {
-        newScores = playerScores.map((s, i) =>
-          i === holeIndex ? { ...s, ...scoreUpdate } : s
+        newScores = playerScores.map((score, index) =>
+          index === holeIndex ? { ...score, ...scoreUpdate } : score,
         );
       } else {
         newScores = [
@@ -191,7 +215,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           },
         ];
       }
-      
+
       return {
         ...prev,
         scores: { ...prev.scores, [playerId]: newScores },
@@ -204,7 +228,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setGameState((prev) => {
       const nextPlayerIndex = (prev.currentPlayerIndex + 1) % prev.players.length;
       const nextHole = nextPlayerIndex === 0 ? prev.currentHole + 1 : prev.currentHole;
-      
+
       return {
         ...prev,
         currentPlayerIndex: nextPlayerIndex,
@@ -217,9 +241,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setGameState((prev) => ({
       ...prev,
       currentPlayerIndex:
-        prev.currentPlayerIndex === 0
-          ? prev.players.length - 1
-          : prev.currentPlayerIndex - 1,
+        prev.currentPlayerIndex === 0 ? prev.players.length - 1 : prev.currentPlayerIndex - 1,
     }));
   };
 
@@ -236,15 +258,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   const resetGame = () => {
-    setGameState({
+    setGameState((prev) => ({
       players: [],
       currentHole: 1,
       currentPlayerIndex: 0,
       scores: {},
       isComplete: false,
-      settings: gameState.settings,
-    });
+      settings: prev.settings,
+      selectedEditionId: LEGACY_DEFAULT_EDITION,
+      playMode: LEGACY_DEFAULT_MODE,
+    }));
     setHistory([]);
+  };
+
+  const setGameExperience = (editionId: EditionId, playMode: PlayMode) => {
+    setGameState((prev) => ({
+      ...prev,
+      selectedEditionId: editionId,
+      playMode,
+    }));
   };
 
   const saveGame = (slot: string) => {
@@ -261,14 +293,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const loadGame = (slot: string) => {
     const games = JSON.parse(localStorage.getItem("savedGames") || "{}");
     if (games[slot]) {
-      setGameState({
-        players: games[slot].players,
-        currentHole: games[slot].currentHole,
-        currentPlayerIndex: games[slot].currentPlayerIndex,
-        scores: games[slot].scores,
-        isComplete: games[slot].isComplete,
-        settings: games[slot].settings || gameState.settings,
-      });
+      setGameState(toGameState(games[slot]));
     }
   };
 
@@ -312,14 +337,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     saveHistory(gameState);
     setGameState((prev) => {
       const newScores = { ...prev.scores };
-      
+
       prev.players.forEach((player) => {
         const playerScores = newScores[player.id] || [];
-        const holeIndex = playerScores.findIndex((s) => s.hole === hole);
-        
+        const holeIndex = playerScores.findIndex((score) => score.hole === hole);
+
         if (holeIndex >= 0) {
-          newScores[player.id] = playerScores.map((s, i) =>
-            i === holeIndex ? { ...s, par } : s
+          newScores[player.id] = playerScores.map((score, index) =>
+            index === holeIndex ? { ...score, par } : score,
           );
         } else {
           newScores[player.id] = [
@@ -328,7 +353,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ];
         }
       });
-      
+
       return { ...prev, scores: newScores };
     });
   };
@@ -369,6 +394,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setParForAllPlayers,
         recordSetupTime,
         getSetupTimes,
+        setGameExperience,
       }}
     >
       {children}

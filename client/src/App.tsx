@@ -13,32 +13,56 @@ import { SummaryScreen } from "@/components/SummaryScreen";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { SaveLoadDialog } from "@/components/SaveLoadDialog";
 import { BottomNav } from "@/components/BottomNav";
+import { EditionSelectionScreen } from "@/components/EditionSelectionScreen";
+import { PlayModeSelectionScreen } from "@/components/PlayModeSelectionScreen";
+import { DigitalAccessScreen } from "@/components/DigitalAccessScreen";
+import { DigitalExperiencePlaceholder } from "@/components/DigitalExperiencePlaceholder";
+import { getEditionById, type EditionDefinition } from "@/lib/editions";
+import { hasDigitalAccess, purchaseDigitalEdition } from "@/lib/entitlements";
 import { getTurnOrder, isLeader } from "@/lib/game-utils";
 
-type Screen = "splash" | "setup" | "game" | "summary";
+type Screen =
+  | "splash"
+  | "edition"
+  | "mode"
+  | "setup"
+  | "game"
+  | "summary"
+  | "digital-access"
+  | "digital-experience";
 type ActiveTab = "game" | "summary" | "settings" | "save";
 
 function GameApp() {
   const game = useGame();
   const tournament = useTournament();
-  const { theme, setTheme } = useTheme();
-  
+  const { setTheme } = useTheme();
+
   const [screen, setScreen] = useState<Screen>("splash");
   const [activeTab, setActiveTab] = useState<ActiveTab>("game");
   const [showSaveLoad, setShowSaveLoad] = useState<"load" | null>(null);
+  const [selectedEdition, setSelectedEdition] = useState<EditionDefinition | null>(null);
+  const [isPurchasingDigital, setIsPurchasingDigital] = useState(false);
+  const [digitalAccessError, setDigitalAccessError] = useState<string | null>(null);
 
-  // Sync theme with game settings
   useEffect(() => {
     setTheme(game.settings.theme);
   }, [game.settings.theme, setTheme]);
 
   const handleNewGame = () => {
     game.resetGame();
-    setScreen("setup");
+    setSelectedEdition(null);
+    setDigitalAccessError(null);
+    setScreen("edition");
   };
 
   const handleLoadGame = () => {
     setShowSaveLoad("load");
+  };
+
+  const handleSelectEdition = (edition: EditionDefinition) => {
+    setSelectedEdition(edition);
+    setDigitalAccessError(null);
+    setScreen("mode");
   };
 
   const handleStartGame = () => {
@@ -46,8 +70,52 @@ function GameApp() {
     setScreen("game");
   };
 
+  const handleSelectPhysicalMode = () => {
+    if (!selectedEdition) return;
+    game.resetGame();
+    game.setGameExperience(selectedEdition.id, "physical");
+    setScreen("setup");
+  };
+
+  const handleSelectDigitalMode = async () => {
+    if (!selectedEdition) return;
+    setDigitalAccessError(null);
+    game.setGameExperience(selectedEdition.id, "digital");
+
+    const unlocked = await hasDigitalAccess(selectedEdition.id);
+    setScreen(unlocked ? "digital-experience" : "digital-access");
+  };
+
+  const handlePurchaseDigitalEdition = async () => {
+    if (!selectedEdition) return;
+
+    setIsPurchasingDigital(true);
+    setDigitalAccessError(null);
+    try {
+      await purchaseDigitalEdition(selectedEdition.id);
+      const unlocked = await hasDigitalAccess(selectedEdition.id);
+      if (unlocked) {
+        setScreen("digital-experience");
+      } else {
+        setDigitalAccessError("Unable to unlock digital edition. Please try again.");
+      }
+    } catch (error) {
+      setDigitalAccessError(
+        error instanceof Error ? error.message : "Unable to complete digital unlock right now.",
+      );
+    } finally {
+      setIsPurchasingDigital(false);
+    }
+  };
+
+  const handleUsePhysicalCards = () => {
+    if (!selectedEdition) return;
+    game.resetGame();
+    game.setGameExperience(selectedEdition.id, "physical");
+    setScreen("setup");
+  };
+
   const handleStartTournamentGame = async () => {
-    // Fetch existing scores from server first
     let serverScores: Record<string, Array<{ hole: number; par: number; strokes: number; scratches: number; penalties: number }>> = {};
     try {
       const res = await apiRequest("GET", `/api/tournaments/${tournament.roomCode}/my-scores?deviceId=${tournament.deviceId}`);
@@ -56,18 +124,16 @@ function GameApp() {
     } catch (err) {
       console.log("No existing scores to restore or error fetching:", err);
     }
-    
-    // Reset local game and populate with tournament players
+
     game.resetGame();
-    
-    // Add players and restore their scores immediately
+    game.setGameExperience(game.selectedEditionId, "physical");
+
     tournament.myPlayers.forEach((tp, idx) => {
       game.addPlayer(tp.playerName, idx);
     });
-    
+
     game.startGame();
-    
-    // Use a small delay to ensure state is updated, then restore scores
+
     setTimeout(() => {
       tournament.myPlayers.forEach((tp, idx) => {
         const scores = serverScores[tp.id.toString()];
@@ -85,7 +151,7 @@ function GameApp() {
         }
       });
     }, 100);
-    
+
     setScreen("game");
     setActiveTab("game");
   };
@@ -100,6 +166,18 @@ function GameApp() {
   };
 
   const handleLoadSlot = (slot: string) => {
+    const savedGames = game.getSavedGames() as Record<string, { selectedEditionId?: string }>;
+    const savedEditionId = savedGames[slot]?.selectedEditionId;
+    if (savedEditionId) {
+      try {
+        setSelectedEdition(getEditionById(savedEditionId as EditionDefinition["id"]));
+      } catch {
+        setSelectedEdition(getEditionById("classic"));
+      }
+    } else {
+      setSelectedEdition(getEditionById("classic"));
+    }
+
     game.loadGame(slot);
     setShowSaveLoad(null);
     setScreen("game");
@@ -119,21 +197,14 @@ function GameApp() {
   };
 
   const turnOrderPlayers = getTurnOrder(game.players, game.scores, game.currentHole);
-  const currentPlayerIndex = turnOrderPlayers.length > 0
-    ? game.currentPlayerIndex % turnOrderPlayers.length
-    : 0;
+  const currentPlayerIndex = turnOrderPlayers.length > 0 ? game.currentPlayerIndex % turnOrderPlayers.length : 0;
   const currentPlayer = turnOrderPlayers[currentPlayerIndex];
   const playerIsLeader = currentPlayer ? isLeader(currentPlayer.id, game.players, game.scores) : false;
 
-  // Splash Screen
   if (screen === "splash") {
     return (
       <>
-        <SplashScreen 
-          onNewGame={handleNewGame} 
-          onLoadGame={handleLoadGame}
-          onStartTournamentGame={handleStartTournamentGame}
-        />
+        <SplashScreen onNewGame={handleNewGame} onLoadGame={handleLoadGame} onStartTournamentGame={handleStartTournamentGame} />
         {showSaveLoad === "load" && (
           <SaveLoadDialog
             mode="load"
@@ -148,7 +219,47 @@ function GameApp() {
     );
   }
 
-  // Setup Screen
+  if (screen === "edition") {
+    return <EditionSelectionScreen onSelectEdition={handleSelectEdition} onBack={() => setScreen("splash")} />;
+  }
+
+  if ((screen === "mode" || screen === "digital-access" || screen === "digital-experience") && !selectedEdition) {
+    return <EditionSelectionScreen onSelectEdition={handleSelectEdition} onBack={() => setScreen("splash")} />;
+  }
+
+  if (screen === "mode" && selectedEdition) {
+    return (
+      <PlayModeSelectionScreen
+        edition={selectedEdition}
+        onSelectMode={(mode) => {
+          if (mode === "physical") {
+            handleSelectPhysicalMode();
+          } else {
+            void handleSelectDigitalMode();
+          }
+        }}
+        onBack={() => setScreen("edition")}
+      />
+    );
+  }
+
+  if (screen === "digital-access" && selectedEdition) {
+    return (
+      <DigitalAccessScreen
+        edition={selectedEdition}
+        isPurchasing={isPurchasingDigital}
+        error={digitalAccessError}
+        onPurchase={() => void handlePurchaseDigitalEdition()}
+        onUsePhysicalCards={handleUsePhysicalCards}
+        onBack={() => setScreen("mode")}
+      />
+    );
+  }
+
+  if (screen === "digital-experience" && selectedEdition) {
+    return <DigitalExperiencePlaceholder edition={selectedEdition} onBack={() => setScreen("mode")} />;
+  }
+
   if (screen === "setup") {
     return (
       <PlayerSetup
@@ -163,7 +274,6 @@ function GameApp() {
     );
   }
 
-  // Game/Summary/Save/Settings with Bottom Nav
   return (
     <div className="pb-16">
       {activeTab === "game" && currentPlayer && (
@@ -190,9 +300,7 @@ function GameApp() {
           players={game.players}
           scores={game.scores}
           onNewGame={handleNewGame}
-          onUpdateHoleScore={(playerId, hole, strokes) =>
-            game.updateScore(playerId, hole, { hole, strokes })
-          }
+          onUpdateHoleScore={(playerId, hole, strokes) => game.updateScore(playerId, hole, { hole, strokes })}
           isGameOver={game.isComplete}
         />
       )}
@@ -242,3 +350,4 @@ export default function App() {
     </QueryClientProvider>
   );
 }
+
