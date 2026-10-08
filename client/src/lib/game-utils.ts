@@ -28,6 +28,33 @@ export function getScoreCallout(strokes: number, par: number): string {
   return `+${diff}`;
 }
 
+function getFinalHoleScore(score?: HoleScore): number {
+  if (!score) return Number.POSITIVE_INFINITY;
+  return score.strokes + score.scratches + score.penalties;
+}
+
+export function getTurnOrder(
+  players: Player[],
+  scores: Record<string, HoleScore[]>,
+  currentHole: number
+): Player[] {
+  const previousHole = currentHole - 1;
+
+  return [...players].sort((a, b) => {
+    if (currentHole > 1) {
+      const previousScoreDiff =
+        getFinalHoleScore(scores[a.id]?.find((score) => score.hole === previousHole)) -
+        getFinalHoleScore(scores[b.id]?.find((score) => score.hole === previousHole));
+
+      if (previousScoreDiff !== 0) {
+        return previousScoreDiff;
+      }
+    }
+
+    return a.order - b.order;
+  });
+}
+
 export function getLeaderboard(
   players: Player[],
   scores: Record<string, HoleScore[]>,

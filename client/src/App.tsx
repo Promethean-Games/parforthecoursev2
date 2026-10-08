@@ -13,7 +13,7 @@ import { SummaryScreen } from "@/components/SummaryScreen";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { SaveLoadDialog } from "@/components/SaveLoadDialog";
 import { BottomNav } from "@/components/BottomNav";
-import { isLeader } from "@/lib/game-utils";
+import { getTurnOrder, isLeader } from "@/lib/game-utils";
 
 type Screen = "splash" | "setup" | "game" | "summary";
 type ActiveTab = "game" | "summary" | "settings" | "save";
@@ -118,7 +118,11 @@ function GameApp() {
     game.deleteSlot(slot);
   };
 
-  const currentPlayer = game.players[game.currentPlayerIndex];
+  const turnOrderPlayers = getTurnOrder(game.players, game.scores, game.currentHole);
+  const currentPlayerIndex = turnOrderPlayers.length > 0
+    ? game.currentPlayerIndex % turnOrderPlayers.length
+    : 0;
+  const currentPlayer = turnOrderPlayers[currentPlayerIndex];
   const playerIsLeader = currentPlayer ? isLeader(currentPlayer.id, game.players, game.scores) : false;
 
   // Splash Screen
@@ -164,7 +168,7 @@ function GameApp() {
     <div className="pb-16">
       {activeTab === "game" && currentPlayer && (
         <GameScreen
-          players={game.players}
+          players={turnOrderPlayers}
           currentPlayer={currentPlayer}
           currentHole={game.currentHole}
           scores={game.scores}
