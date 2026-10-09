@@ -273,13 +273,6 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
           </Card>
 
           <div className="pt-4 space-y-3">
-            <button
-              onClick={() => window.open("https://forms.gle/dss9Ksbenx3WTzh29", "_blank")}
-              className="w-full text-sm text-muted-foreground hover:text-primary transition-colors py-2"
-              data-testid="button-submit-feedback-settings"
-            >
-              Submit Feedback
-            </button>
             <Button
               variant="outline"
               className="w-full h-12"

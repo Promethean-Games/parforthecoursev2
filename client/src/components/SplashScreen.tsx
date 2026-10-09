@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Settings } from "lucide-react";
 import { LOGO_URL } from "@/lib/constants";
+import { unlockAllTestEntitlements } from "@/lib/entitlements";
 import { TDSignInModal } from "./TDSignInModal";
 import { TournamentManagementPage } from "./TournamentManagementPage";
 
@@ -16,10 +19,41 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
   const [showTDSignIn, setShowTDSignIn] = useState(false);
   const [showTournamentManagement, setShowTournamentManagement] = useState(false);
   const [verifiedPin, setVerifiedPin] = useState<string | null>(null);
+  const [testerCodeStep, setTesterCodeStep] = useState<"prompt" | "code" | null>(null);
+  const [testerCodeInput, setTesterCodeInput] = useState("");
+  const [testerCodeError, setTesterCodeError] = useState<string | null>(null);
 
   const handleTDSignInSuccess = (pin: string) => {
     setVerifiedPin(pin);
     setShowTournamentManagement(true);
+  };
+
+  const resetTesterCodeFlow = () => {
+    setTesterCodeStep(null);
+    setTesterCodeInput("");
+    setTesterCodeError(null);
+  };
+
+  const handleNewGameClick = () => {
+    setTesterCodeInput("");
+    setTesterCodeError(null);
+    setTesterCodeStep("prompt");
+  };
+
+  const handleNormalNewGame = () => {
+    resetTesterCodeFlow();
+    onNewGame();
+  };
+
+  const handleTesterCodeSubmit = async () => {
+    const success = await unlockAllTestEntitlements(testerCodeInput);
+    if (!success) {
+      setTesterCodeError("Invalid code. Please try again.");
+      return;
+    }
+
+    resetTesterCodeFlow();
+    onNewGame();
   };
 
   if (showTournamentManagement && verifiedPin) {
@@ -56,18 +90,6 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
             >
               TD Sign-In
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => window.open("https://forms.gle/41CE3SGQLPukQcw17", "_blank")}
-              data-testid="menu-item-send-feedback"
-            >
-              Send Feedback
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => window.open("https://forms.gle/dss9Ksbenx3WTzh29", "_blank")}
-              data-testid="menu-item-submit-feedback"
-            >
-              Submit Feedback
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -84,7 +106,7 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
         <Button 
           size="lg"
           className="w-full text-lg h-14"
-          onClick={onNewGame}
+          onClick={handleNewGameClick}
           data-testid="button-new-game"
         >
           New Game
@@ -109,6 +131,62 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
         </button>
       </div>
 
+
+      <AlertDialog open={testerCodeStep !== null} onOpenChange={(open) => {
+        if (!open) {
+          resetTesterCodeFlow();
+        }
+      }}>
+        <AlertDialogContent>
+          {testerCodeStep === "prompt" ? (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Playtesting access</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Do you have a code for unlocking playtesting mode?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={handleNormalNewGame}>No</AlertDialogCancel>
+                <AlertDialogAction onClick={() => setTesterCodeStep("code")}>Yes</AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          ) : (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Enter playtesting code</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Use the tester code to unlock all entitlements for this session.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="space-y-2">
+                <Input
+                  value={testerCodeInput}
+                  onChange={(e) => {
+                    setTesterCodeError(null);
+                    setTesterCodeInput(e.target.value.toUpperCase());
+                  }}
+                  placeholder="Enter code"
+                  className="font-mono tracking-widest text-center"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      void handleTesterCodeSubmit();
+                    }
+                  }}
+                  autoFocus
+                />
+                {testerCodeError && (
+                  <p className="text-sm text-destructive">{testerCodeError}</p>
+                )}
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={resetTesterCodeFlow}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void handleTesterCodeSubmit()}>Unlock</AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
 
       <TDSignInModal
         isOpen={showTDSignIn}
