@@ -202,7 +202,20 @@ function GameApp() {
     setActiveTab("summary");
   };
 
+  const handleHome = () => {
+    game.resetGame();
+    setSelectedEdition(null);
+    setDigitalAccessError(null);
+    setShowSaveLoad(null);
+    setScreen("splash");
+    setActiveTab("game");
+  };
+
   const handleTabChange = (tab: ActiveTab) => {
+    if (game.isComplete && tab === "game") {
+      handleHome();
+      return;
+    }
     setActiveTab(tab);
   };
 
@@ -367,10 +380,11 @@ function GameApp() {
           onUpdateSettings={game.updateSettings}
           onAddPlayer={game.addPlayer}
           onEndGame={handleEndGame}
+          onHome={handleHome}
         />
       )}
 
-      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+      <BottomNav activeTab={activeTab} isGameEnded={game.isComplete} onHome={handleHome} onTabChange={handleTabChange} />
     </div>
   );
 }

@@ -10,7 +10,7 @@ export default function BottomNavExample() {
         <h2 className="text-xl font-bold mb-2">Bottom Navigation</h2>
         <p className="text-muted-foreground">Active: {activeTab}</p>
       </div>
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <BottomNav activeTab={activeTab} isGameEnded={false} onHome={() => setActiveTab("game")} onTabChange={setActiveTab} />
     </div>
   );
 }

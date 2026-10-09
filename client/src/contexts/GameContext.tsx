@@ -233,6 +233,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const nextPlayerIndex = (prev.currentPlayerIndex + 1) % prev.players.length;
       const nextHole = nextPlayerIndex === 0 ? prev.currentHole + 1 : prev.currentHole;
 
+      if (nextHole > 18) {
+        return {
+          ...prev,
+          currentPlayerIndex: 0,
+          currentHole: 18,
+          isComplete: true,
+        };
+      }
+
       return {
         ...prev,
         currentPlayerIndex: nextPlayerIndex,

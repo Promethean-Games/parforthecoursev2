@@ -5,8 +5,9 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Trophy, LogOut, Users, Shield } from "lucide-react";
+import { UserPlus, Shield, Home } from "lucide-react";
 import { useTournament } from "@/contexts/TournamentContext";
+import { unlockAllTestEntitlements } from "@/lib/entitlements";
 import { PlayerSelectionDialog } from "./PlayerSelectionDialog";
 import { DirectorPortal } from "./DirectorPortal";
 import type { Settings, Player } from "@shared/schema";
@@ -17,15 +18,17 @@ interface SettingsPanelProps {
   onUpdateSettings: (settings: Partial<Settings>) => void;
   onAddPlayer: (name: string, position?: number) => void;
   onEndGame: () => void;
+  onHome: () => void;
 }
 
-export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer, onEndGame }: SettingsPanelProps) {
+export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer, onEndGame, onHome }: SettingsPanelProps) {
   const [newPlayerName, setNewPlayerName] = useState("");
   const [insertPosition, setInsertPosition] = useState<string>("end");
-  const [roomCodeInput, setRoomCodeInput] = useState("");
+  const [testCodeInput, setTestCodeInput] = useState("");
   const [showPlayerSelection, setShowPlayerSelection] = useState(false);
-  const [joinError, setJoinError] = useState<string | null>(null);
   const [titleTapCount, setTitleTapCount] = useState(0);
+  const [testCodeStatus, setTestCodeStatus] = useState<string | null>(null);
+  const [directorError, setDirectorError] = useState<string | null>(null);
   const [showDirectorPortal, setShowDirectorPortal] = useState(false);
   const [directorPinInput, setDirectorPinInput] = useState("");
   const [showPinPrompt, setShowPinPrompt] = useState(false);
@@ -40,15 +43,16 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
     setInsertPosition("end");
   };
 
-  const handleJoinRoom = async () => {
-    if (!roomCodeInput.trim()) return;
-    setJoinError(null);
-    const success = await tournament.joinRoom(roomCodeInput.trim());
+  const handleUnlockTestAccess = async () => {
+    if (!testCodeInput.trim()) return;
+    setTestCodeStatus(null);
+
+    const success = await unlockAllTestEntitlements(testCodeInput);
     if (success) {
-      setRoomCodeInput("");
-      setShowPlayerSelection(true);
+      setTestCodeInput("");
+      setTestCodeStatus("Test access enabled. All entitlements unlocked.");
     } else {
-      setJoinError(tournament.error || "Failed to join");
+      setTestCodeStatus("Invalid test code. Please check the shared tester access code.");
     }
   };
 
@@ -74,13 +78,14 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
   };
 
   const handleVerifyPin = async () => {
+    setDirectorError(null);
     const valid = await tournament.verifyDirectorPin(directorPinInput);
     if (valid) {
       setShowPinPrompt(false);
       setDirectorPinInput("");
       setShowDirectorPortal(true);
     } else {
-      setJoinError("Invalid PIN");
+      setDirectorError("Invalid PIN");
     }
   };
 
@@ -102,91 +107,6 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
         </div>
 
         <div className="space-y-4">
-          {/* Tournament/Room Code Section */}
-          <Card className="p-4">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <Trophy className="w-4 h-4" />
-              Tournament Mode
-            </h3>
-            
-            {tournament.isConnected ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{tournament.tournamentInfo?.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Room: {tournament.roomCode}
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleLeaveRoom}
-                    data-testid="button-leave-room"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Leave
-                  </Button>
-                </div>
-                
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Users className="w-4 h-4" />
-                  <span>{tournament.myPlayers.length} player(s) assigned to this device</span>
-                </div>
-                
-                <Button
-                  variant="secondary"
-                  className="w-full"
-                  onClick={() => setShowPlayerSelection(true)}
-                  data-testid="button-manage-players"
-                >
-                  Manage My Players
-                </Button>
-
-                {tournament.isDirector && (
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setShowDirectorPortal(true)}
-                    data-testid="button-director-portal"
-                  >
-                    <Shield className="w-4 h-4 mr-2" />
-                    Director Portal
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  <Input
-                    value={roomCodeInput}
-                    onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
-                    placeholder="Enter room code"
-                    className="flex-1 font-mono text-center tracking-widest"
-                    maxLength={6}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleJoinRoom();
-                    }}
-                    data-testid="input-room-code"
-                  />
-                  <Button
-                    onClick={handleJoinRoom}
-                    disabled={tournament.isLoading || !roomCodeInput.trim()}
-                    data-testid="button-join-room"
-                  >
-                    {tournament.isLoading ? "Joining..." : "Join"}
-                  </Button>
-                </div>
-                {joinError && (
-                  <p className="text-sm text-destructive">{joinError}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Enter a 6-character room code to join a live tournament
-                </p>
-              </div>
-            )}
-          </Card>
-
           {/* Director PIN Prompt */}
           {showPinPrompt && (
             <Card className="p-4 border-primary">
@@ -207,6 +127,9 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
                   data-testid="input-director-pin"
                   autoFocus
                 />
+                {directorError && (
+                  <p className="text-sm text-destructive">{directorError}</p>
+                )}
                 <div className="flex gap-2">
                   <Button className="flex-1" onClick={handleVerifyPin} data-testid="button-verify-pin">
                     Verify
@@ -314,6 +237,41 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
             <p className="text-xs text-muted-foreground">Version 2.1.0</p>
           </Card>
 
+          <Card className="p-4">
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Test Code
+            </h3>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  value={testCodeInput}
+                  onChange={(e) => setTestCodeInput(e.target.value.toUpperCase())}
+                  placeholder="Enter test code"
+                  className="flex-1 font-mono text-center tracking-widest"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleUnlockTestAccess();
+                  }}
+                  data-testid="input-test-code"
+                />
+                <Button
+                  onClick={handleUnlockTestAccess}
+                  className="bg-green-600 hover:bg-green-500"
+                  disabled={!testCodeInput.trim()}
+                  data-testid="button-unlock-test-access"
+                >
+                  Unlock
+                </Button>
+              </div>
+              {testCodeStatus && (
+                <p className="text-sm text-emerald-500">{testCodeStatus}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Enter the tester code to unlock all digital entitlements for QA and Play Store testing.
+              </p>
+            </div>
+          </Card>
+
           <div className="pt-4 space-y-3">
             <button
               onClick={() => window.open("https://forms.gle/dss9Ksbenx3WTzh29", "_blank")}
@@ -322,6 +280,15 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
             >
               Submit Feedback
             </button>
+            <Button
+              variant="outline"
+              className="w-full h-12"
+              onClick={onHome}
+              data-testid="button-home-settings"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Home
+            </Button>
             <Button
               variant="destructive"
               className="w-full h-12"

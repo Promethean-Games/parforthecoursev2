@@ -16,6 +16,7 @@ export default function SettingsPanelExample() {
       onUpdateSettings={(updates) => setSettings({ ...settings, ...updates })}
       onAddPlayer={() => console.log("Add player")}
       onEndGame={() => console.log("End game")}
+      onHome={() => console.log("Home")}
     />
   );
 }
