@@ -16,7 +16,6 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "PFTCWebView"
-        private const val WEBVIEW_STATE_KEY    = "webview_state"
         private const val SHOWING_FALLBACK_KEY = "showing_fallback"
 
         /** True when the diagnostic panel should be shown on failure. */
@@ -159,18 +158,12 @@ class MainActivity : AppCompatActivity() {
         StartupDiagnostics.stepSucceeded("WebView setup")
 
         val restoringFallback = savedInstanceState?.getBoolean(SHOWING_FALLBACK_KEY) == true
-        val restored = if (!restoringFallback) {
-            savedInstanceState?.getBundle(WEBVIEW_STATE_KEY)?.let { state ->
-                webView.restoreState(state)
-            }
-        } else null
-
-        if (restored == null) {
-            Log.i(TAG, "No restorable WebView state; loading app URL")
-            loadAppUrl()
-        } else {
-            StartupDiagnostics.stepSucceeded("WebView state restored")
+        if (restoringFallback) {
+            showingFallback = true
         }
+
+        Log.i(TAG, "Loading fresh app URL on startup")
+        loadAppUrl()
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -187,10 +180,6 @@ class MainActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean(SHOWING_FALLBACK_KEY, showingFallback)
-        if (showingFallback) return
-        val webViewState = Bundle()
-        webView.saveState(webViewState)
-        outState.putBundle(WEBVIEW_STATE_KEY, webViewState)
     }
 
     override fun onDestroy() {
@@ -203,16 +192,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
+    private fun currentAppUrl(): String {
+        val separator = if (BuildConfig.APP_URL.contains("?")) "&" else "?"
+        return "${BuildConfig.APP_URL}${separator}appVersion=${BuildConfig.VERSION_CODE}"
+    }
+
     private fun loadAppUrl() {
         showingFallback    = false
         retriedInitialLoad = false
         secureOverlayKeys.clear()
         applySecureFlag()
         webView.stopLoading()
+        webView.clearCache(true)
         webView.clearHistory()
-        Log.i(TAG, "Loading APP_URL=${BuildConfig.APP_URL}")
-        StartupDiagnostics.stepStarted("Loading APP_URL: ${BuildConfig.APP_URL}")
-        webView.loadUrl(BuildConfig.APP_URL)
+        val appUrl = currentAppUrl()
+        Log.i(TAG, "Loading APP_URL=$appUrl")
+        StartupDiagnostics.stepStarted("Loading APP_URL: $appUrl")
+        webView.loadUrl(appUrl)
     }
 
     private fun handleMainFrameLoadFailure(message: String, detail: String? = null) {
@@ -225,7 +221,7 @@ class MainActivity : AppCompatActivity() {
                 if (!showingFallback) {
                     Log.i(TAG, "Retrying APP_URL load")
                     StartupDiagnostics.stepStarted("Retry: Loading APP_URL")
-                    webView.loadUrl(BuildConfig.APP_URL)
+                    webView.loadUrl(currentAppUrl())
                 }
             }, 600)
             return
@@ -278,7 +274,7 @@ class MainActivity : AppCompatActivity() {
           <div class="card">
             <h1>${esc(getString(R.string.app_name))}</h1>
             <p>${esc(message)}</p>
-            <button onclick="location.href='${esc(BuildConfig.APP_URL)}'">${esc(getString(R.string.retry_button))}</button>
+            <button onclick="location.href='${esc(currentAppUrl())}'">${esc(getString(R.string.retry_button))}</button>
           </div>
         </body>
         </html>
@@ -387,7 +383,7 @@ class MainActivity : AppCompatActivity() {
                 ${esc(message)}
               </p>
               <button class="retry"
-                      onclick="location.href='${esc(BuildConfig.APP_URL)}'"
+                      onclick="location.href='${esc(currentAppUrl())}'"
               >${esc(getString(R.string.retry_button))}</button>
             </body>
             </html>
