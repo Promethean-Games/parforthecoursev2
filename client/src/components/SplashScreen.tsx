@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Settings } from "lucide-react";
 import { LOGO_URL } from "@/lib/constants";
 import { unlockAllTestEntitlements } from "@/lib/entitlements";
@@ -147,8 +147,12 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={handleNormalNewGame}>No</AlertDialogCancel>
-                <AlertDialogAction onClick={() => setTesterCodeStep("code")}>Yes</AlertDialogAction>
+                <Button variant="outline" onClick={handleNormalNewGame}>
+                  No
+                </Button>
+                <Button onClick={() => setTesterCodeStep("code")}>
+                  Yes
+                </Button>
               </AlertDialogFooter>
             </>
           ) : (
@@ -180,8 +184,12 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
                 )}
               </div>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={resetTesterCodeFlow}>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => void handleTesterCodeSubmit()}>Unlock</AlertDialogAction>
+                <Button variant="outline" onClick={resetTesterCodeFlow}>
+                  Cancel
+                </Button>
+                <Button onClick={() => void handleTesterCodeSubmit()}>
+                  Unlock
+                </Button>
               </AlertDialogFooter>
             </>
           )}
