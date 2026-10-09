@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Component, type ReactNode, type ErrorInfo } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
@@ -31,6 +31,47 @@ type Screen =
   | "digital-access"
   | "digital-experience";
 type ActiveTab = "game" | "summary" | "settings" | "save";
+
+class AppErrorBoundary extends Component<{
+  children: ReactNode;
+}, {
+  hasError: boolean;
+  error: Error | null;
+}> {
+  state = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error) {
+   return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+   console.error("App render error", error, errorInfo);
+  }
+
+  render() {
+   if (this.state.hasError) {
+     return (
+       <div className="flex min-h-screen items-center justify-center bg-background p-6 text-center">
+         <div className="max-w-md rounded-lg border border-destructive/40 bg-card p-6 shadow-lg">
+           <h1 className="mb-3 text-2xl font-bold text-foreground">Something went wrong</h1>
+           <p className="mb-4 text-sm text-muted-foreground">
+             The app could not finish loading. Please reload and try again.
+           </p>
+           <button
+             type="button"
+             onClick={() => window.location.reload()}
+             className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground"
+           >
+             Reload app
+           </button>
+         </div>
+       </div>
+     );
+   }
+
+   return this.props.children;
+  }
+}
 
 function GameApp() {
   const game = useGame();
@@ -336,18 +377,20 @@ function GameApp() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <ThemeProvider>
-          <TournamentProvider>
-            <GameProvider>
-              <GameApp />
-            </GameProvider>
-          </TournamentProvider>
-        </ThemeProvider>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ThemeProvider>
+            <TournamentProvider>
+              <GameProvider>
+                <GameApp />
+              </GameProvider>
+            </TournamentProvider>
+          </ThemeProvider>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </AppErrorBoundary>
   );
 }
 

@@ -9,6 +9,7 @@ const assetDir = fs.existsSync(path.resolve(import.meta.dirname, "attached_asset
   : path.resolve(import.meta.dirname, "assets");
 
 export default defineConfig({
+  base: "./",
   plugins: [
     react(),
     runtimeErrorOverlay(),
