@@ -1,7 +1,12 @@
+import fs from "node:fs";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+
+const assetDir = fs.existsSync(path.resolve(import.meta.dirname, "attached_assets"))
+  ? path.resolve(import.meta.dirname, "attached_assets")
+  : path.resolve(import.meta.dirname, "assets");
 
 export default defineConfig({
   plugins: [
@@ -23,7 +28,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+      "@assets": assetDir,
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
