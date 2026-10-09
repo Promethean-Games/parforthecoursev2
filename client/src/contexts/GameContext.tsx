@@ -74,13 +74,17 @@ export function useGame() {
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [gameState, setGameState] = useState<GameState>(() => {
-    const saved = localStorage.getItem("currentGame");
-    if (saved) {
-      try {
-        return toGameState(JSON.parse(saved));
-      } catch {
-        // Fall back to default state
+    try {
+      const saved = typeof window !== "undefined" ? window.localStorage.getItem("currentGame") : null;
+      if (saved) {
+        try {
+          return toGameState(JSON.parse(saved));
+        } catch {
+          // Fall back to default state
+        }
       }
+    } catch {
+      // Ignore storage issues from restricted contexts.
     }
 
     return {

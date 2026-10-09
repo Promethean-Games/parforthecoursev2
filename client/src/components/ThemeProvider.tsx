@@ -18,15 +18,24 @@ export function useTheme() {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem("theme");
-    return (saved as Theme) || "dark";
+    try {
+      const saved = typeof window !== "undefined" ? window.localStorage.getItem("theme") : null;
+      return (saved as Theme) || "dark";
+    } catch {
+      return "dark";
+    }
   });
 
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
-    localStorage.setItem("theme", theme);
+
+    try {
+      window.localStorage.setItem("theme", theme);
+    } catch {
+      // Ignore storage issues in restricted browser contexts.
+    }
   }, [theme]);
 
   const toggleTheme = () => {

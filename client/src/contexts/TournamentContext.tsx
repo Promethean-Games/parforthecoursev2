@@ -51,17 +51,26 @@ export function useTournament() {
 }
 
 function getDeviceId(): string {
-  let deviceId = localStorage.getItem("deviceId");
-  if (!deviceId) {
-    deviceId = crypto.randomUUID();
-    localStorage.setItem("deviceId", deviceId);
+  try {
+    const storage = typeof window !== "undefined" ? window.localStorage : null;
+    const existing = storage?.getItem("deviceId");
+    if (existing) return existing;
+
+    const generatedId = globalThis.crypto?.randomUUID?.() ?? `device-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    storage?.setItem("deviceId", generatedId);
+    return generatedId;
+  } catch {
+    return `device-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
-  return deviceId;
 }
 
 export function TournamentProvider({ children }: { children: ReactNode }) {
   const [roomCode, setRoomCode] = useState<string | null>(() => {
-    return localStorage.getItem("tournamentRoomCode");
+    try {
+      return typeof window !== "undefined" ? window.localStorage.getItem("tournamentRoomCode") : null;
+    } catch {
+      return null;
+    }
   });
   const [tournamentInfo, setTournamentInfo] = useState<TournamentInfo | null>(null);
   const [myPlayers, setMyPlayers] = useState<TournamentPlayer[]>([]);
