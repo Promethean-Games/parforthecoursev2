@@ -19,9 +19,9 @@ export function PlayModeSelectionScreen({ edition, onSelectMode, onBack }: PlayM
       </div>
 
       <div className="space-y-4 flex-1">
-        <Card className="p-4 space-y-3">
+        <Card className="p-4 space-y-3 border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 to-background">
           <Button
-            className="w-full h-12 text-lg"
+            className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-emerald-500 via-green-500 to-lime-500 text-white shadow-lg shadow-emerald-900/20"
             onClick={() => onSelectMode("physical")}
             data-testid="button-mode-physical"
           >
@@ -30,10 +30,9 @@ export function PlayModeSelectionScreen({ edition, onSelectMode, onBack }: PlayM
           <p className="text-sm text-muted-foreground text-center">I own the physical cards.</p>
         </Card>
 
-        <Card className="p-4 space-y-3">
+        <Card className="p-4 space-y-3 border-blue-500/40 bg-gradient-to-br from-blue-500/10 to-background">
           <Button
-            variant="outline"
-            className="w-full h-12 text-lg"
+            className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-900/20"
             onClick={() => onSelectMode("digital")}
             data-testid="button-mode-digital"
           >
