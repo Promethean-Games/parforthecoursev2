@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { DrawDialog } from "./DrawDialog";
 import { TableSetupDialog } from "./TableSetupDialog";
 import { useTournament } from "@/contexts/TournamentContext";
+import type { PlayMode } from "@/lib/play-mode";
 
 interface GameScreenProps {
   players: Player[];
@@ -16,6 +17,7 @@ interface GameScreenProps {
   currentHole: number;
   scores: Record<string, HoleScore[]>;
   isLeader: boolean;
+  playMode: PlayMode;
   leftHandedMode?: boolean;
   onPreviousPlayer: () => void;
   onNextPlayer: () => void;
@@ -33,6 +35,7 @@ export function GameScreen({
   currentHole,
   scores,
   isLeader,
+  playMode,
   leftHandedMode = false,
   onPreviousPlayer,
   onNextPlayer,
@@ -234,8 +237,12 @@ export function GameScreen({
   const shooterInfo = `${shootersRemaining} shooter${shootersRemaining !== 1 ? "s" : ""} remaining`;
 
   const handleNextCard = () => {
-    const jokerSelected = typeof window !== "undefined" && window.confirm("Did the player draw a Joker card? Click OK for Yes, Cancel for No.");
-    setIsJokerDraw(Boolean(jokerSelected));
+    if (playMode === "digital") {
+      const jokerSelected = typeof window !== "undefined" && window.confirm("Did the player draw a Joker card? Click OK for Yes, Cancel for No.");
+      setIsJokerDraw(Boolean(jokerSelected));
+    } else {
+      setIsJokerDraw(false);
+    }
     onNextCard();
   };
 

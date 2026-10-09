@@ -20,6 +20,7 @@ export default function GameScreenExample() {
       currentHole={1}
       scores={scores}
       isLeader={true}
+      playMode="physical"
       leftHandedMode={false}
       onPreviousPlayer={() => console.log("Previous")}
       onNextPlayer={() => console.log("Next")}

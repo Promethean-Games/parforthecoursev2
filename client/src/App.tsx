@@ -337,6 +337,7 @@ function GameApp() {
           currentHole={game.currentHole}
           scores={game.scores}
           isLeader={playerIsLeader}
+          playMode={game.playMode}
           leftHandedMode={game.settings.leftHandedMode}
           onPreviousPlayer={game.previousPlayer}
           onNextPlayer={game.nextPlayer}
@@ -407,4 +408,3 @@ export default function App() {
     </AppErrorBoundary>
   );
 }
-
