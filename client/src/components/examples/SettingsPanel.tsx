@@ -12,8 +12,9 @@ export default function SettingsPanelExample() {
   return (
     <SettingsPanel
       settings={settings}
+      players={[]}
       onUpdateSettings={(updates) => setSettings({ ...settings, ...updates })}
-      onClose={() => console.log("Close")}
+      onAddPlayer={() => console.log("Add player")}
       onEndGame={() => console.log("End game")}
     />
   );

@@ -58,7 +58,7 @@ export function getTurnOrder(
 export function getLeaderboard(
   players: Player[],
   scores: Record<string, HoleScore[]>,
-  round: number
+  round: number = 1
 ): Array<{ player: Player; total: number }> {
   return players
     .map((player) => ({
@@ -67,10 +67,8 @@ export function getLeaderboard(
     }))
     .sort((a, b) => {
       if (round === 1) {
-        // Sort by height (assuming height is a property of Player)
-        return a.player.height - b.player.height;
+        return a.player.order - b.player.order;
       }
-      // Sort by score for subsequent rounds
       return a.total - b.total;
     });
 }
@@ -80,6 +78,6 @@ export function isLeader(
   players: Player[],
   scores: Record<string, HoleScore[]>
 ): boolean {
-  const leaderboard = getLeaderboard(players, scores);
+  const leaderboard = getLeaderboard(players, scores, 1);
   return leaderboard.length > 0 && leaderboard[0].player.id === playerId;
 }
