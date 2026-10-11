@@ -18,8 +18,8 @@ export const EDITIONS: EditionDefinition[] = [
     description: "Original Par for the Course edition.",
     digitalProductId: "classic.digital",
     priceCents: 199,
-    cardCount: 18,
-    jokerCount: 0,
+    cardCount: 16,
+    jokerCount: 2,
     available: true,
   },
   {
