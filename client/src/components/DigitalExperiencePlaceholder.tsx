@@ -64,14 +64,7 @@ export function DigitalExperiencePlaceholder({ edition, onBack }: DigitalExperie
 
   const handleDrawCard = () => {
     if (isFlipping || !classicOnly) return;
-
-    let activePile = drawPile;
-    if (activePile.length === 0) {
-      activePile = shuffleDeck(fullDeck);
-      setDrawPile(activePile);
-    }
-
-    const [nextCard, ...remainingCards] = activePile;
+    const [nextCard, ...remainingCards] = drawPile;
     if (!nextCard) return;
 
     setIsFaceVisible(false);
@@ -83,13 +76,6 @@ export function DigitalExperiencePlaceholder({ edition, onBack }: DigitalExperie
       setIsFaceVisible(true);
       setIsFlipping(false);
     }, FLIP_DURATION_MS / 2);
-  };
-
-  const handleReshuffle = () => {
-    if (isFlipping || !classicOnly) return;
-    setDrawPile(shuffleDeck(fullDeck));
-    setCurrentCard(null);
-    setIsFaceVisible(false);
   };
 
   const cardsRemaining = drawPile.length;
@@ -118,7 +104,7 @@ export function DigitalExperiencePlaceholder({ edition, onBack }: DigitalExperie
           <button
             type="button"
             onClick={handleDrawCard}
-            disabled={isFlipping}
+            disabled={isFlipping || cardsRemaining === 0}
             className="relative h-[320px] w-[214px] rounded-xl"
             style={{ perspective: "1000px" }}
             aria-label="Tap card back to draw"
@@ -155,17 +141,15 @@ export function DigitalExperiencePlaceholder({ edition, onBack }: DigitalExperie
 
         <div className="space-y-1">
           <p className="text-base font-semibold" data-testid="text-digital-card-result">
-            {currentCard ? (currentCard.par === null ? "JOKER! Create your own hole." : currentCard.label) : "Tap the card back to draw."}
+            {currentCard
+              ? (currentCard.par === null ? "JOKER! Create your own hole." : currentCard.label)
+              : "Tap the card back to draw."}
           </p>
           <p className="text-sm text-muted-foreground" data-testid="text-digital-cards-remaining">
-            {cardsRemaining} cards remaining in this shuffle
+            {cardsRemaining > 0
+              ? `${cardsRemaining} cards remaining`
+              : "Deck complete - all 18 cards have been shown once."}
           </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3">
-          <Button variant="outline" onClick={handleReshuffle} disabled={isFlipping} data-testid="button-digital-reshuffle">
-            Reshuffle
-          </Button>
         </div>
 
         <Button variant="ghost" onClick={onBack} data-testid="button-digital-placeholder-back">
