@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { DrawDialog } from "./DrawDialog";
 import { TableSetupDialog } from "./TableSetupDialog";
 import { useTournament } from "@/contexts/TournamentContext";
+import type { EditionDefinition } from "@/lib/editions";
 import type { PlayMode } from "@/lib/play-mode";
 
 interface GameScreenProps {
@@ -18,6 +19,7 @@ interface GameScreenProps {
   scores: Record<string, HoleScore[]>;
   isLeader: boolean;
   playMode: PlayMode;
+  edition?: EditionDefinition;
   leftHandedMode?: boolean;
   onPreviousPlayer: () => void;
   onNextPlayer: () => void;
@@ -36,6 +38,7 @@ export function GameScreen({
   scores,
   isLeader,
   playMode,
+  edition,
   leftHandedMode = false,
   onPreviousPlayer,
   onNextPlayer,
@@ -49,8 +52,8 @@ export function GameScreen({
   const [showDrawDialog, setShowDrawDialog] = useState(false);
   const [showTableSetupDialog, setShowTableSetupDialog] = useState(false);
   const [pendingPar, setPendingPar] = useState<number | null>(null);
-  const [isJokerDraw, setIsJokerDraw] = useState(false);
   const [drawConfirmTime, setDrawConfirmTime] = useState<number | null>(null);
+  const [isJokerDraw, setIsJokerDraw] = useState(false);
   const [lastHole, setLastHole] = useState(currentHole);
   const isInitialMount = useRef(true);
   const lastPlayerId = useRef(currentPlayer.id);
@@ -237,12 +240,17 @@ export function GameScreen({
   const shooterInfo = `${shootersRemaining} shooter${shootersRemaining !== 1 ? "s" : ""} remaining`;
 
   const handleNextCard = () => {
-    if (playMode === "digital") {
-      const jokerSelected = typeof window !== "undefined" && window.confirm("Did the player draw a Joker card? Click OK for Yes, Cancel for No.");
-      setIsJokerDraw(Boolean(jokerSelected));
-    } else {
+    const supportsJokers = playMode === "digital" && !!edition && edition.jokerCount > 0 && (edition.cardCount ?? 0) > 0;
+
+    if (!supportsJokers) {
       setIsJokerDraw(false);
+      onNextCard();
+      return;
     }
+
+    const jokerProbability = edition.jokerCount / edition.cardCount!;
+    const shouldShowJoker = Math.random() < jokerProbability;
+    setIsJokerDraw(shouldShowJoker);
     onNextCard();
   };
 

@@ -7,6 +7,7 @@ export interface EditionDefinition {
   digitalProductId: string;
   priceCents: number;
   cardCount: number | null;
+  jokerCount: number;
   available: boolean;
 }
 
@@ -17,7 +18,8 @@ export const EDITIONS: EditionDefinition[] = [
     description: "Original Par for the Course edition.",
     digitalProductId: "classic.digital",
     priceCents: 199,
-    cardCount: null,
+    cardCount: 18,
+    jokerCount: 0,
     available: true,
   },
   {
@@ -26,7 +28,8 @@ export const EDITIONS: EditionDefinition[] = [
     description: "Reracked edition content.",
     digitalProductId: "reracked.digital",
     priceCents: 199,
-    cardCount: null,
+    cardCount: 18,
+    jokerCount: 0,
     available: true,
   },
   {
@@ -35,7 +38,8 @@ export const EDITIONS: EditionDefinition[] = [
     description: "Sequential edition content.",
     digitalProductId: "sequential.digital",
     priceCents: 199,
-    cardCount: null,
+    cardCount: 16,
+    jokerCount: 2,
     available: true,
   },
   {
@@ -44,7 +48,8 @@ export const EDITIONS: EditionDefinition[] = [
     description: "Tee'd Off! edition content.",
     digitalProductId: "teed_off.digital",
     priceCents: 199,
-    cardCount: null,
+    cardCount: 18,
+    jokerCount: 0,
     available: true,
   },
   {
@@ -53,7 +58,8 @@ export const EDITIONS: EditionDefinition[] = [
     description: "Tournament edition content.",
     digitalProductId: "tournament.digital",
     priceCents: 199,
-    cardCount: null,
+    cardCount: 18,
+    jokerCount: 0,
     available: true,
   },
 ];

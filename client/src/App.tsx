@@ -338,6 +338,7 @@ function GameApp() {
           scores={game.scores}
           isLeader={playerIsLeader}
           playMode={game.playMode}
+          edition={selectedEdition ?? getEditionById(game.selectedEditionId)}
           leftHandedMode={game.settings.leftHandedMode}
           onPreviousPlayer={game.previousPlayer}
           onNextPlayer={game.nextPlayer}
