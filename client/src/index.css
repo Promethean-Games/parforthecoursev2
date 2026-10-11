@@ -197,6 +197,28 @@
  */
 @layer utilities {
 
+  @keyframes next-card-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.3);
+    }
+    50% {
+      transform: scale(1.015);
+      box-shadow: 0 0 0 0.75rem hsl(var(--primary) / 0);
+    }
+  }
+
+  .next-card-button-ready {
+    animation: next-card-pulse 2.8s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .next-card-button-ready {
+      animation: none;
+    }
+  }
+
   /* Hide ugly search cancel button in Chrome until we can style it properly */
   input[type="search"]::-webkit-search-cancel-button {
     @apply hidden;

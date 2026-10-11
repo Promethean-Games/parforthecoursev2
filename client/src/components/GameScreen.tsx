@@ -1,5 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight, Undo2 } from "lucide-react";
 import type { Player, HoleScore, SetupTime } from "@shared/schema";
@@ -121,6 +130,7 @@ export function GameScreen({
   const [pendingPar, setPendingPar] = useState<number | null>(null);
   const [drawConfirmTime, setDrawConfirmTime] = useState<number | null>(null);
   const [isJokerDraw, setIsJokerDraw] = useState(false);
+  const [showAdvanceBlockedDialog, setShowAdvanceBlockedDialog] = useState(false);
   const [digitalDrawPile, setDigitalDrawPile] = useState<DigitalCard[]>([]);
   const [digitalDrawsByHole, setDigitalDrawsByHole] = useState<Record<number, DigitalCard>>({});
   const [lastHole, setLastHole] = useState(currentHole);
@@ -336,6 +346,11 @@ export function GameScreen({
   const shooterInfo = `${shootersRemaining} shooter${shootersRemaining !== 1 ? "s" : ""} remaining`;
 
   const handleNextCard = () => {
+    if (!canAdvance) {
+      setShowAdvanceBlockedDialog(true);
+      return;
+    }
+
     setIsJokerDraw(false);
     onNextCard();
   };
@@ -495,9 +510,14 @@ export function GameScreen({
           Undo
         </Button>
         <Button
-          className="flex-1 h-12 text-base"
+          className={cn(
+            "flex-1 h-12 text-base",
+            canAdvance
+              ? "next-card-button-ready"
+              : "cursor-not-allowed opacity-50 no-default-hover-elevate no-default-active-elevate",
+          )}
           onClick={handleNextCard}
-          disabled={!canAdvance}
+          aria-disabled={!canAdvance}
           data-testid="button-next-card"
         >
           Next Card
@@ -527,6 +547,26 @@ export function GameScreen({
           onConfirm={handleTableReady}
         />
       )}
+
+      <AlertDialog open={showAdvanceBlockedDialog} onOpenChange={setShowAdvanceBlockedDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Finish this hole first</AlertDialogTitle>
+            <AlertDialogDescription>
+              Record a score for every shooter before moving to the next card. No players will be
+              removed automatically.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setShowAdvanceBlockedDialog(false)}
+              data-testid="button-next-card-blocked-ok"
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
