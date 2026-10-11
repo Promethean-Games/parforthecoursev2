@@ -101,11 +101,11 @@ export function DigitalDrawDialog({ card, onReady }: DigitalDrawDialogProps) {
 
         {isRevealed && isJokerCard && (
           <div className="space-y-2 text-left">
-            <label htmlFor="digital-joker-par" className="text-sm font-medium text-foreground">
-              Choose a par for this custom hole
+            <label htmlFor="digital-joker-par" className="text-base font-semibold text-foreground">
+              Choose a par for this custom hole (1-15)
             </label>
             <Select value={jokerPar?.toString() ?? ""} onValueChange={(value) => setJokerPar(parseInt(value, 10))}>
-              <SelectTrigger className="w-full" id="digital-joker-par" data-testid="select-digital-joker-par">
+              <SelectTrigger className="h-14 w-full text-lg" id="digital-joker-par" data-testid="select-digital-joker-par">
                 <SelectValue placeholder="Select par" />
               </SelectTrigger>
               <SelectContent>
@@ -122,7 +122,7 @@ export function DigitalDrawDialog({ card, onReady }: DigitalDrawDialogProps) {
         <Button
           onClick={handleReady}
           disabled={!isRevealed || !card || (isJokerCard && jokerPar === null)}
-          className="w-full min-h-20 text-3xl font-bold tracking-wide"
+          className="w-full min-h-24 text-4xl font-bold tracking-wide"
           data-testid="button-digital-draw-ready"
         >
           Ready!

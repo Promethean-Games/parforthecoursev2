@@ -24,7 +24,7 @@ export function TableSetupDialog({ hole, par, onConfirm }: TableSetupDialogProps
         </p>
 
         <Button
-          className="w-full min-h-20 text-3xl font-bold tracking-wide"
+          className="w-full min-h-24 text-4xl font-bold tracking-wide"
           onClick={onConfirm}
           data-testid="button-table-ready"
         >

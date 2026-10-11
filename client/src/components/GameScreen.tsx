@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -35,6 +36,7 @@ interface GameScreenProps {
   onNextPlayer: () => void;
   onUpdateScore: (score: Partial<HoleScore>) => void;
   onNextCard: () => void;
+  onRemovePlayersAndAdvance: (ids: string[]) => void;
   onUndo: () => void;
   canUndo: boolean;
   onSetParForAll: (par: number) => void;
@@ -54,6 +56,7 @@ export function GameScreen({
   onNextPlayer,
   onUpdateScore,
   onNextCard,
+  onRemovePlayersAndAdvance,
   onUndo,
   canUndo,
   onSetParForAll,
@@ -337,13 +340,14 @@ export function GameScreen({
 
   const canAdvance = par > 0 && strokes > 0 && allPlayersHaveScores;
 
-  // Count players remaining with zero score for current hole
-  const shootersRemaining = players.filter((player) => {
+  const playersMissingScores = players.filter((player) => {
     const playerScore = scores[player.id]?.find((s) => s.hole === currentHole);
     return !playerScore || playerScore.strokes === 0;
-  }).length;
-  
+  });
+  const shootersRemaining = playersMissingScores.length;
   const shooterInfo = `${shootersRemaining} shooter${shootersRemaining !== 1 ? "s" : ""} remaining`;
+  const removablePlayerIds = playersMissingScores.map((player) => player.id);
+  const canRemovePlayers = removablePlayerIds.length > 0 && removablePlayerIds.length < players.length;
 
   const handleNextCard = () => {
     if (!canAdvance) {
@@ -353,6 +357,14 @@ export function GameScreen({
 
     setIsJokerDraw(false);
     onNextCard();
+  };
+
+  const handleRemovePlayers = () => {
+    if (!canRemovePlayers) return;
+
+    setShowAdvanceBlockedDialog(false);
+    setIsJokerDraw(false);
+    onRemovePlayersAndAdvance(removablePlayerIds);
   };
 
   return (
@@ -509,32 +521,19 @@ export function GameScreen({
           <Undo2 className="w-5 h-5 mr-2" />
           Undo
         </Button>
-        {canAdvance ? (
-          <Button
-            className="flex-1 h-12 text-base next-card-button-ready"
-            onClick={handleNextCard}
-            data-testid="button-next-card"
-          >
-            Next Card
-          </Button>
-        ) : (
-          <div className="relative flex-1">
-            <Button
-              className="h-12 w-full text-base no-default-hover-elevate no-default-active-elevate"
-              disabled
-              data-testid="button-next-card"
-            >
-              Next Card
-            </Button>
-            <button
-              type="button"
-              className="absolute inset-0 z-10 cursor-not-allowed rounded-md"
-              onClick={() => setShowAdvanceBlockedDialog(true)}
-              aria-label="Why Next Card is disabled"
-              data-testid="button-next-card-disabled-overlay"
-            />
-          </div>
-        )}
+        <Button
+          className={cn(
+            "flex-1 h-12 text-base",
+            canAdvance
+              ? "next-card-button-ready"
+              : "cursor-not-allowed opacity-50",
+          )}
+          onClick={handleNextCard}
+          aria-disabled={!canAdvance}
+          data-testid="button-next-card"
+        >
+          Next Card
+        </Button>
       </div>
 
       {showDrawDialog && (
@@ -566,16 +565,33 @@ export function GameScreen({
           <AlertDialogHeader>
             <AlertDialogTitle>Finish this hole first</AlertDialogTitle>
             <AlertDialogDescription>
-              Record a score for every shooter before moving to the next card. No players will be
-              removed automatically.
+              {canRemovePlayers
+                ? "Some players have not recorded a score for this hole. Remove them and continue, or cancel to return to the game."
+                : "At least one player needs a recorded score before you can remove anyone and continue to the next card."}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {playersMissingScores.length > 0 && (
+            <div className="space-y-2">
+              {playersMissingScores.map((player) => (
+                <div
+                  key={player.id}
+                  className="rounded-md bg-muted/50 px-3 py-2 text-sm font-medium"
+                >
+                  {player.name}
+                </div>
+              ))}
+            </div>
+          )}
           <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-next-card-cancel">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => setShowAdvanceBlockedDialog(false)}
-              data-testid="button-next-card-blocked-ok"
+              onClick={handleRemovePlayers}
+              disabled={!canRemovePlayers}
+              data-testid="button-next-card-remove-players"
             >
-              OK
+              Remove Players
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

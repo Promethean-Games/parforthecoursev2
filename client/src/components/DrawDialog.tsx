@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import drawImage from "@assets/draw-image.png";
+import { PAR_OPTIONS } from "@/lib/constants";
 
 interface DrawDialogProps {
   onSelectPar: (par: number) => void;
@@ -84,7 +85,7 @@ export function DrawDialog({ onSelectPar, onClose, isFirstDraw = false, isJoker 
               <SelectValue placeholder="Select Par" />
             </SelectTrigger>
             <SelectContent>
-              {Array.from({ length: 15 }, (_, i) => i + 1).map((par) => (
+              {PAR_OPTIONS.map((par) => (
                 <SelectItem key={par} value={par.toString()}>
                   Par {par}
                 </SelectItem>

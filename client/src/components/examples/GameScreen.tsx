@@ -26,6 +26,16 @@ export default function GameScreenExample() {
       onNextPlayer={() => console.log("Next")}
       onUpdateScore={(score) => console.log("Update score", score)}
       onNextCard={() => console.log("Next card")}
+      onRemovePlayersAndAdvance={(ids) => {
+        console.log("Remove players and advance", ids);
+        setScores((prev) => {
+          const nextScores = { ...prev };
+          ids.forEach((id) => {
+            delete nextScores[id];
+          });
+          return nextScores;
+        });
+      }}
       onUndo={() => console.log("Undo")}
       canUndo={true}
       onSetParForAll={(par) => console.log("Set par for all:", par)}
