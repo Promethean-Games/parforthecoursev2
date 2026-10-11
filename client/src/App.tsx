@@ -378,6 +378,7 @@ function GameApp() {
           onNextPlayer={game.nextPlayer}
           onUpdateScore={(score) => game.updateScore(currentPlayer.id, game.currentHole, score)}
           onNextCard={game.nextCard}
+          onRemovePlayersAndAdvance={game.removePlayersAndAdvance}
           onUndo={game.undo}
           canUndo={true}
           onSetParForAll={(par) => game.setParForAllPlayers(game.currentHole, par)}

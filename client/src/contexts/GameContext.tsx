@@ -18,6 +18,7 @@ interface GameState {
 interface GameContextValue extends GameState {
   addPlayer: (name: string, position?: number) => void;
   removePlayer: (id: string) => void;
+  removePlayersAndAdvance: (ids: string[]) => void;
   updatePlayerName: (id: string, name: string) => void;
   updatePlayerColor: (id: string, color: string) => void;
   movePlayer: (id: string, direction: "up" | "down") => void;
@@ -154,6 +155,55 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ...prev,
       players: prev.players.filter((player) => player.id !== id).map((player, index) => ({ ...player, order: index })),
     }));
+  };
+
+  const removePlayersAndAdvance = (ids: string[]) => {
+    if (ids.length === 0) return;
+
+    const removedIds = new Set(ids);
+    setHistory((prev) => [...prev.slice(-9), gameState]);
+    setGameState((prev) => {
+      const remainingPlayers = prev.players
+        .filter((player) => !removedIds.has(player.id))
+        .map((player, index) => ({ ...player, order: index }));
+
+      if (remainingPlayers.length === 0) {
+        return prev;
+      }
+
+      const remainingScores = Object.fromEntries(
+        Object.entries(prev.scores).filter(([playerId]) => !removedIds.has(playerId)),
+      );
+
+      const currentPlayerId = prev.players[prev.currentPlayerIndex]?.id;
+      const currentPlayerIndex = currentPlayerId
+        ? remainingPlayers.findIndex((player) => player.id === currentPlayerId)
+        : -1;
+      const basePlayerIndex = currentPlayerIndex >= 0
+        ? currentPlayerIndex
+        : Math.min(prev.currentPlayerIndex, remainingPlayers.length - 1);
+      const nextPlayerIndex = (basePlayerIndex + 1) % remainingPlayers.length;
+      const nextHole = nextPlayerIndex === 0 ? prev.currentHole + 1 : prev.currentHole;
+
+      if (nextHole > 18) {
+        return {
+          ...prev,
+          players: remainingPlayers,
+          scores: remainingScores,
+          currentPlayerIndex: 0,
+          currentHole: 18,
+          isComplete: true,
+        };
+      }
+
+      return {
+        ...prev,
+        players: remainingPlayers,
+        scores: remainingScores,
+        currentPlayerIndex: nextPlayerIndex,
+        currentHole: nextHole,
+      };
+    });
   };
 
   const updatePlayerName = (id: string, name: string) => {
@@ -387,6 +437,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ...gameState,
         addPlayer,
         removePlayer,
+        removePlayersAndAdvance,
         updatePlayerName,
         updatePlayerColor,
         movePlayer,
