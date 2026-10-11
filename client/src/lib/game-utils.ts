@@ -81,3 +81,66 @@ export function isLeader(
   const leaderboard = getLeaderboard(players, scores, 1);
   return leaderboard.length > 0 && leaderboard[0].player.id === playerId;
 }
+
+export function isHoleCompleted(score: HoleScore | undefined): score is HoleScore {
+  if (!score) return false;
+  return score.par > 0 && score.strokes > 0;
+}
+
+export function getCompletedHoleScores(scores: HoleScore[]): HoleScore[] {
+  return scores.filter((score) => isHoleCompleted(score));
+}
+
+export function calculateScoreVsPar(scores: HoleScore[]): number {
+  return getCompletedHoleScores(scores).reduce((acc, score) => {
+    const finalScore = score.strokes + score.scratches + score.penalties;
+    return acc + (finalScore - score.par);
+  }, 0);
+}
+
+export function formatScoreVsPar(scoreVsPar: number): string {
+  if (scoreVsPar === 0) return "E";
+  return scoreVsPar > 0 ? `+${scoreVsPar}` : `${scoreVsPar}`;
+}
+
+export function getBestHoleScore(scores: HoleScore[]): number | null {
+  const completed = getCompletedHoleScores(scores);
+  if (completed.length === 0) return null;
+
+  return completed.reduce((best, score) => {
+    const finalScore = score.strokes + score.scratches + score.penalties;
+    return Math.min(best, finalScore);
+  }, Number.POSITIVE_INFINITY);
+}
+
+export function getHolesAtParOrBetter(scores: HoleScore[]): { atParOrBetter: number; completedHoles: number } {
+  const completed = getCompletedHoleScores(scores);
+  const atParOrBetter = completed.filter((score) => {
+    const finalScore = score.strokes + score.scratches + score.penalties;
+    return finalScore <= score.par;
+  }).length;
+
+  return {
+    atParOrBetter,
+    completedHoles: completed.length,
+  };
+}
+
+export function getPlayerRank(
+  playerId: string,
+  players: Player[],
+  scores: Record<string, HoleScore[]>
+): number | null {
+  const leaderboard = getLeaderboard(players, scores, 2);
+  const rankIndex = leaderboard.findIndex((entry) => entry.player.id === playerId);
+  if (rankIndex < 0) return null;
+  return rankIndex + 1;
+}
+
+export function getCurrentHolePar(scores: Record<string, HoleScore[]>, hole: number): number | null {
+  for (const playerScores of Object.values(scores)) {
+    const holeScore = playerScores.find((score) => score.hole === hole && score.par > 0);
+    if (holeScore) return holeScore.par;
+  }
+  return null;
+}

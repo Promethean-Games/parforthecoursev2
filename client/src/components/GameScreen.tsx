@@ -78,6 +78,35 @@ export function GameScreen({
     { id: "joker-01", imageSrc: cardAssetPath("joker.png"), label: "Joker", par: null },
     { id: "joker-02", imageSrc: cardAssetPath("joker.png"), label: "Joker", par: null },
   ];
+  const createRerackedDeck = (): DigitalCard[] => [
+    { id: "2-01", imageSrc: cardAssetPath("reracked/2-01.png"), label: "Par 2", par: 2 },
+    { id: "3-01", imageSrc: cardAssetPath("reracked/3-01.png"), label: "Par 3", par: 3 },
+    { id: "3-02", imageSrc: cardAssetPath("reracked/3-02.png"), label: "Par 3", par: 3 },
+    { id: "3-03", imageSrc: cardAssetPath("reracked/3-03.png"), label: "Par 3", par: 3 },
+    { id: "4-01", imageSrc: cardAssetPath("reracked/4-01.png"), label: "Par 4", par: 4 },
+    { id: "4-02", imageSrc: cardAssetPath("reracked/4-02.png"), label: "Par 4", par: 4 },
+    { id: "4-03", imageSrc: cardAssetPath("reracked/4-03.png"), label: "Par 4", par: 4 },
+    { id: "4-04", imageSrc: cardAssetPath("reracked/4-04.png"), label: "Par 4", par: 4 },
+    { id: "4-05", imageSrc: cardAssetPath("reracked/4-05.png"), label: "Par 4", par: 4 },
+    { id: "5-01", imageSrc: cardAssetPath("reracked/5-01.png"), label: "Par 5", par: 5 },
+    { id: "5-02", imageSrc: cardAssetPath("reracked/5-02.png"), label: "Par 5", par: 5 },
+    { id: "6-01", imageSrc: cardAssetPath("reracked/6-01.png"), label: "Par 6", par: 6 },
+    { id: "6-02", imageSrc: cardAssetPath("reracked/6-02.png"), label: "Par 6", par: 6 },
+    { id: "6-03", imageSrc: cardAssetPath("reracked/6-03.png"), label: "Par 6", par: 6 },
+    { id: "7-01", imageSrc: cardAssetPath("reracked/7-01.png"), label: "Par 7", par: 7 },
+    { id: "7-02", imageSrc: cardAssetPath("reracked/7-02.png"), label: "Par 7", par: 7 },
+    { id: "joker-01", imageSrc: cardAssetPath("reracked/joker-01.png"), label: "Joker", par: null },
+    { id: "joker-02", imageSrc: cardAssetPath("reracked/joker-02.png"), label: "Joker", par: null },
+  ];
+  const createDeckForEdition = (editionId: EditionDefinition["id"]): DigitalCard[] => {
+    switch (editionId) {
+      case "reracked":
+        return createRerackedDeck();
+      case "classic":
+      default:
+        return createClassicDeck();
+    }
+  };
   const shuffleDeck = (cards: DigitalCard[]): DigitalCard[] => {
     const shuffled = [...cards];
     for (let i = shuffled.length - 1; i > 0; i -= 1) {
@@ -98,13 +127,13 @@ export function GameScreen({
   const isInitialMount = useRef(true);
   const lastPlayerId = useRef(currentPlayer.id);
   const tournament = useTournament();
-  const isClassicDigital = playMode === "digital" && edition?.id === "classic";
+  const isDigitalDeckEdition = playMode === "digital" && !!edition && (edition.id === "classic" || edition.id === "reracked");
 
   useEffect(() => {
-    if (!isClassicDigital) return;
-    setDigitalDrawPile(shuffleDeck(createClassicDeck()));
+    if (!isDigitalDeckEdition || !edition) return;
+    setDigitalDrawPile(shuffleDeck(createDeckForEdition(edition.id)));
     setDigitalDrawsByHole({});
-  }, [isClassicDigital]);
+  }, [isDigitalDeckEdition, edition?.id]);
   
   // Swipe gesture handling
   const touchStartX = useRef<number | null>(null);
@@ -170,12 +199,12 @@ export function GameScreen({
   }, []);
 
   useEffect(() => {
-    if (!showDrawDialog || !isClassicDigital || digitalDrawsByHole[currentHole] || digitalDrawPile.length === 0) return;
+    if (!showDrawDialog || !isDigitalDeckEdition || digitalDrawsByHole[currentHole] || digitalDrawPile.length === 0) return;
     const [nextCard, ...remaining] = digitalDrawPile;
     if (!nextCard) return;
     setDigitalDrawsByHole((prev) => ({ ...prev, [currentHole]: nextCard }));
     setDigitalDrawPile(remaining);
-  }, [showDrawDialog, isClassicDigital, currentHole, digitalDrawsByHole, digitalDrawPile]);
+  }, [showDrawDialog, isDigitalDeckEdition, currentHole, digitalDrawsByHole, digitalDrawPile]);
 
   useEffect(() => {
     // Track player changes to avoid updating score during player switch
@@ -278,12 +307,14 @@ export function GameScreen({
     setShowTableSetupDialog(false);
   };
 
-  const handleDigitalReady = () => {
+  const handleDigitalReady = (jokerPar?: number) => {
     const drawnCard = digitalDrawsByHole[currentHole];
     if (!drawnCard) return;
-    if (typeof drawnCard.par === "number") {
-      onSetParForAll(drawnCard.par);
-      setPar(drawnCard.par);
+
+    const selectedPar = drawnCard.par ?? jokerPar;
+    if (typeof selectedPar === "number") {
+      onSetParForAll(selectedPar);
+      setPar(selectedPar);
     }
     setShowDrawDialog(false);
   };
@@ -474,7 +505,7 @@ export function GameScreen({
       </div>
 
       {showDrawDialog && (
-        isClassicDigital ? (
+        isDigitalDeckEdition ? (
           <DigitalDrawDialog
             card={digitalDrawsByHole[currentHole] || null}
             onReady={handleDigitalReady}

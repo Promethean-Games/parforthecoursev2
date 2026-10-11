@@ -16,6 +16,7 @@ interface DigitalCard {
 }
 
 const FLIP_DURATION_MS = 550;
+const SUPPORTED_DIGITAL_EDITIONS = new Set(["classic", "reracked"]);
 
 function cardAssetPath(fileName: string): string {
   return `${import.meta.env.BASE_URL}cards/${fileName}`;
@@ -44,6 +45,39 @@ function createClassicDeck(): DigitalCard[] {
   ];
 }
 
+function createRerackedDeck(): DigitalCard[] {
+  return [
+    { id: "2-01", imageSrc: cardAssetPath("reracked/2-01.png"), label: "Par 2", par: 2 },
+    { id: "3-01", imageSrc: cardAssetPath("reracked/3-01.png"), label: "Par 3", par: 3 },
+    { id: "3-02", imageSrc: cardAssetPath("reracked/3-02.png"), label: "Par 3", par: 3 },
+    { id: "3-03", imageSrc: cardAssetPath("reracked/3-03.png"), label: "Par 3", par: 3 },
+    { id: "4-01", imageSrc: cardAssetPath("reracked/4-01.png"), label: "Par 4", par: 4 },
+    { id: "4-02", imageSrc: cardAssetPath("reracked/4-02.png"), label: "Par 4", par: 4 },
+    { id: "4-03", imageSrc: cardAssetPath("reracked/4-03.png"), label: "Par 4", par: 4 },
+    { id: "4-04", imageSrc: cardAssetPath("reracked/4-04.png"), label: "Par 4", par: 4 },
+    { id: "4-05", imageSrc: cardAssetPath("reracked/4-05.png"), label: "Par 4", par: 4 },
+    { id: "5-01", imageSrc: cardAssetPath("reracked/5-01.png"), label: "Par 5", par: 5 },
+    { id: "5-02", imageSrc: cardAssetPath("reracked/5-02.png"), label: "Par 5", par: 5 },
+    { id: "6-01", imageSrc: cardAssetPath("reracked/6-01.png"), label: "Par 6", par: 6 },
+    { id: "6-02", imageSrc: cardAssetPath("reracked/6-02.png"), label: "Par 6", par: 6 },
+    { id: "6-03", imageSrc: cardAssetPath("reracked/6-03.png"), label: "Par 6", par: 6 },
+    { id: "7-01", imageSrc: cardAssetPath("reracked/7-01.png"), label: "Par 7", par: 7 },
+    { id: "7-02", imageSrc: cardAssetPath("reracked/7-02.png"), label: "Par 7", par: 7 },
+    { id: "joker-01", imageSrc: cardAssetPath("reracked/joker-01.png"), label: "Joker", par: null },
+    { id: "joker-02", imageSrc: cardAssetPath("reracked/joker-02.png"), label: "Joker", par: null },
+  ];
+}
+
+function createDeckForEdition(editionId: EditionDefinition["id"]): DigitalCard[] {
+  switch (editionId) {
+    case "reracked":
+      return createRerackedDeck();
+    case "classic":
+    default:
+      return createClassicDeck();
+  }
+}
+
 function shuffleDeck(cards: DigitalCard[]): DigitalCard[] {
   const shuffled = [...cards];
   for (let i = shuffled.length - 1; i > 0; i -= 1) {
@@ -54,16 +88,16 @@ function shuffleDeck(cards: DigitalCard[]): DigitalCard[] {
 }
 
 export function DigitalExperiencePlaceholder({ edition, onBack }: DigitalExperiencePlaceholderProps) {
-  const classicOnly = edition.id === "classic";
+  const supportedDigitalEdition = SUPPORTED_DIGITAL_EDITIONS.has(edition.id);
   const cardBackSrc = useMemo(() => cardAssetPath("back.png"), []);
-  const fullDeck = useMemo(() => createClassicDeck(), []);
+  const fullDeck = useMemo(() => createDeckForEdition(edition.id), [edition.id]);
   const [drawPile, setDrawPile] = useState<DigitalCard[]>(() => shuffleDeck(fullDeck));
   const [currentCard, setCurrentCard] = useState<DigitalCard | null>(null);
   const [isFlipping, setIsFlipping] = useState(false);
   const [isFaceVisible, setIsFaceVisible] = useState(false);
 
   const handleDrawCard = () => {
-    if (isFlipping || !classicOnly) return;
+    if (isFlipping || !supportedDigitalEdition) return;
     const [nextCard, ...remainingCards] = drawPile;
     if (!nextCard) return;
 
@@ -80,7 +114,7 @@ export function DigitalExperiencePlaceholder({ edition, onBack }: DigitalExperie
 
   const cardsRemaining = drawPile.length;
 
-  if (!classicOnly) {
+  if (!supportedDigitalEdition) {
     return (
       <div className="flex flex-col min-h-screen items-center justify-center p-6">
         <Card className="w-full max-w-md p-6 space-y-4 text-center">
@@ -99,7 +133,7 @@ export function DigitalExperiencePlaceholder({ edition, onBack }: DigitalExperie
   return (
     <div className="flex flex-col min-h-screen items-center justify-center p-6">
       <Card className="w-full max-w-md p-6 space-y-4 text-center">
-        <h1 className="text-2xl font-bold">Classic Digital Deck</h1>
+        <h1 className="text-2xl font-bold">{edition.name} Digital Deck</h1>
         <div className="w-full flex justify-center py-3">
           <button
             type="button"

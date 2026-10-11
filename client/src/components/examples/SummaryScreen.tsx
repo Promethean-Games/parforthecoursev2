@@ -30,8 +30,9 @@ export default function SummaryScreenExample() {
     <SummaryScreen
       players={players}
       scores={scores}
+      currentHole={4}
+      totalHoles={9}
       onNewGame={() => console.log("New game")}
-      onSubmitToSheets={() => console.log("Submit to sheets")}
       isGameOver={true}
     />
   );

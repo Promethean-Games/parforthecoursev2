@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PAR_OPTIONS } from "@/lib/constants";
 
 interface DigitalDrawDialogProps {
   card: {
@@ -7,7 +9,7 @@ interface DigitalDrawDialogProps {
     label: string;
     par: number | null;
   } | null;
-  onReady: () => void;
+  onReady: (jokerPar?: number) => void;
 }
 
 const FLIP_DURATION_MS = 550;
@@ -19,15 +21,25 @@ function cardAssetPath(fileName: string): string {
 export function DigitalDrawDialog({ card, onReady }: DigitalDrawDialogProps) {
   const cardBackSrc = useMemo(() => cardAssetPath("back.png"), []);
   const [isRevealed, setIsRevealed] = useState(false);
+  const [jokerPar, setJokerPar] = useState<number | null>(null);
 
   useEffect(() => {
     setIsRevealed(false);
+    setJokerPar(null);
   }, [card?.imageSrc]);
 
   const revealCard = () => {
     if (!card || isRevealed) return;
     setIsRevealed(true);
   };
+
+  const handleReady = () => {
+    if (!card || !isRevealed) return;
+    if (card.par === null && jokerPar === null) return;
+    onReady(card.par === null ? jokerPar ?? undefined : undefined);
+  };
+
+  const isJokerCard = card?.par === null;
 
   return (
     <div className="fixed inset-0 bg-background/95 z-50 flex items-center justify-center p-6">
@@ -82,12 +94,38 @@ export function DigitalDrawDialog({ card, onReady }: DigitalDrawDialogProps) {
         <p className="text-base font-semibold" data-testid="text-digital-draw-card-label">
           {!isRevealed
             ? ""
-            : card?.par === null
+            : isJokerCard
               ? "JOKER! Create your own hole."
               : card?.label}
         </p>
 
-        <Button onClick={onReady} disabled={!isRevealed || !card} data-testid="button-digital-draw-ready">
+        {isRevealed && isJokerCard && (
+          <div className="space-y-2 text-left">
+            <label htmlFor="digital-joker-par" className="text-sm font-medium text-foreground">
+              Choose a par for this custom hole
+            </label>
+            <Select value={jokerPar?.toString() ?? ""} onValueChange={(value) => setJokerPar(parseInt(value, 10))}>
+              <SelectTrigger className="w-full" id="digital-joker-par" data-testid="select-digital-joker-par">
+                <SelectValue placeholder="Select par" />
+              </SelectTrigger>
+              <SelectContent>
+                {PAR_OPTIONS.map((par) => (
+                  <SelectItem key={par} value={par.toString()}>
+                    Par {par}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <Button
+          onClick={handleReady}
+          disabled={!isRevealed || !card || (isJokerCard && jokerPar === null)}
+          size="lg"
+          className="w-full min-h-16 text-2xl font-bold tracking-wide"
+          data-testid="button-digital-draw-ready"
+        >
           Ready!
         </Button>
       </div>

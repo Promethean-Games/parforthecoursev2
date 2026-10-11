@@ -28,8 +28,8 @@ export const EDITIONS: EditionDefinition[] = [
     description: "Reracked edition content.",
     digitalProductId: "reracked.digital",
     priceCents: 199,
-    cardCount: 18,
-    jokerCount: 0,
+    cardCount: 16,
+    jokerCount: 2,
     available: true,
   },
   {

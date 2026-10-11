@@ -129,7 +129,7 @@ function GameApp() {
       return;
     }
 
-    if (selectedEdition.id === "classic") {
+    if (selectedEdition.id === "classic" || selectedEdition.id === "reracked") {
       game.resetGame();
       game.setGameExperience(selectedEdition.id, "digital");
       setScreen("setup");
@@ -148,7 +148,7 @@ function GameApp() {
       await purchaseDigitalEdition(selectedEdition.id);
       const unlocked = await hasDigitalAccess(selectedEdition.id);
       if (unlocked) {
-        if (selectedEdition.id === "classic") {
+        if (selectedEdition.id === "classic" || selectedEdition.id === "reracked") {
           game.resetGame();
           game.setGameExperience(selectedEdition.id, "digital");
           setScreen("setup");
@@ -268,6 +268,9 @@ function GameApp() {
     game.deleteSlot(slot);
   };
 
+  const activeEdition = selectedEdition ?? getEditionById(game.selectedEditionId);
+  const totalHoles = (activeEdition.cardCount ?? 18) + activeEdition.jokerCount;
+
   const turnOrderPlayers = getTurnOrder(game.players, game.scores, game.currentHole);
   const currentPlayerIndex = turnOrderPlayers.length > 0 ? game.currentPlayerIndex % turnOrderPlayers.length : 0;
   const currentPlayer = turnOrderPlayers[currentPlayerIndex];
@@ -329,7 +332,7 @@ function GameApp() {
   }
 
   if (screen === "digital-experience" && selectedEdition) {
-    if (selectedEdition.id === "classic") {
+   if (selectedEdition.id === "classic" || selectedEdition.id === "reracked") {
       return (
         <PlayerSetup
           players={game.players}
@@ -369,7 +372,7 @@ function GameApp() {
           scores={game.scores}
           isLeader={playerIsLeader}
           playMode={game.playMode}
-          edition={selectedEdition ?? getEditionById(game.selectedEditionId)}
+          edition={activeEdition}
           leftHandedMode={game.settings.leftHandedMode}
           onPreviousPlayer={game.previousPlayer}
           onNextPlayer={game.nextPlayer}
@@ -386,6 +389,8 @@ function GameApp() {
         <SummaryScreen
           players={game.players}
           scores={game.scores}
+          currentHole={game.currentHole}
+          totalHoles={totalHoles}
           onNewGame={handleNewGame}
           onUpdateHoleScore={(playerId, hole, strokes) => game.updateScore(playerId, hole, { hole, strokes })}
           isGameOver={game.isComplete}
