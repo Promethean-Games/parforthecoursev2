@@ -10,8 +10,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Undo2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Undo2 } from "lucide-react";
 import type { Player, HoleScore, SetupTime } from "@shared/schema";
 import { PAR_OPTIONS, LEADER_ICON_URL } from "@/lib/constants";
 import { getScoreCallout } from "@/lib/game-utils";
@@ -135,6 +143,7 @@ export function GameScreen({
   const [isJokerDraw, setIsJokerDraw] = useState(false);
   const [showAdvanceBlockedDialog, setShowAdvanceBlockedDialog] = useState(false);
   const [showRemovePlayersConfirmation, setShowRemovePlayersConfirmation] = useState(false);
+  const [showCoursePreview, setShowCoursePreview] = useState(false);
   const [digitalDrawPile, setDigitalDrawPile] = useState<DigitalCard[]>([]);
   const [digitalDrawsByHole, setDigitalDrawsByHole] = useState<Record<number, DigitalCard>>({});
   const [lastHole, setLastHole] = useState(currentHole);
@@ -346,9 +355,13 @@ export function GameScreen({
     return !playerScore || playerScore.strokes === 0;
   });
   const shootersRemaining = playersMissingScores.length;
-  const shooterInfo = `${shootersRemaining} shooter${shootersRemaining !== 1 ? "s" : ""} remaining`;
+  const playerInfo = `${shootersRemaining} player${shootersRemaining !== 1 ? "s" : ""} remaining`;
   const removablePlayerIds = playersMissingScores.map((player) => player.id);
   const canRemovePlayers = removablePlayerIds.length > 0 && removablePlayerIds.length < players.length;
+  const currentHoleCard = isDigitalDeckEdition ? digitalDrawsByHole[currentHole] ?? null : null;
+  const currentHolePreviewLabel = currentHoleCard?.par === null
+    ? `Joker - Par ${par || "?"}`
+    : currentHoleCard?.label ?? "";
 
   const handleNextCard = () => {
     if (!canAdvance) {
@@ -434,9 +447,24 @@ export function GameScreen({
       <div className="h-0.5 mb-4" style={{ backgroundColor: currentPlayer.color }} />
 
       {/* Hole & Shooters Remaining */}
-      <div className="flex justify-between items-center mb-3">
+      <div className="flex justify-between items-start mb-3">
         <div className="text-lg font-bold" data-testid="text-hole">Hole {currentHole}</div>
-        <div className="text-sm text-muted-foreground" data-testid="text-shooters-remaining">{shooterInfo}</div>
+        <div className={cn("flex flex-col items-end gap-2", leftHandedMode && "items-start")}>
+          <div className="text-sm text-muted-foreground" data-testid="text-players-remaining">{playerInfo}</div>
+          {currentHoleCard && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-full px-3 text-xs font-semibold"
+              onClick={() => setShowCoursePreview(true)}
+              data-testid="button-view-hole"
+            >
+              <Eye className="h-4 w-4" />
+              View Hole
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Par Selection */}
@@ -639,6 +667,30 @@ export function GameScreen({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={showCoursePreview} onOpenChange={setShowCoursePreview}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Hole {currentHole} Preview</DialogTitle>
+            <DialogDescription>{currentHolePreviewLabel}</DialogDescription>
+          </DialogHeader>
+          {currentHoleCard && (
+            <div className="space-y-4">
+              <img
+                src={currentHoleCard.imageSrc}
+                alt={`Hole ${currentHole} course card`}
+                className="mx-auto max-h-[60vh] rounded-xl object-contain shadow-lg"
+                data-testid="img-hole-preview"
+              />
+              <DialogClose asChild>
+                <Button variant="outline" className="w-full" data-testid="button-close-hole-preview">
+                  Close
+                </Button>
+              </DialogClose>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
