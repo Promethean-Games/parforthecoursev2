@@ -509,19 +509,32 @@ export function GameScreen({
           <Undo2 className="w-5 h-5 mr-2" />
           Undo
         </Button>
-        <Button
-          className={cn(
-            "flex-1 h-12 text-base",
-            canAdvance
-              ? "next-card-button-ready"
-              : "cursor-not-allowed opacity-50 no-default-hover-elevate no-default-active-elevate",
-          )}
-          onClick={handleNextCard}
-          aria-disabled={!canAdvance}
-          data-testid="button-next-card"
-        >
-          Next Card
-        </Button>
+        {canAdvance ? (
+          <Button
+            className="flex-1 h-12 text-base next-card-button-ready"
+            onClick={handleNextCard}
+            data-testid="button-next-card"
+          >
+            Next Card
+          </Button>
+        ) : (
+          <div className="relative flex-1">
+            <Button
+              className="h-12 w-full text-base no-default-hover-elevate no-default-active-elevate"
+              disabled
+              data-testid="button-next-card"
+            >
+              Next Card
+            </Button>
+            <button
+              type="button"
+              className="absolute inset-0 z-10 cursor-not-allowed rounded-md"
+              onClick={() => setShowAdvanceBlockedDialog(true)}
+              aria-label="Why Next Card is disabled"
+              data-testid="button-next-card-disabled-overlay"
+            />
+          </div>
+        )}
       </div>
 
       {showDrawDialog && (

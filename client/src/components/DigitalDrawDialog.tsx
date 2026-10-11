@@ -122,8 +122,7 @@ export function DigitalDrawDialog({ card, onReady }: DigitalDrawDialogProps) {
         <Button
           onClick={handleReady}
           disabled={!isRevealed || !card || (isJokerCard && jokerPar === null)}
-          size="lg"
-          className="w-full min-h-16 text-2xl font-bold tracking-wide"
+          className="w-full min-h-20 text-3xl font-bold tracking-wide"
           data-testid="button-digital-draw-ready"
         >
           Ready!
