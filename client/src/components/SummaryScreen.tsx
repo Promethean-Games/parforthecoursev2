@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ComponentType } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ export function SummaryScreen({
 }: SummaryScreenProps) {
   const [activeTab, setActiveTab] = useState<"local" | "tournament">("local");
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("");
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [showScorecard, setShowScorecard] = useState(false);
   const [editingScore, setEditingScore] = useState<{ playerId: string; hole: number; value: string } | null>(null);
   const tournament = useTournament();
@@ -98,14 +100,33 @@ export function SummaryScreen({
     }
   }, [tournament.isConnected, activeTab]);
 
+  useEffect(() => {
+    if (!carouselApi) return;
+
+    const selectedIndex = leaderboard.findIndex((entry) => entry.player.id === selectedPlayerId);
+    if (selectedIndex >= 0) {
+      carouselApi.scrollTo(selectedIndex);
+    }
+  }, [carouselApi, leaderboard, selectedPlayerId]);
+
+  useEffect(() => {
+    if (!carouselApi) return;
+
+    const handleSelect = () => {
+      const selectedIndex = carouselApi.selectedScrollSnap();
+      const selectedEntry = leaderboard[selectedIndex];
+      if (selectedEntry && selectedEntry.player.id !== selectedPlayerId) {
+        setSelectedPlayerId(selectedEntry.player.id);
+      }
+    };
+
+    carouselApi.on("select", handleSelect);
+    return () => {
+      carouselApi.off("select", handleSelect);
+    };
+  }, [carouselApi, leaderboard, selectedPlayerId]);
+
   const selectedPlayer = leaderboard.find((entry) => entry.player.id === selectedPlayerId)?.player || leader?.player || players[0];
-  const selectedPlayerScores = selectedPlayer ? scores[selectedPlayer.id] || [] : [];
-  const selectedPlayerTotals = calculatePlayerTotal(selectedPlayerScores);
-  const selectedScoreVsPar = calculateScoreVsPar(selectedPlayerScores);
-  const selectedRank = selectedPlayer ? getPlayerRank(selectedPlayer.id, players, scores) : null;
-  const selectedCompletedHoles = getCompletedHoleScores(selectedPlayerScores).length;
-  const selectedBestHole = getBestHoleScore(selectedPlayerScores);
-  const selectedParOrBetter = getHolesAtParOrBetter(selectedPlayerScores);
 
   const allHoles = useMemo(() => {
     const playedHoles = Object.values(scores)
@@ -126,9 +147,6 @@ export function SummaryScreen({
   if (activeTab === "tournament" && tournament.isConnected) {
     return (
       <div className="min-h-screen pb-20">
-        <div className="bg-primary px-4 py-4">
-          <h1 className="text-4xl font-black text-primary-foreground">Par for the Course</h1>
-        </div>
         <div className="p-4">
           <div className="mb-4 flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setActiveTab("local")} data-testid="button-tab-local">
@@ -175,10 +193,6 @@ export function SummaryScreen({
   return (
     <>
       <div className="min-h-screen pb-20">
-        <div className="bg-primary px-4 py-4">
-          <h1 className="text-4xl font-black text-primary-foreground">Par for the Course</h1>
-        </div>
-
         <div className="p-4">
           {tournament.isConnected && (
             <div className="mb-4 flex gap-2">
@@ -270,25 +284,86 @@ export function SummaryScreen({
           </Card>
 
           {selectedPlayer && (
-            <Card className="mb-4 p-4">
-              <h3 className="mb-3 flex items-center gap-2 text-2xl font-bold">
-                <span className="h-5 w-5 rounded-full" style={{ backgroundColor: selectedPlayer.color }} />
-                <span>{isGameOver ? "Performance Breakdown" : "Player Stats"} ({selectedPlayer.name})</span>
-              </h3>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <StatCard icon={Trophy} label="Total Strokes" value={selectedPlayerTotals.totalStrokes.toString()} />
-                <StatCard
-                  icon={Flag}
-                  label="Score vs Par"
-                  value={formatScoreVsPar(selectedScoreVsPar)}
-                  valueClassName={getScoreColorClass(selectedScoreVsPar)}
-                />
-                <StatCard icon={BarChart3} label={isGameOver ? "Final Rank" : "Current Rank"} value={selectedRank ? `#${selectedRank}` : "-"} />
-                <StatCard icon={ListOrdered} label="Holes Played" value={`${selectedCompletedHoles} / ${normalizedTotalHoles}`} />
-                <StatCard icon={Skull} label="Scratches" value={selectedPlayerTotals.totalScratches.toString()} />
-                <StatCard icon={AlertTriangle} label="Penalties" value={selectedPlayerTotals.totalPenalties.toString()} />
-                <StatCard icon={Star} label="Best Hole" value={selectedBestHole !== null ? selectedBestHole.toString() : "-"} />
-                <StatCard icon={Target} label="At Par or Better" value={`${selectedParOrBetter.atParOrBetter} / ${selectedParOrBetter.completedHoles}`} />
+            <Card className="mb-4 overflow-hidden p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="flex items-center gap-2 text-2xl font-bold">
+                  <span className="h-5 w-5 rounded-full" style={{ backgroundColor: selectedPlayer.color }} />
+                  <span>{isGameOver ? "Performance Breakdown" : "Player Stats"} ({selectedPlayer.name})</span>
+                </h3>
+                <div className="rounded-full border border-border bg-muted/60 px-2 py-1 text-xs font-medium text-muted-foreground">
+                  {leaderboard.length > 1 ? "Swipe" : "Player"}
+                </div>
+              </div>
+
+              <div className="mb-3 flex justify-center">
+                <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                  <span className="h-2 w-2 rounded-full bg-primary" />
+                  <span>Swipe to view other players</span>
+                </div>
+              </div>
+
+              <Carousel
+                opts={{ align: "start", loop: false, dragFree: false }}
+                setApi={setCarouselApi}
+                className="mb-3"
+              >
+                <CarouselContent>
+                  {leaderboard.map((entry) => {
+                    const playerScores = scores[entry.player.id] || [];
+                    const playerTotal = calculatePlayerTotal(playerScores);
+                    const playerScoreVsPar = calculateScoreVsPar(playerScores);
+                    const playerRank = getPlayerRank(entry.player.id, players, scores);
+                    const playerCompletedHoles = getCompletedHoleScores(playerScores).length;
+                    const playerBestHole = getBestHoleScore(playerScores);
+                    const playerParOrBetter = getHolesAtParOrBetter(playerScores);
+
+                    return (
+                      <CarouselItem key={entry.player.id} className="pl-0">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-lg font-bold text-foreground">
+                            <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.player.color }} />
+                            <span>{entry.player.name}</span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                            <StatCard icon={Trophy} label="Total Strokes" value={playerTotal.totalStrokes.toString()} />
+                            <StatCard
+                              icon={Flag}
+                              label="Score vs Par"
+                              value={formatScoreVsPar(playerScoreVsPar)}
+                              valueClassName={getScoreColorClass(playerScoreVsPar)}
+                            />
+                            <StatCard icon={BarChart3} label={isGameOver ? "Final Rank" : "Current Rank"} value={playerRank ? `#${playerRank}` : "-"} />
+                            <StatCard icon={ListOrdered} label="Holes Played" value={`${playerCompletedHoles} / ${normalizedTotalHoles}`} />
+                            <StatCard icon={Skull} label="Scratches" value={playerTotal.totalScratches.toString()} />
+                            <StatCard icon={AlertTriangle} label="Penalties" value={playerTotal.totalPenalties.toString()} />
+                            <StatCard icon={Star} label="Best Hole" value={playerBestHole !== null ? playerBestHole.toString() : "-"} />
+                            <StatCard
+                              icon={Target}
+                              label="At Par or Better"
+                              value={`${playerParOrBetter.atParOrBetter} / ${playerParOrBetter.completedHoles}`}
+                            />
+                          </div>
+                        </div>
+                      </CarouselItem>
+                    );
+                  })}
+                </CarouselContent>
+              </Carousel>
+
+              <div className="flex items-center justify-center gap-2">
+                {leaderboard.map((entry, index) => (
+                  <button
+                    key={entry.player.id}
+                    type="button"
+                    aria-label={`View ${entry.player.name} stats`}
+                    onClick={() => setSelectedPlayerId(entry.player.id)}
+                    className={cn(
+                      "h-2.5 rounded-full transition-all duration-200",
+                      selectedPlayerId === entry.player.id ? "w-8 bg-primary" : "w-2.5 bg-muted-foreground/40",
+                    )}
+                  />
+                ))}
               </div>
             </Card>
           )}
