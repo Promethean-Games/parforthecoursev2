@@ -15,29 +15,32 @@ interface DigitalCard {
   par: number | null;
 }
 
-const CARD_BACK_SRC = "/cards/back.png";
 const FLIP_DURATION_MS = 550;
+
+function cardAssetPath(fileName: string): string {
+  return `${import.meta.env.BASE_URL}cards/${fileName}`;
+}
 
 function createClassicDeck(): DigitalCard[] {
   return [
-    { id: "2-01", imageSrc: "/cards/2-01.png", label: "Par 2", par: 2 },
-    { id: "2-02", imageSrc: "/cards/2-02.png", label: "Par 2", par: 2 },
-    { id: "2-03", imageSrc: "/cards/2-03.png", label: "Par 2", par: 2 },
-    { id: "3-01", imageSrc: "/cards/3-01.png", label: "Par 3", par: 3 },
-    { id: "3-02", imageSrc: "/cards/3-02.png", label: "Par 3", par: 3 },
-    { id: "3-03", imageSrc: "/cards/3-03.png", label: "Par 3", par: 3 },
-    { id: "3-04", imageSrc: "/cards/3-04.png", label: "Par 3", par: 3 },
-    { id: "4-01", imageSrc: "/cards/4-01.png", label: "Par 4", par: 4 },
-    { id: "4-02", imageSrc: "/cards/4-02.png", label: "Par 4", par: 4 },
-    { id: "4-03", imageSrc: "/cards/4-03.png", label: "Par 4", par: 4 },
-    { id: "4-04", imageSrc: "/cards/4-04.png", label: "Par 4", par: 4 },
-    { id: "4-05", imageSrc: "/cards/4-05.png", label: "Par 4", par: 4 },
-    { id: "5-01", imageSrc: "/cards/5-01.png", label: "Par 5", par: 5 },
-    { id: "5-02", imageSrc: "/cards/5-02.png", label: "Par 5", par: 5 },
-    { id: "5-03", imageSrc: "/cards/5-03.png", label: "Par 5", par: 5 },
-    { id: "6-01", imageSrc: "/cards/6-01.png", label: "Par 6", par: 6 },
-    { id: "joker-01", imageSrc: "/cards/joker.png", label: "Joker", par: null },
-    { id: "joker-02", imageSrc: "/cards/joker.png", label: "Joker", par: null },
+    { id: "2-01", imageSrc: cardAssetPath("2-01.png"), label: "Par 2", par: 2 },
+    { id: "2-02", imageSrc: cardAssetPath("2-02.png"), label: "Par 2", par: 2 },
+    { id: "2-03", imageSrc: cardAssetPath("2-03.png"), label: "Par 2", par: 2 },
+    { id: "3-01", imageSrc: cardAssetPath("3-01.png"), label: "Par 3", par: 3 },
+    { id: "3-02", imageSrc: cardAssetPath("3-02.png"), label: "Par 3", par: 3 },
+    { id: "3-03", imageSrc: cardAssetPath("3-03.png"), label: "Par 3", par: 3 },
+    { id: "3-04", imageSrc: cardAssetPath("3-04.png"), label: "Par 3", par: 3 },
+    { id: "4-01", imageSrc: cardAssetPath("4-01.png"), label: "Par 4", par: 4 },
+    { id: "4-02", imageSrc: cardAssetPath("4-02.png"), label: "Par 4", par: 4 },
+    { id: "4-03", imageSrc: cardAssetPath("4-03.png"), label: "Par 4", par: 4 },
+    { id: "4-04", imageSrc: cardAssetPath("4-04.png"), label: "Par 4", par: 4 },
+    { id: "4-05", imageSrc: cardAssetPath("4-05.png"), label: "Par 4", par: 4 },
+    { id: "5-01", imageSrc: cardAssetPath("5-01.png"), label: "Par 5", par: 5 },
+    { id: "5-02", imageSrc: cardAssetPath("5-02.png"), label: "Par 5", par: 5 },
+    { id: "5-03", imageSrc: cardAssetPath("5-03.png"), label: "Par 5", par: 5 },
+    { id: "6-01", imageSrc: cardAssetPath("6-01.png"), label: "Par 6", par: 6 },
+    { id: "joker-01", imageSrc: cardAssetPath("joker.png"), label: "Joker", par: null },
+    { id: "joker-02", imageSrc: cardAssetPath("joker.png"), label: "Joker", par: null },
   ];
 }
 
@@ -52,6 +55,7 @@ function shuffleDeck(cards: DigitalCard[]): DigitalCard[] {
 
 export function DigitalExperiencePlaceholder({ edition, onBack }: DigitalExperiencePlaceholderProps) {
   const classicOnly = edition.id === "classic";
+  const cardBackSrc = useMemo(() => cardAssetPath("back.png"), []);
   const fullDeck = useMemo(() => createClassicDeck(), []);
   const [drawPile, setDrawPile] = useState<DigitalCard[]>(() => shuffleDeck(fullDeck));
   const [currentCard, setCurrentCard] = useState<DigitalCard | null>(null);
@@ -110,14 +114,15 @@ export function DigitalExperiencePlaceholder({ edition, onBack }: DigitalExperie
     <div className="flex flex-col min-h-screen items-center justify-center p-6">
       <Card className="w-full max-w-md p-6 space-y-4 text-center">
         <h1 className="text-2xl font-bold">Classic Digital Deck</h1>
-        <p className="text-muted-foreground">16 course cards + 2 Jokers, shuffled each time.</p>
-
         <div className="w-full flex justify-center py-3">
-          <div
-            className="relative h-[320px] w-[214px]"
-            style={{
-              perspective: "1000px",
-            }}
+          <button
+            type="button"
+            onClick={handleDrawCard}
+            disabled={isFlipping}
+            className="relative h-[320px] w-[214px] rounded-xl"
+            style={{ perspective: "1000px" }}
+            aria-label="Tap card back to draw"
+            data-testid="button-digital-card-draw"
           >
             <div
               className="relative h-full w-full"
@@ -128,14 +133,14 @@ export function DigitalExperiencePlaceholder({ edition, onBack }: DigitalExperie
               }}
             >
               <img
-                src={CARD_BACK_SRC}
+                src={cardBackSrc}
                 alt="Card back"
                 className="absolute h-full w-full rounded-xl object-cover shadow-lg"
                 style={{ backfaceVisibility: "hidden" }}
                 data-testid="img-digital-card-back"
               />
               <img
-                src={currentCard?.imageSrc || CARD_BACK_SRC}
+                src={currentCard?.imageSrc || cardBackSrc}
                 alt={currentCard ? `Drawn card ${currentCard.label}` : "Card face"}
                 className="absolute h-full w-full rounded-xl object-cover shadow-lg"
                 style={{
@@ -145,22 +150,19 @@ export function DigitalExperiencePlaceholder({ edition, onBack }: DigitalExperie
                 data-testid="img-digital-card-face"
               />
             </div>
-          </div>
+          </button>
         </div>
 
         <div className="space-y-1">
           <p className="text-base font-semibold" data-testid="text-digital-card-result">
-            {currentCard ? (currentCard.par === null ? "JOKER! Create your own hole." : currentCard.label) : "Tap Draw Card to flip."}
+            {currentCard ? (currentCard.par === null ? "JOKER! Create your own hole." : currentCard.label) : "Tap the card back to draw."}
           </p>
           <p className="text-sm text-muted-foreground" data-testid="text-digital-cards-remaining">
             {cardsRemaining} cards remaining in this shuffle
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Button onClick={handleDrawCard} disabled={isFlipping} data-testid="button-digital-draw">
-            {isFlipping ? "Drawing..." : "Draw Card"}
-          </Button>
+        <div className="grid grid-cols-1 gap-3">
           <Button variant="outline" onClick={handleReshuffle} disabled={isFlipping} data-testid="button-digital-reshuffle">
             Reshuffle
           </Button>
