@@ -124,7 +124,19 @@ function GameApp() {
     game.setGameExperience(selectedEdition.id, "digital");
 
     const unlocked = await hasDigitalAccess(selectedEdition.id);
-    setScreen(unlocked ? "digital-experience" : "digital-access");
+    if (!unlocked) {
+      setScreen("digital-access");
+      return;
+    }
+
+    if (selectedEdition.id === "classic") {
+      game.resetGame();
+      game.setGameExperience(selectedEdition.id, "digital");
+      setScreen("setup");
+      return;
+    }
+
+    setScreen("digital-experience");
   };
 
   const handlePurchaseDigitalEdition = async () => {
@@ -136,6 +148,12 @@ function GameApp() {
       await purchaseDigitalEdition(selectedEdition.id);
       const unlocked = await hasDigitalAccess(selectedEdition.id);
       if (unlocked) {
+        if (selectedEdition.id === "classic") {
+          game.resetGame();
+          game.setGameExperience(selectedEdition.id, "digital");
+          setScreen("setup");
+          return;
+        }
         setScreen("digital-experience");
       } else {
         setDigitalAccessError("Unable to unlock digital edition. Please try again.");

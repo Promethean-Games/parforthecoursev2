@@ -7,6 +7,7 @@ import { PAR_OPTIONS, LEADER_ICON_URL } from "@/lib/constants";
 import { getScoreCallout } from "@/lib/game-utils";
 import { cn } from "@/lib/utils";
 import { DrawDialog } from "./DrawDialog";
+import { DigitalDrawDialog } from "./DigitalDrawDialog";
 import { TableSetupDialog } from "./TableSetupDialog";
 import { useTournament } from "@/contexts/TournamentContext";
 import type { EditionDefinition } from "@/lib/editions";
@@ -49,15 +50,61 @@ export function GameScreen({
   onSetParForAll,
   onRecordSetupTime,
 }: GameScreenProps) {
+  interface DigitalCard {
+    id: string;
+    imageSrc: string;
+    label: string;
+    par: number | null;
+  }
+
+  const cardAssetPath = (fileName: string) => `${import.meta.env.BASE_URL}cards/${fileName}`;
+  const createClassicDeck = (): DigitalCard[] => [
+    { id: "2-01", imageSrc: cardAssetPath("2-01.png"), label: "Par 2", par: 2 },
+    { id: "2-02", imageSrc: cardAssetPath("2-02.png"), label: "Par 2", par: 2 },
+    { id: "2-03", imageSrc: cardAssetPath("2-03.png"), label: "Par 2", par: 2 },
+    { id: "3-01", imageSrc: cardAssetPath("3-01.png"), label: "Par 3", par: 3 },
+    { id: "3-02", imageSrc: cardAssetPath("3-02.png"), label: "Par 3", par: 3 },
+    { id: "3-03", imageSrc: cardAssetPath("3-03.png"), label: "Par 3", par: 3 },
+    { id: "3-04", imageSrc: cardAssetPath("3-04.png"), label: "Par 3", par: 3 },
+    { id: "4-01", imageSrc: cardAssetPath("4-01.png"), label: "Par 4", par: 4 },
+    { id: "4-02", imageSrc: cardAssetPath("4-02.png"), label: "Par 4", par: 4 },
+    { id: "4-03", imageSrc: cardAssetPath("4-03.png"), label: "Par 4", par: 4 },
+    { id: "4-04", imageSrc: cardAssetPath("4-04.png"), label: "Par 4", par: 4 },
+    { id: "4-05", imageSrc: cardAssetPath("4-05.png"), label: "Par 4", par: 4 },
+    { id: "5-01", imageSrc: cardAssetPath("5-01.png"), label: "Par 5", par: 5 },
+    { id: "5-02", imageSrc: cardAssetPath("5-02.png"), label: "Par 5", par: 5 },
+    { id: "5-03", imageSrc: cardAssetPath("5-03.png"), label: "Par 5", par: 5 },
+    { id: "6-01", imageSrc: cardAssetPath("6-01.png"), label: "Par 6", par: 6 },
+    { id: "joker-01", imageSrc: cardAssetPath("joker.png"), label: "Joker", par: null },
+    { id: "joker-02", imageSrc: cardAssetPath("joker.png"), label: "Joker", par: null },
+  ];
+  const shuffleDeck = (cards: DigitalCard[]): DigitalCard[] => {
+    const shuffled = [...cards];
+    for (let i = shuffled.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   const [showDrawDialog, setShowDrawDialog] = useState(false);
   const [showTableSetupDialog, setShowTableSetupDialog] = useState(false);
   const [pendingPar, setPendingPar] = useState<number | null>(null);
   const [drawConfirmTime, setDrawConfirmTime] = useState<number | null>(null);
   const [isJokerDraw, setIsJokerDraw] = useState(false);
+  const [digitalDrawPile, setDigitalDrawPile] = useState<DigitalCard[]>([]);
+  const [digitalDrawsByHole, setDigitalDrawsByHole] = useState<Record<number, DigitalCard>>({});
   const [lastHole, setLastHole] = useState(currentHole);
   const isInitialMount = useRef(true);
   const lastPlayerId = useRef(currentPlayer.id);
   const tournament = useTournament();
+  const isClassicDigital = playMode === "digital" && edition?.id === "classic";
+
+  useEffect(() => {
+    if (!isClassicDigital) return;
+    setDigitalDrawPile(shuffleDeck(createClassicDeck()));
+    setDigitalDrawsByHole({});
+  }, [isClassicDigital]);
   
   // Swipe gesture handling
   const touchStartX = useRef<number | null>(null);
@@ -121,6 +168,14 @@ export function GameScreen({
       setShowDrawDialog(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (!showDrawDialog || !isClassicDigital || digitalDrawsByHole[currentHole] || digitalDrawPile.length === 0) return;
+    const [nextCard, ...remaining] = digitalDrawPile;
+    if (!nextCard) return;
+    setDigitalDrawsByHole((prev) => ({ ...prev, [currentHole]: nextCard }));
+    setDigitalDrawPile(remaining);
+  }, [showDrawDialog, isClassicDigital, currentHole, digitalDrawsByHole, digitalDrawPile]);
 
   useEffect(() => {
     // Track player changes to avoid updating score during player switch
@@ -223,6 +278,16 @@ export function GameScreen({
     setShowTableSetupDialog(false);
   };
 
+  const handleDigitalReady = () => {
+    const drawnCard = digitalDrawsByHole[currentHole];
+    if (!drawnCard) return;
+    if (typeof drawnCard.par === "number") {
+      onSetParForAll(drawnCard.par);
+      setPar(drawnCard.par);
+    }
+    setShowDrawDialog(false);
+  };
+
   // Check if all players have non-zero scores for current hole
   const allPlayersHaveScores = players.every((player) => {
     const playerScore = scores[player.id]?.find((s) => s.hole === currentHole);
@@ -240,17 +305,7 @@ export function GameScreen({
   const shooterInfo = `${shootersRemaining} shooter${shootersRemaining !== 1 ? "s" : ""} remaining`;
 
   const handleNextCard = () => {
-    const supportsJokers = playMode === "digital" && !!edition && edition.jokerCount > 0 && (edition.cardCount ?? 0) > 0;
-
-    if (!supportsJokers) {
-      setIsJokerDraw(false);
-      onNextCard();
-      return;
-    }
-
-    const jokerProbability = edition.jokerCount / edition.cardCount!;
-    const shouldShowJoker = Math.random() < jokerProbability;
-    setIsJokerDraw(shouldShowJoker);
+    setIsJokerDraw(false);
     onNextCard();
   };
 
@@ -419,12 +474,19 @@ export function GameScreen({
       </div>
 
       {showDrawDialog && (
-        <DrawDialog
-          onSelectPar={handleDrawPar}
-          onClose={() => setShowDrawDialog(false)}
-          isFirstDraw={currentHole === 1}
-          isJoker={isJokerDraw}
-        />
+        isClassicDigital ? (
+          <DigitalDrawDialog
+            card={digitalDrawsByHole[currentHole] || null}
+            onReady={handleDigitalReady}
+          />
+        ) : (
+          <DrawDialog
+            onSelectPar={handleDrawPar}
+            onClose={() => setShowDrawDialog(false)}
+            isFirstDraw={currentHole === 1}
+            isJoker={isJokerDraw}
+          />
+        )
       )}
 
       {showTableSetupDialog && pendingPar !== null && (
