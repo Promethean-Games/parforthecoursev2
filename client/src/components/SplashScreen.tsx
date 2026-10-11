@@ -1,13 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Settings } from "lucide-react";
 import { LOGO_URL } from "@/lib/constants";
 import { unlockAllTestEntitlements } from "@/lib/entitlements";
-import { TDSignInModal } from "./TDSignInModal";
-import { TournamentManagementPage } from "./TournamentManagementPage";
 
 interface SplashScreenProps {
   onNewGame: () => void;
@@ -16,17 +12,9 @@ interface SplashScreenProps {
 }
 
 export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: SplashScreenProps) {
-  const [showTDSignIn, setShowTDSignIn] = useState(false);
-  const [showTournamentManagement, setShowTournamentManagement] = useState(false);
-  const [verifiedPin, setVerifiedPin] = useState<string | null>(null);
   const [testerCodeStep, setTesterCodeStep] = useState<"prompt" | "code" | null>(null);
   const [testerCodeInput, setTesterCodeInput] = useState("");
   const [testerCodeError, setTesterCodeError] = useState<string | null>(null);
-
-  const handleTDSignInSuccess = (pin: string) => {
-    setVerifiedPin(pin);
-    setShowTournamentManagement(true);
-  };
 
   const resetTesterCodeFlow = () => {
     setTesterCodeStep(null);
@@ -56,44 +44,8 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
     onNewGame();
   };
 
-  if (showTournamentManagement && verifiedPin) {
-    return (
-      <TournamentManagementPage 
-        onClose={() => {
-          setShowTournamentManagement(false);
-          setVerifiedPin(null);
-        }} 
-        directorPin={verifiedPin}
-      />
-    );
-  }
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 relative">
-      {/* TD Sign-In Gear Icon - Upper Right */}
-      <div className="absolute top-4 right-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950"
-              data-testid="button-td-menu"
-            >
-              <Settings className="w-6 h-6" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem 
-              onClick={() => setShowTDSignIn(true)}
-              data-testid="menu-item-td-signin"
-            >
-              TD Sign-In
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
       <div className="mb-8">
         <img 
           src={LOGO_URL} 
@@ -196,11 +148,6 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
         </AlertDialogContent>
       </AlertDialog>
 
-      <TDSignInModal
-        isOpen={showTDSignIn}
-        onClose={() => setShowTDSignIn(false)}
-        onSuccess={handleTDSignInSuccess}
-      />
     </div>
   );
 }

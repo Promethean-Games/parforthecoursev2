@@ -30,6 +30,14 @@ interface SaveLoadDialogProps {
 
 const AUTOSAVE_KEY = "__autosave__";
 const MANUAL_SLOTS = ["Slot 1", "Slot 2", "Slot 3"];
+const MAX_MANUAL_SLOTS = 3;
+
+interface SlotViewModel {
+  key: string;
+  label: string;
+  savedGame?: GameSession;
+  isEmpty: boolean;
+}
 
 export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onDelete, onEndGame, onNewGame, onClose }: SaveLoadDialogProps) {
   const [editingSlot, setEditingSlot] = useState<string | null>(null);
@@ -38,12 +46,47 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
   const { toast } = useToast();
 
   const autosave = savedGames[AUTOSAVE_KEY];
-  
-  // Only show the 3 fixed manual slots
-  const slots = MANUAL_SLOTS;
+  const manualSavedEntries = Object.entries(savedGames)
+   .filter(([slot]) => slot !== AUTOSAVE_KEY)
+   .sort(([, gameA], [, gameB]) => new Date(gameB.updatedAt).getTime() - new Date(gameA.updatedAt).getTime())
+   .slice(0, MAX_MANUAL_SLOTS);
+
+  const placeholderKeys = MANUAL_SLOTS.filter(
+   (slot) => !manualSavedEntries.some(([existingSlot]) => existingSlot === slot),
+  );
+
+  while (placeholderKeys.length < MAX_MANUAL_SLOTS - manualSavedEntries.length) {
+   placeholderKeys.push(`Slot ${placeholderKeys.length + manualSavedEntries.length + 1}`);
+  }
+
+  const slots: SlotViewModel[] = [
+   ...manualSavedEntries.map(([slot, game]) => ({
+     key: slot,
+     label: slot,
+     savedGame: game,
+     isEmpty: false,
+   })),
+   ...placeholderKeys.slice(0, Math.max(0, MAX_MANUAL_SLOTS - manualSavedEntries.length)).map((slot) => ({
+     key: slot,
+     label: slot,
+     isEmpty: true,
+   })),
+  ];
+
+  const getGameStateSummary = (game: GameSession) => {
+   const currentPlayerName = game.players[game.currentPlayerIndex]?.name;
+   return game.isComplete
+     ? `Complete • Finished on hole ${game.currentHole}`
+     : `Hole ${game.currentHole}${currentPlayerName ? ` • ${currentPlayerName} up` : ""}`;
+  };
+
+  const getPlayerSummary = (game: GameSession) => {
+   const playerNames = game.players.map((player) => player.name).join(", ");
+   return `${game.players.length} players${playerNames ? ` • ${playerNames}` : ""}`;
+  };
 
   const handleRename = (oldSlot: string) => {
-    const newName = editingName.trim();
+   const newName = editingName.trim();
     if (newName && newName !== oldSlot && newName !== AUTOSAVE_KEY && onRename) {
       onRename(oldSlot, newName);
       toast({ title: "Slot Renamed", description: `Renamed to "${newName}"` });
@@ -82,32 +125,56 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
 
         <div className="space-y-3">
           {/* Autosave Section - Load Only */}
-          {autosave && (
+          {mode === "load" && (
             <Card className="p-4 border-dashed" data-testid="slot-autosave">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <h3 className="font-semibold">Autosave</h3>
-                <span className="text-xs text-muted-foreground ml-auto">
-                  {new Date(autosave.updatedAt).toLocaleString()}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground mb-2">
-                {autosave.players.length} players • Hole {autosave.currentHole}
-              </p>
-              <Button
-                variant="outline"
-                className="w-full h-12"
-                onClick={() => {
-                  onLoad?.(AUTOSAVE_KEY);
-                  toast({ title: "Game Loaded", description: "Loaded from autosave" });
-                  onClose();
-                }}
-                disabled={mode === "save"}
-                data-testid="button-load-autosave"
-              >
-                <FolderOpen className="w-4 h-4 mr-2" />
-                {mode === "save" ? "Autosave (Load Only)" : "Load Autosave"}
-              </Button>
+              {autosave ? (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="font-semibold">Autosave</h3>
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      {new Date(autosave.updatedAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {getGameStateSummary(autosave)}
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {getPlayerSummary(autosave)}
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="w-full h-12"
+                    onClick={() => {
+                      onLoad?.(AUTOSAVE_KEY);
+                      toast({ title: "Game Loaded", description: "Loaded from autosave" });
+                      onClose();
+                    }}
+                    data-testid="button-load-autosave"
+                  >
+                    <FolderOpen className="w-4 h-4 mr-2" />
+                    Load Autosave
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="font-semibold">Autosave</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    No autosave is available yet.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="w-full h-12"
+                    disabled
+                    data-testid="button-load-autosave"
+                  >
+                    Empty Slot
+                  </Button>
+                </>
+              )}
             </Card>
           )}
 
@@ -148,12 +215,13 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
           )}
 
           {slots.map((slot) => {
-            const savedGame = savedGames[slot];
-            const isEmpty = !savedGame;
-            const isEditing = editingSlot === slot;
+            const savedGame = slot.savedGame;
+            const isEmpty = slot.isEmpty;
+            const isEditing = editingSlot === slot.key;
+            const populatedGame = savedGame ?? null;
 
             return (
-              <Card key={slot} className="p-4" data-testid={`slot-${slot}`}>
+              <Card key={slot.key} className="p-4" data-testid={`slot-${slot.label}`}>
                 <div className="flex items-center justify-between mb-2 gap-2">
                   {isEditing ? (
                     <div className="flex items-center gap-2 flex-1">
@@ -163,19 +231,19 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
                         className="h-8"
                         autoFocus
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") handleRename(slot);
+                          if (e.key === "Enter") handleRename(slot.key);
                           if (e.key === "Escape") {
                             setEditingSlot(null);
                             setEditingName("");
                           }
                         }}
-                        data-testid={`input-rename-${slot}`}
+                        data-testid={`input-rename-${slot.label}`}
                       />
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => handleRename(slot)}
-                        data-testid={`button-confirm-rename-${slot}`}
+                        onClick={() => handleRename(slot.key)}
+                        data-testid={`button-confirm-rename-${slot.label}`}
                       >
                         <Check className="w-4 h-4" />
                       </Button>
@@ -183,17 +251,17 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
                   ) : (
                     <>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{slot}</h3>
+                        <h3 className="font-semibold">{slot.label}</h3>
                         {!isEmpty && (
                           <Button
                             size="icon"
                             variant="ghost"
                             className="h-6 w-6"
                             onClick={() => {
-                              setEditingSlot(slot);
-                              setEditingName(slot);
+                              setEditingSlot(slot.key);
+                              setEditingName(slot.label);
                             }}
-                            data-testid={`button-rename-${slot}`}
+                            data-testid={`button-rename-${slot.label}`}
                           >
                             <Pencil className="w-3 h-3" />
                           </Button>
@@ -203,14 +271,14 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
                         {!isEmpty && (
                           <>
                             <span className="text-xs text-muted-foreground">
-                              {new Date(savedGame.updatedAt).toLocaleDateString()}
+                              {populatedGame ? new Date(populatedGame.updatedAt).toLocaleDateString() : ""}
                             </span>
                             <Button
                               size="icon"
                               variant="ghost"
                               className="h-6 w-6 text-destructive hover:text-destructive"
-                              onClick={() => setConfirmAction({ type: "delete", slot })}
-                              data-testid={`button-delete-${slot}`}
+                              onClick={() => setConfirmAction({ type: "delete", slot: slot.key })}
+                              data-testid={`button-delete-${slot.label}`}
                             >
                               <Trash2 className="w-3 h-3" />
                             </Button>
@@ -227,33 +295,36 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
                     className="w-full h-14"
                     onClick={() => {
                       if (mode === "save") {
-                        onSave?.(slot);
-                        toast({ title: "Game Saved", description: `Saved to ${slot}` });
+                        onSave?.(slot.key);
+                        toast({ title: "Game Saved", description: `Saved to ${slot.label}` });
                         onClose();
                       }
                     }}
                     disabled={mode === "load"}
-                    data-testid={`button-${mode}-${slot}`}
+                    data-testid={`button-${mode}-${slot.label}`}
                   >
                     {mode === "save" ? "Save Here" : "Empty Slot"}
                   </Button>
-                ) : (
+                ) : populatedGame ? (
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {savedGame.players.length} players • Hole {savedGame.currentHole}
+                    <p className="text-sm text-muted-foreground">
+                      {getGameStateSummary(populatedGame)}
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {getPlayerSummary(populatedGame)}
                     </p>
                     <Button
                       className="w-full h-12"
                       onClick={() => {
                         if (mode === "save") {
-                          setConfirmAction({ type: "overwrite", slot });
+                          setConfirmAction({ type: "overwrite", slot: slot.key });
                         } else {
-                          onLoad?.(slot);
-                          toast({ title: "Game Loaded", description: `Loaded from ${slot}` });
+                          onLoad?.(slot.key);
+                          toast({ title: "Game Loaded", description: `Loaded from ${slot.label}` });
                           onClose();
                         }
                       }}
-                      data-testid={`button-${mode}-${slot}`}
+                      data-testid={`button-${mode}-${slot.label}`}
                     >
                       {mode === "save" ? (
                         <>
@@ -268,7 +339,7 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
                       )}
                     </Button>
                   </div>
-                )}
+                ) : null}
               </Card>
             );
           })}
