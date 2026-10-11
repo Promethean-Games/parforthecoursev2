@@ -134,6 +134,7 @@ export function GameScreen({
   const [drawConfirmTime, setDrawConfirmTime] = useState<number | null>(null);
   const [isJokerDraw, setIsJokerDraw] = useState(false);
   const [showAdvanceBlockedDialog, setShowAdvanceBlockedDialog] = useState(false);
+  const [showRemovePlayersConfirmation, setShowRemovePlayersConfirmation] = useState(false);
   const [digitalDrawPile, setDigitalDrawPile] = useState<DigitalCard[]>([]);
   const [digitalDrawsByHole, setDigitalDrawsByHole] = useState<Record<number, DigitalCard>>({});
   const [lastHole, setLastHole] = useState(currentHole);
@@ -363,6 +364,13 @@ export function GameScreen({
     if (!canRemovePlayers) return;
 
     setShowAdvanceBlockedDialog(false);
+    setShowRemovePlayersConfirmation(true);
+  };
+
+  const handleConfirmRemovePlayers = () => {
+    if (!canRemovePlayers) return;
+
+    setShowRemovePlayersConfirmation(false);
     setIsJokerDraw(false);
     onRemovePlayersAndAdvance(removablePlayerIds);
   };
@@ -590,6 +598,41 @@ export function GameScreen({
               onClick={handleRemovePlayers}
               disabled={!canRemovePlayers}
               data-testid="button-next-card-remove-players"
+            >
+              Remove Players
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showRemovePlayersConfirmation} onOpenChange={setShowRemovePlayersConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm player removal</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. Removed players will be scored null for all future
+              holes, which may negatively affect game statistics.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {playersMissingScores.length > 0 && (
+            <div className="space-y-2">
+              {playersMissingScores.map((player) => (
+                <div
+                  key={player.id}
+                  className="rounded-md bg-muted/50 px-3 py-2 text-sm font-medium"
+                >
+                  {player.name}
+                </div>
+              ))}
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-confirm-remove-players-cancel">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmRemovePlayers}
+              data-testid="button-confirm-remove-players"
             >
               Remove Players
             </AlertDialogAction>
