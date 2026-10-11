@@ -329,6 +329,19 @@ function GameApp() {
   }
 
   if (screen === "digital-experience" && selectedEdition) {
+    if (selectedEdition.id === "classic") {
+      return (
+        <PlayerSetup
+          players={game.players}
+          onAddPlayer={game.addPlayer}
+          onRemovePlayer={game.removePlayer}
+          onUpdatePlayerName={game.updatePlayerName}
+          onUpdatePlayerColor={game.updatePlayerColor}
+          onMovePlayer={game.movePlayer}
+          onStartGame={handleStartGame}
+        />
+      );
+    }
     return <DigitalExperiencePlaceholder edition={selectedEdition} onBack={() => setScreen("mode")} />;
   }
 
