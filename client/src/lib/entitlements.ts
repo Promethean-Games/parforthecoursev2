@@ -4,6 +4,7 @@ import { getBillingDeviceId } from "@/lib/billingDevice";
 
 const STORAGE_KEY = "digitalEditionEntitlements";
 const TEST_ACCESS_STORAGE_KEY = "digitalEditionTestAccess";
+const TEST_ACCESS_BASELINE_STORAGE_KEY = "digitalEditionTestAccessBaseline";
 // Temporary Play Store QA unlock. Remove after tester access is no longer needed.
 export const TEST_ACCESS_CODE = "PLAYTEST";
 
@@ -18,30 +19,35 @@ const EMPTY_ENTITLEMENTS: EntitlementMap = {
   tournament: false,
 };
 
-function hasTestingAccess(): boolean {
+export function hasTestingAccess(): boolean {
   if (typeof window === "undefined") return false;
   return localStorage.getItem(TEST_ACCESS_STORAGE_KEY) === "true";
 }
 
-function readEntitlements(): EntitlementMap {
+function readStoredEntitlements(): EntitlementMap {
   if (typeof window === "undefined") return { ...EMPTY_ENTITLEMENTS };
   const raw = localStorage.getItem(STORAGE_KEY);
-  const baseEntitlements: EntitlementMap = raw
-    ? (() => {
-        try {
-          const parsed = JSON.parse(raw) as Partial<EntitlementMap>;
-          return {
-            classic: Boolean(parsed.classic),
-            reracked: Boolean(parsed.reracked),
-            sequential: Boolean(parsed.sequential),
-            "teed-off": Boolean(parsed["teed-off"]),
-            tournament: Boolean(parsed.tournament),
-          };
-        } catch {
-          return { ...EMPTY_ENTITLEMENTS };
-        }
-      })()
-    : { ...EMPTY_ENTITLEMENTS };
+
+  if (!raw) {
+    return { ...EMPTY_ENTITLEMENTS };
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<EntitlementMap>;
+    return {
+      classic: Boolean(parsed.classic),
+      reracked: Boolean(parsed.reracked),
+      sequential: Boolean(parsed.sequential),
+      "teed-off": Boolean(parsed["teed-off"]),
+      tournament: Boolean(parsed.tournament),
+    };
+  } catch {
+    return { ...EMPTY_ENTITLEMENTS };
+  }
+}
+
+function readEntitlements(): EntitlementMap {
+  const baseEntitlements = readStoredEntitlements();
 
   if (hasTestingAccess()) {
     return {
@@ -63,8 +69,11 @@ function writeEntitlements(value: EntitlementMap): void {
 
 export function setTestingAccess(enabled: boolean): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(TEST_ACCESS_STORAGE_KEY, enabled ? "true" : "false");
+
   if (enabled) {
+    const baseline = readStoredEntitlements();
+    localStorage.setItem(TEST_ACCESS_BASELINE_STORAGE_KEY, JSON.stringify(baseline));
+    localStorage.setItem(TEST_ACCESS_STORAGE_KEY, "true");
     writeEntitlements({
       classic: true,
       reracked: true,
@@ -72,7 +81,30 @@ export function setTestingAccess(enabled: boolean): void {
       "teed-off": true,
       tournament: true,
     });
+    return;
   }
+
+  localStorage.setItem(TEST_ACCESS_STORAGE_KEY, "false");
+  const savedBaseline = localStorage.getItem(TEST_ACCESS_BASELINE_STORAGE_KEY);
+  const restoredEntitlements = savedBaseline
+    ? (() => {
+        try {
+          const parsed = JSON.parse(savedBaseline) as Partial<EntitlementMap>;
+          return {
+            classic: Boolean(parsed.classic),
+            reracked: Boolean(parsed.reracked),
+            sequential: Boolean(parsed.sequential),
+            "teed-off": Boolean(parsed["teed-off"]),
+            tournament: Boolean(parsed.tournament),
+          };
+        } catch {
+          return { ...EMPTY_ENTITLEMENTS };
+        }
+      })()
+    : { ...EMPTY_ENTITLEMENTS };
+
+  writeEntitlements(restoredEntitlements);
+  localStorage.removeItem(TEST_ACCESS_BASELINE_STORAGE_KEY);
 }
 
 export async function unlockAllTestEntitlements(code: string): Promise<boolean> {

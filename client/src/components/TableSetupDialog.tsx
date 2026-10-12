@@ -15,20 +15,16 @@ export function TableSetupDialog({ hole, par, onConfirm }: TableSetupDialogProps
             Hole {hole} - Par {par}
           </h1>
           <p className="text-xl text-muted-foreground" data-testid="text-setup-instruction">
-            Set up the course according to the card.
+            Setup the pool table to match the card as shown using stripes and/or solids. Click Ready! when you have finished setting up the table.
           </p>
         </div>
-        
-        <p className="text-lg" data-testid="text-setup-confirm-prompt">
-          Press the button below when the table matches the card.
-        </p>
 
         <Button
           className="w-full min-h-24 text-4xl font-bold tracking-wide"
           onClick={onConfirm}
           data-testid="button-table-ready"
         >
-          Table is Ready!
+          Ready!
         </Button>
       </div>
     </div>

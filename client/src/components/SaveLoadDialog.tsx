@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Save, FolderOpen, Pencil, Check, Trash2, Clock, Flag, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { GameSession } from "@shared/schema";
+import { EDITIONS } from "@/lib/editions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -88,6 +89,15 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
    return `${game.players.length} players${playerNames ? ` • ${playerNames}` : ""}`;
   };
 
+  const getEditionLabel = (game: GameSession) => {
+   if (!game.selectedEditionId) {
+     return "Classic";
+   }
+
+   const edition = EDITIONS.find((item) => item.id === game.selectedEditionId);
+   return edition?.name ?? game.selectedEditionId;
+  };
+
   const handleRename = (oldSlot: string) => {
    const newName = editingName.trim();
     if (newName && newName !== oldSlot && newName !== AUTOSAVE_KEY && onRename) {
@@ -140,6 +150,9 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">
+                    Edition • {getEditionLabel(autosave)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
                     {getGameStateSummary(autosave)}
                   </p>
                   <p className="text-sm text-muted-foreground mb-3">
@@ -181,19 +194,9 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
             </Card>
           )}
 
-          {/* Manual Save Slots */}
-          <div className="pt-2">
-            <h3 className="text-sm font-medium text-muted-foreground mb-3">
-              {mode === "save" ? "Save Slots" : "Saved Games"}
-            </h3>
-          </div>
-
           {/* Game Actions - Save mode only */}
           {mode === "save" && (
-            <div className="pt-4 border-t space-y-3">
-              <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                Game Actions
-              </h3>
+            <div className="pt-2 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   variant="outline"
@@ -310,6 +313,9 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
                   </Button>
                 ) : populatedGame ? (
                   <div>
+                    <p className="text-sm text-muted-foreground">
+                      Edition • {getEditionLabel(populatedGame)}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {getGameStateSummary(populatedGame)}
                     </p>

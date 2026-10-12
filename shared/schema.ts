@@ -151,6 +151,7 @@ export const gameSessionSchema = z.object({
   currentPlayerIndex: z.number(),
   scores: z.record(z.string(), z.array(holeScoreSchema)),
   isComplete: z.boolean(),
+  selectedEditionId: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

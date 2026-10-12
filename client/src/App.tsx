@@ -256,7 +256,7 @@ function GameApp() {
   };
 
   const handleLoadSlot = (slot: string) => {
-    const savedGames = game.getSavedGames() as Record<string, { selectedEditionId?: string }>;
+    const savedGames = game.getSavedGames();
     const savedEditionId = savedGames[slot]?.selectedEditionId;
     if (savedEditionId) {
       try {

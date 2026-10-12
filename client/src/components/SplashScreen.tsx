@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { LOGO_URL } from "@/lib/constants";
-import { unlockAllTestEntitlements } from "@/lib/entitlements";
+import { hasTestingAccess, setTestingAccess, unlockAllTestEntitlements } from "@/lib/entitlements";
 
 interface SplashScreenProps {
   onNewGame: () => void;
@@ -12,7 +12,7 @@ interface SplashScreenProps {
 }
 
 export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: SplashScreenProps) {
-  const [testerCodeStep, setTesterCodeStep] = useState<"prompt" | "code" | null>(null);
+  const [testerCodeStep, setTesterCodeStep] = useState<"code" | "sign-out" | null>(null);
   const [testerCodeInput, setTesterCodeInput] = useState("");
   const [testerCodeError, setTesterCodeError] = useState<string | null>(null);
 
@@ -23,14 +23,21 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
   };
 
   const handleNewGameClick = () => {
-    setTesterCodeInput("");
-    setTesterCodeError(null);
-    setTesterCodeStep("prompt");
-  };
-
-  const handleNormalNewGame = () => {
     resetTesterCodeFlow();
     onNewGame();
+  };
+
+  const handleTestButtonClick = () => {
+    if (hasTestingAccess()) {
+      setTesterCodeInput("");
+      setTesterCodeError(null);
+      setTesterCodeStep("sign-out");
+      return;
+    }
+
+    setTesterCodeInput("");
+    setTesterCodeError(null);
+    setTesterCodeStep("code");
   };
 
   const handleTesterCodeSubmit = async () => {
@@ -42,6 +49,11 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
 
     resetTesterCodeFlow();
     onNewGame();
+  };
+
+  const handleTesterSignOut = () => {
+    setTestingAccess(false);
+    resetTesterCodeFlow();
   };
 
   return (
@@ -72,6 +84,15 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
         >
           Load Game
         </Button>
+        <Button
+          size="lg"
+          variant="secondary"
+          className="w-full text-lg h-14"
+          onClick={handleTestButtonClick}
+          data-testid="button-test"
+        >
+          Test
+        </Button>
 
         {/* Submit Feedback */}
         <button
@@ -90,20 +111,20 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
         }
       }}>
         <AlertDialogContent>
-          {testerCodeStep === "prompt" ? (
+          {testerCodeStep === "sign-out" ? (
             <>
               <AlertDialogHeader>
-                <AlertDialogTitle>Playtesting access</AlertDialogTitle>
+                <AlertDialogTitle>Tester access active</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Do you have a code for unlocking playtesting mode?
+                  You are currently signed in with the test unlock code. Sign out to return to normal entitlement checks?
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <Button variant="outline" onClick={handleNormalNewGame}>
-                  No
+                <Button variant="outline" onClick={resetTesterCodeFlow}>
+                  Cancel
                 </Button>
-                <Button onClick={() => setTesterCodeStep("code")}>
-                  Yes
+                <Button onClick={handleTesterSignOut}>
+                  Sign out
                 </Button>
               </AlertDialogFooter>
             </>
