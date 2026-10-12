@@ -86,6 +86,8 @@ export async function initializeDatabase() {
          trial_started_at TIMESTAMP NOT NULL DEFAULT NOW(),
          trial_ends_at TIMESTAMP NOT NULL,
          is_purchased BOOLEAN NOT NULL DEFAULT false,
+         unlock_all_digital BOOLEAN NOT NULL DEFAULT false,
+         edition_entitlements JSONB NOT NULL DEFAULT '{}'::jsonb,
          purchase_token TEXT,
          product_id TEXT,
          package_name TEXT,
@@ -101,6 +103,8 @@ export async function initializeDatabase() {
        ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMP NOT NULL DEFAULT NOW();
        ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP;
        ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS is_purchased BOOLEAN NOT NULL DEFAULT false;
+       ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS unlock_all_digital BOOLEAN NOT NULL DEFAULT false;
+       ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS edition_entitlements JSONB NOT NULL DEFAULT '{}'::jsonb;
        ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS product_id TEXT;
        ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS purchase_state INTEGER;
        ALTER TABLE billing_entitlements ADD COLUMN IF NOT EXISTS platform TEXT NOT NULL DEFAULT 'google';

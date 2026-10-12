@@ -39,3 +39,31 @@ This project uses a **30-day free trial + one-time purchase** model. No subscrip
 3. **Trial expired** — paywall shown with "Purchase to Unlock" button.
 4. **Purchase flow** — Google Play billing sheet launches; token sent to server; access granted immediately.
 5. **Re-install / new device** — device needs to purchase again (purchases are device-scoped); consider adding a restore flow if needed.
+
+## Stripe edition unlocks (Web / Digital Deck access)
+
+Digital deck access now supports:
+
+- Per-edition unlock: **$1.99** each
+- Unlock all editions: **$4.99** one-time
+
+### Stripe environment variables
+
+| Variable | Required | Notes |
+|---|---|---|
+| `STRIPE_SECRET_KEY` | Yes | Stripe secret key used to create and verify Checkout sessions |
+| `APP_BASE_URL` | Recommended | Base URL used for Checkout success/cancel redirects (falls back to request host) |
+| `STRIPE_PRICE_CLASSIC` | Optional | If set, uses this Stripe Price ID instead of dynamic price data |
+| `STRIPE_PRICE_RERACKED` | Optional | Same behavior |
+| `STRIPE_PRICE_SEQUENTIAL` | Optional | Same behavior |
+| `STRIPE_PRICE_TEED_OFF` | Optional | Same behavior |
+| `STRIPE_PRICE_TOURNAMENT` | Optional | Same behavior |
+| `STRIPE_PRICE_UNLOCK_ALL` | Optional | Price ID for the $4.99 unlock-all product |
+
+### Stripe runtime API summary
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/billing/digital-entitlements?deviceId=...` | Returns edition-level unlock map for the device |
+| `POST /api/billing/stripe/create-checkout-session` | Creates Checkout session for one edition or unlock-all |
+| `POST /api/billing/stripe/complete-checkout` | Validates paid Checkout session and grants entitlements |

@@ -1,4 +1,6 @@
 import type { EditionId } from "@/lib/editions";
+import { apiRequest } from "@/lib/queryClient";
+import { getBillingDeviceId } from "@/lib/billingDevice";
 
 const STORAGE_KEY = "digitalEditionEntitlements";
 const TEST_ACCESS_STORAGE_KEY = "digitalEditionTestAccess";
@@ -6,6 +8,7 @@ const TEST_ACCESS_STORAGE_KEY = "digitalEditionTestAccess";
 export const TEST_ACCESS_CODE = "PLAYTEST";
 
 type EntitlementMap = Record<EditionId, boolean>;
+export type PurchaseTarget = EditionId | "all";
 
 const EMPTY_ENTITLEMENTS: EntitlementMap = {
   classic: false,
@@ -82,18 +85,69 @@ export async function unlockAllTestEntitlements(code: string): Promise<boolean> 
 }
 
 export async function getDigitalEntitlements(): Promise<EntitlementMap> {
-  return readEntitlements();
+  if (hasTestingAccess()) {
+    return readEntitlements();
+  }
+
+  const deviceId = getBillingDeviceId();
+  const response = await fetch(`/api/billing/digital-entitlements?deviceId=${encodeURIComponent(deviceId)}`);
+  if (!response.ok) {
+    throw new Error((await response.text()) || "Failed to load entitlements");
+  }
+
+  const data = await response.json() as { entitlements?: Partial<EntitlementMap> };
+  const serverEntitlements: EntitlementMap = {
+    classic: Boolean(data.entitlements?.classic),
+    reracked: Boolean(data.entitlements?.reracked),
+    sequential: Boolean(data.entitlements?.sequential),
+    "teed-off": Boolean(data.entitlements?.["teed-off"]),
+    tournament: Boolean(data.entitlements?.tournament),
+  };
+  writeEntitlements(serverEntitlements);
+  return serverEntitlements;
 }
 
 export async function hasDigitalAccess(editionId: EditionId): Promise<boolean> {
-  const entitlements = readEntitlements();
+  const entitlements = await getDigitalEntitlements();
   return Boolean(entitlements[editionId]);
 }
 
-export async function purchaseDigitalEdition(editionId: EditionId): Promise<void> {
-  const entitlements = readEntitlements();
-  entitlements[editionId] = true;
-  writeEntitlements(entitlements);
+export async function purchaseDigitalEdition(target: PurchaseTarget): Promise<void> {
+  const deviceId = getBillingDeviceId();
+  const response = await apiRequest("POST", "/api/billing/stripe/create-checkout-session", {
+    deviceId,
+    target,
+  });
+  const data = await response.json() as { checkoutUrl?: string };
+  if (!data.checkoutUrl) {
+    throw new Error("Checkout URL was not returned");
+  }
+
+  if (typeof window !== "undefined") {
+    window.location.assign(data.checkoutUrl);
+  }
+}
+
+export async function finalizeStripeCheckoutFromUrl(): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  const url = new URL(window.location.href);
+  const checkoutState = url.searchParams.get("checkout");
+  const sessionId = url.searchParams.get("session_id");
+  if (checkoutState !== "success" || !sessionId) {
+    return;
+  }
+
+  const deviceId = getBillingDeviceId();
+  await apiRequest("POST", "/api/billing/stripe/complete-checkout", {
+    deviceId,
+    sessionId,
+  });
+
+  await getDigitalEntitlements();
+  url.searchParams.delete("checkout");
+  url.searchParams.delete("session_id");
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
 export async function setMockDigitalAccess(editionId: EditionId, unlocked: boolean): Promise<void> {

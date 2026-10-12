@@ -7,6 +7,7 @@ interface DigitalAccessScreenProps {
   isPurchasing: boolean;
   error: string | null;
   onPurchase: () => void;
+  onUnlockAll: () => void;
   onUsePhysicalCards: () => void;
   onBack: () => void;
 }
@@ -16,6 +17,7 @@ export function DigitalAccessScreen({
   isPurchasing,
   error,
   onPurchase,
+  onUnlockAll,
   onUsePhysicalCards,
   onBack,
 }: DigitalAccessScreenProps) {
@@ -40,6 +42,16 @@ export function DigitalAccessScreen({
           data-testid="button-purchase-digital-edition"
         >
           {isPurchasing ? "Unlocking..." : "Purchase Digital Edition"}
+        </Button>
+
+        <Button
+          variant="secondary"
+          className="w-full h-12"
+          onClick={onUnlockAll}
+          disabled={isPurchasing}
+          data-testid="button-purchase-unlock-all"
+        >
+          {isPurchasing ? "Unlocking..." : "Unlock All Editions ($4.99)"}
         </Button>
 
         <Button

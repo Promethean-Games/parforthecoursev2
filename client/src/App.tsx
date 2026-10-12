@@ -18,7 +18,7 @@ import { PlayModeSelectionScreen } from "@/components/PlayModeSelectionScreen";
 import { DigitalAccessScreen } from "@/components/DigitalAccessScreen";
 import { DigitalExperiencePlaceholder } from "@/components/DigitalExperiencePlaceholder";
 import { getEditionById, type EditionDefinition } from "@/lib/editions";
-import { hasDigitalAccess, purchaseDigitalEdition } from "@/lib/entitlements";
+import { finalizeStripeCheckoutFromUrl, hasDigitalAccess, purchaseDigitalEdition } from "@/lib/entitlements";
 import { getTurnOrder, isLeader } from "@/lib/game-utils";
 
 type Screen =
@@ -89,6 +89,16 @@ function GameApp() {
     setTheme(game.settings.theme);
   }, [game.settings.theme, setTheme]);
 
+  useEffect(() => {
+    void finalizeStripeCheckoutFromUrl().catch((error) => {
+      setDigitalAccessError(
+        error instanceof Error
+          ? error.message
+          : "Unable to finalize payment. Please try opening Digital Cards again.",
+      );
+    });
+  }, []);
+
   const handleNewGame = () => {
     game.resetGame();
     setSelectedEdition(null);
@@ -152,27 +162,23 @@ function GameApp() {
     setDigitalAccessError(null);
     try {
       await purchaseDigitalEdition(selectedEdition.id);
-      const unlocked = await hasDigitalAccess(selectedEdition.id);
-      if (unlocked) {
-        if (
-          selectedEdition.id === "classic"
-          || selectedEdition.id === "reracked"
-          || selectedEdition.id === "sequential"
-          || selectedEdition.id === "teed-off"
-          || selectedEdition.id === "tournament"
-        ) {
-          game.resetGame();
-          game.setGameExperience(selectedEdition.id, "digital");
-          setScreen("setup");
-          return;
-        }
-        setScreen("digital-experience");
-      } else {
-        setDigitalAccessError("Unable to unlock digital edition. Please try again.");
-      }
     } catch (error) {
       setDigitalAccessError(
         error instanceof Error ? error.message : "Unable to complete digital unlock right now.",
+      );
+    } finally {
+      setIsPurchasingDigital(false);
+    }
+  };
+
+  const handleUnlockAllDigitalEditions = async () => {
+    setIsPurchasingDigital(true);
+    setDigitalAccessError(null);
+    try {
+      await purchaseDigitalEdition("all");
+    } catch (error) {
+      setDigitalAccessError(
+        error instanceof Error ? error.message : "Unable to start unlock-all checkout right now.",
       );
     } finally {
       setIsPurchasingDigital(false);
@@ -337,6 +343,7 @@ function GameApp() {
         isPurchasing={isPurchasingDigital}
         error={digitalAccessError}
         onPurchase={() => void handlePurchaseDigitalEdition()}
+        onUnlockAll={() => void handleUnlockAllDigitalEditions()}
         onUsePhysicalCards={handleUsePhysicalCards}
         onBack={() => setScreen("mode")}
       />

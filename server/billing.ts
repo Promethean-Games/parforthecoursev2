@@ -1,6 +1,7 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { z } from "zod";
 import { GoogleAuth } from "google-auth-library";
+import Stripe from "stripe";
 import { pool } from "./db";
 
 const TRIAL_DAYS = 30;
@@ -11,6 +12,8 @@ interface EntitlementRow {
   trial_started_at: Date;
   trial_ends_at: Date;
   is_purchased: boolean;
+  unlock_all_digital: boolean;
+  edition_entitlements: unknown;
   purchase_token: string | null;
   product_id: string | null;
   package_name: string | null;
@@ -35,6 +38,49 @@ const appleVerifySchema = z.object({
   bundleId: z.string().min(1).optional(),
   appUserId: z.string().optional(),
 });
+
+const EDITION_IDS = ["classic", "reracked", "sequential", "teed-off", "tournament"] as const;
+type EditionId = (typeof EDITION_IDS)[number];
+type PurchaseTarget = EditionId | "all";
+type EntitlementMap = Record<EditionId, boolean>;
+
+const purchaseTargetSchema = z.enum([...EDITION_IDS, "all"]);
+
+const createCheckoutSessionSchema = z.object({
+  deviceId: z.string().min(1),
+  target: purchaseTargetSchema,
+});
+
+const completeCheckoutSessionSchema = z.object({
+  deviceId: z.string().min(1),
+  sessionId: z.string().min(1),
+});
+
+const EMPTY_ENTITLEMENTS: EntitlementMap = {
+  classic: false,
+  reracked: false,
+  sequential: false,
+  "teed-off": false,
+  tournament: false,
+};
+
+const EDITION_PRICE_CENTS: Record<EditionId, number> = {
+  classic: 199,
+  reracked: 199,
+  sequential: 199,
+  "teed-off": 199,
+  tournament: 199,
+};
+
+const EDITION_DISPLAY_NAMES: Record<EditionId, string> = {
+  classic: "Classic",
+  reracked: "Reracked",
+  sequential: "Sequential",
+  "teed-off": "Tee'd Off!",
+  tournament: "Tournament",
+};
+
+const UNLOCK_ALL_PRICE_CENTS = 499;
 
 const GOOGLE_ANDROID_PUBLISHER_SCOPE =
   "https://www.googleapis.com/auth/androidpublisher";
@@ -63,6 +109,112 @@ function getBillingConfig() {
       "com.prometheangames.pftc.classic",
     productId:
       process.env.GOOGLE_PLAY_PRODUCT_ID || "pftc_premium_unlock",
+  };
+}
+
+function getStripeSecretKey(): string {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) {
+    throw new Error("STRIPE_SECRET_KEY is not configured");
+  }
+  return key;
+}
+
+function getStripeClient(): Stripe {
+  return new Stripe(getStripeSecretKey(), {
+    apiVersion: "2026-02-25.clover",
+  });
+}
+
+function getAppBaseUrl(req: Request): string {
+  const configured = process.env.APP_BASE_URL;
+  if (configured) return configured.replace(/\/$/, "");
+
+  const proto = req.get("x-forwarded-proto") ?? req.protocol ?? "http";
+  const host = req.get("x-forwarded-host") ?? req.get("host");
+  if (!host) {
+    throw new Error("Unable to determine app host for checkout redirects");
+  }
+  return `${proto}://${host}`;
+}
+
+function stripePriceEnvKeyForEdition(editionId: EditionId): string {
+  switch (editionId) {
+    case "classic":
+      return "STRIPE_PRICE_CLASSIC";
+    case "reracked":
+      return "STRIPE_PRICE_RERACKED";
+    case "sequential":
+      return "STRIPE_PRICE_SEQUENTIAL";
+    case "teed-off":
+      return "STRIPE_PRICE_TEED_OFF";
+    case "tournament":
+      return "STRIPE_PRICE_TOURNAMENT";
+    default:
+      return "";
+  }
+}
+
+function readEditionEntitlements(raw: unknown): EntitlementMap {
+  if (!raw || typeof raw !== "object") {
+    return { ...EMPTY_ENTITLEMENTS };
+  }
+
+  const parsed = raw as Partial<EntitlementMap>;
+  return {
+    classic: Boolean(parsed.classic),
+    reracked: Boolean(parsed.reracked),
+    sequential: Boolean(parsed.sequential),
+    "teed-off": Boolean(parsed["teed-off"]),
+    tournament: Boolean(parsed.tournament),
+  };
+}
+
+function resolveEditionEntitlements(row: EntitlementRow): EntitlementMap {
+  const persisted = readEditionEntitlements(row.edition_entitlements);
+  if (!row.unlock_all_digital) {
+    return persisted;
+  }
+
+  return {
+    classic: true,
+    reracked: true,
+    sequential: true,
+    "teed-off": true,
+    tournament: true,
+  };
+}
+
+async function applyEditionPurchase(deviceId: string, target: PurchaseTarget): Promise<void> {
+  const row = await getOrCreateEntitlement(deviceId);
+  const current = readEditionEntitlements(row.edition_entitlements);
+
+  const nextEntitlements: EntitlementMap = { ...current };
+  let unlockAllDigital = row.unlock_all_digital;
+  if (target === "all") {
+    EDITION_IDS.forEach((editionId) => {
+      nextEntitlements[editionId] = true;
+    });
+    unlockAllDigital = true;
+  } else {
+    nextEntitlements[target] = true;
+  }
+
+  await pool.query(
+    `UPDATE billing_entitlements
+     SET unlock_all_digital = $2,
+         edition_entitlements = $3::jsonb,
+         updated_at = NOW()
+     WHERE device_id = $1`,
+    [deviceId, unlockAllDigital, JSON.stringify(nextEntitlements)],
+  );
+}
+
+function formatDigitalEntitlementsResponse(row: EntitlementRow) {
+  const entitlements = resolveEditionEntitlements(row);
+  return {
+    unlockAll: row.unlock_all_digital,
+    entitlements,
   };
 }
 
@@ -183,6 +335,123 @@ function formatAccessResponse(row: EntitlementRow) {
 }
 
 export function registerBillingRoutes(app: Express) {
+  app.get("/api/billing/digital-entitlements", async (req, res) => {
+    const deviceId = typeof req.query.deviceId === "string" ? req.query.deviceId : "";
+    if (!deviceId) {
+      return res.status(400).json({ error: "deviceId is required" });
+    }
+
+    try {
+      const row = await getOrCreateEntitlement(deviceId);
+      res.json(formatDigitalEntitlementsResponse(row));
+    } catch (error) {
+      console.error("Error getting digital entitlements:", error);
+      res.status(500).json({ error: "Failed to get digital entitlements" });
+    }
+  });
+
+  app.post("/api/billing/stripe/create-checkout-session", async (req, res) => {
+    const parsed = createCheckoutSessionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.errors[0]?.message || "Invalid request" });
+    }
+
+    try {
+      const stripe = getStripeClient();
+      const { deviceId, target } = parsed.data;
+      const appBaseUrl = getAppBaseUrl(req);
+      const metadata: Record<string, string> = {
+        deviceId,
+        target,
+      };
+
+      const allPriceId = process.env.STRIPE_PRICE_UNLOCK_ALL;
+      const editionPriceId = target === "all" ? null : process.env[stripePriceEnvKeyForEdition(target)];
+
+      const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
+        target === "all"
+          ? allPriceId
+            ? [{ price: allPriceId, quantity: 1 }]
+            : [{
+                quantity: 1,
+                price_data: {
+                  currency: "usd",
+                  unit_amount: UNLOCK_ALL_PRICE_CENTS,
+                  product_data: {
+                    name: "Par for the Course — Unlock All Digital Editions",
+                    description: "Unlocks Classic, Reracked, Sequential, Tee'd Off!, and Tournament digital editions.",
+                  },
+                },
+              }]
+          : editionPriceId
+            ? [{ price: editionPriceId, quantity: 1 }]
+            : [{
+                quantity: 1,
+                price_data: {
+                  currency: "usd",
+                  unit_amount: EDITION_PRICE_CENTS[target],
+                  product_data: {
+                    name: `Par for the Course — ${EDITION_DISPLAY_NAMES[target]} Digital Edition`,
+                  },
+                },
+              }];
+
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        success_url: `${appBaseUrl}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${appBaseUrl}/?checkout=cancelled`,
+        line_items: lineItems,
+        metadata,
+      });
+
+      if (!session.url) {
+        throw new Error("Stripe checkout URL was not returned");
+      }
+
+      res.json({ checkoutUrl: session.url });
+    } catch (error) {
+      console.error("Error creating Stripe checkout session:", error);
+      res.status(500).json({ error: "Failed to create checkout session" });
+    }
+  });
+
+  app.post("/api/billing/stripe/complete-checkout", async (req, res) => {
+    const parsed = completeCheckoutSessionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.errors[0]?.message || "Invalid request" });
+    }
+
+    try {
+      const stripe = getStripeClient();
+      const { deviceId, sessionId } = parsed.data;
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+      const paid = session.payment_status === "paid";
+      const metadataDeviceId = session.metadata?.deviceId;
+      const metadataTarget = session.metadata?.target;
+
+      if (!paid) {
+        return res.status(400).json({ error: "Checkout session is not paid" });
+      }
+
+      if (!metadataDeviceId || metadataDeviceId !== deviceId) {
+        return res.status(400).json({ error: "Checkout session does not match this device" });
+      }
+
+      const targetParse = purchaseTargetSchema.safeParse(metadataTarget);
+      if (!targetParse.success) {
+        return res.status(400).json({ error: "Checkout session target is invalid" });
+      }
+
+      await applyEditionPurchase(deviceId, targetParse.data);
+      const updatedRow = await getOrCreateEntitlement(deviceId);
+      res.json(formatDigitalEntitlementsResponse(updatedRow));
+    } catch (error) {
+      console.error("Error completing Stripe checkout session:", error);
+      res.status(500).json({ error: "Failed to finalize checkout session" });
+    }
+  });
+
   app.get("/api/billing/google-play/config", (_req, res) => {
     const config = getBillingConfig();
     res.json({
