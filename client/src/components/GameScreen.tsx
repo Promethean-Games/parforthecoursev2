@@ -410,18 +410,20 @@ export function GameScreen({
     setShowDrawDialog(false);
   };
 
-  // Check if all players have non-zero scores for current hole
-  const allPlayersHaveScores = players.every((player) => {
-    const playerScore = scores[player.id]?.find((s) => s.hole === currentHole);
-    return playerScore && playerScore.strokes > 0;
-  });
+  const getHoleStrokesForPlayer = (playerId: string) => {
+    if (playerId === currentPlayer.id) {
+      return strokes;
+    }
+    const playerScore = scores[playerId]?.find((score) => score.hole === currentHole);
+    return playerScore?.strokes ?? 0;
+  };
+
+  // Use local in-progress score state for the current player so Next Card can advance immediately.
+  const allPlayersHaveScores = players.every((player) => getHoleStrokesForPlayer(player.id) > 0);
 
   const canAdvance = par > 0 && strokes > 0 && allPlayersHaveScores;
 
-  const playersMissingScores = players.filter((player) => {
-    const playerScore = scores[player.id]?.find((s) => s.hole === currentHole);
-    return !playerScore || playerScore.strokes === 0;
-  });
+  const playersMissingScores = players.filter((player) => getHoleStrokesForPlayer(player.id) === 0);
   const shootersRemaining = playersMissingScores.length;
   const playerInfo = `${shootersRemaining} player${shootersRemaining !== 1 ? "s" : ""} remaining`;
   const removablePlayerIds = playersMissingScores.map((player) => player.id);

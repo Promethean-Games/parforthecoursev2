@@ -132,27 +132,35 @@ function GameApp() {
     if (!selectedEdition) return;
     setDigitalAccessError(null);
     game.setGameExperience(selectedEdition.id, "digital");
+    try {
+      const unlocked = await hasDigitalAccess(selectedEdition.id);
+      if (!unlocked) {
+        setScreen("digital-access");
+        return;
+      }
 
-    const unlocked = await hasDigitalAccess(selectedEdition.id);
-    if (!unlocked) {
+      if (
+        selectedEdition.id === "classic"
+        || selectedEdition.id === "reracked"
+        || selectedEdition.id === "sequential"
+        || selectedEdition.id === "teed-off"
+        || selectedEdition.id === "tournament"
+      ) {
+        game.resetGame();
+        game.setGameExperience(selectedEdition.id, "digital");
+        setScreen("setup");
+        return;
+      }
+
+      setScreen("digital-experience");
+    } catch (error) {
+      setDigitalAccessError(
+        error instanceof Error
+          ? error.message
+          : "Unable to verify digital access right now. You can still purchase this edition below.",
+      );
       setScreen("digital-access");
-      return;
     }
-
-    if (
-      selectedEdition.id === "classic"
-      || selectedEdition.id === "reracked"
-      || selectedEdition.id === "sequential"
-      || selectedEdition.id === "teed-off"
-      || selectedEdition.id === "tournament"
-    ) {
-      game.resetGame();
-      game.setGameExperience(selectedEdition.id, "digital");
-      setScreen("setup");
-      return;
-    }
-
-    setScreen("digital-experience");
   };
 
   const handlePurchaseDigitalEdition = async () => {
