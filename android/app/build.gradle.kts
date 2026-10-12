@@ -4,7 +4,8 @@ plugins {
 }
 
 val webAssetsSourceDir = layout.projectDirectory.dir("../../dist/public")
-val generatedWebAssetsDir = layout.buildDirectory.dir("generated/web-assets/web")
+val generatedWebAssetsRootDir = layout.buildDirectory.dir("generated/web-assets")
+val generatedWebAssetsDir = generatedWebAssetsRootDir.map { it.dir("web") }
 
 val syncWebAssets by tasks.registering(Copy::class) {
     from(webAssetsSourceDir)
@@ -26,15 +27,15 @@ android {
         buildConfig = true
     }
 
-    sourceSets.getByName("main").assets.srcDir(generatedWebAssetsDir)
+    sourceSets.getByName("main").assets.srcDir(generatedWebAssetsRootDir)
 
     defaultConfig {
         applicationId = "com.parforthecourse.app"
         minSdk = 24
         targetSdk = 35
         // Keep this higher than every production artifact versionCode in Play Console.
-        versionCode = 2026101103
-        versionName = "3.14.3"
+        versionCode = 2026101104
+        versionName = "3.14.4"
         buildConfigField("String", "APP_URL", "\"https://appassets.androidplatform.net/assets/web/index.html\"")
         // Startup Diagnostic Mode: enabled by default for all non-release builds.
         // Set to false in the release block below (or manually flip to true for a beta release build).
