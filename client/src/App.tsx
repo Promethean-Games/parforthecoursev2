@@ -373,6 +373,7 @@ function GameApp() {
           isLeader={playerIsLeader}
           playMode={game.playMode}
           edition={activeEdition}
+          totalHoles={totalHoles}
           leftHandedMode={game.settings.leftHandedMode}
           onPreviousPlayer={game.previousPlayer}
           onNextPlayer={game.nextPlayer}

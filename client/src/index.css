@@ -209,6 +209,18 @@
     }
   }
 
+  @keyframes titlePulse {
+    0%,
+    100% {
+      transform: scale(1);
+      filter: drop-shadow(0 0 8px rgba(255, 214, 80, 0.75));
+    }
+    50% {
+      transform: scale(1.06);
+      filter: drop-shadow(0 0 18px rgba(255, 214, 80, 1));
+    }
+  }
+
   .next-card-button-ready {
     animation: next-card-pulse 2.8s ease-in-out infinite;
   }

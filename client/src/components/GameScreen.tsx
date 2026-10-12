@@ -39,6 +39,7 @@ interface GameScreenProps {
   isLeader: boolean;
   playMode: PlayMode;
   edition?: EditionDefinition;
+  totalHoles?: number;
   leftHandedMode?: boolean;
   onPreviousPlayer: () => void;
   onNextPlayer: () => void;
@@ -59,6 +60,7 @@ export function GameScreen({
   isLeader,
   playMode,
   edition,
+  totalHoles = 18,
   leftHandedMode = false,
   onPreviousPlayer,
   onNextPlayer,
@@ -222,14 +224,6 @@ export function GameScreen({
   }, []);
 
   useEffect(() => {
-    if (!showDrawDialog || !isDigitalDeckEdition || digitalDrawsByHole[currentHole] || digitalDrawPile.length === 0) return;
-    const [nextCard, ...remaining] = digitalDrawPile;
-    if (!nextCard) return;
-    setDigitalDrawsByHole((prev) => ({ ...prev, [currentHole]: nextCard }));
-    setDigitalDrawPile(remaining);
-  }, [showDrawDialog, isDigitalDeckEdition, currentHole, digitalDrawsByHole, digitalDrawPile]);
-
-  useEffect(() => {
     // Track player changes to avoid updating score during player switch
     if (currentPlayer.id !== lastPlayerId.current) {
       lastPlayerId.current = currentPlayer.id;
@@ -330,9 +324,11 @@ export function GameScreen({
     setShowTableSetupDialog(false);
   };
 
-  const handleDigitalReady = (jokerPar?: number) => {
-    const drawnCard = digitalDrawsByHole[currentHole];
+  const handleDigitalReady = (drawnCard: DigitalCard, jokerPar?: number) => {
     if (!drawnCard) return;
+
+    setDigitalDrawsByHole((prev) => ({ ...prev, [currentHole]: drawnCard }));
+    setDigitalDrawPile((prev) => prev.filter((card) => card.id !== drawnCard.id));
 
     const selectedPar = drawnCard.par ?? jokerPar;
     if (typeof selectedPar === "number") {
@@ -575,7 +571,8 @@ export function GameScreen({
       {showDrawDialog && (
         isDigitalDeckEdition ? (
           <DigitalDrawDialog
-            card={digitalDrawsByHole[currentHole] || null}
+            cards={digitalDrawPile.slice(0, Math.min(5, Math.max(1, totalHoles - currentHole + 1)))}
+            playerName={currentPlayer.name}
             onReady={handleDigitalReady}
           />
         ) : (
