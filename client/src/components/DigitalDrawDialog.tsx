@@ -28,9 +28,7 @@ const FLIP_DURATION_MS = 650;
 const DRAW_DRAG_THRESHOLD = 90;
 const CARD_WIDTH_PX = 180;
 const CARD_HEIGHT_PX = 270;
-const CARD_STACK_TOP_PX = 24;
-const CARD_STACK_AREA_HEIGHT_PX = 380;
-const REVEALED_CARD_CENTER_Y_PX = (CARD_STACK_AREA_HEIGHT_PX - CARD_HEIGHT_PX) / 2 - CARD_STACK_TOP_PX;
+const REVEAL_PULL_MS = 220;
 
 function getDefaultCardState(): CardMotionState {
   return {
@@ -50,6 +48,7 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
   const [jokerPar, setJokerPar] = useState<number | null>(null);
   const [cardMotionState, setCardMotionState] = useState<Record<string, CardMotionState>>({});
   const dragStartRef = useRef<Record<string, number | null>>({});
+  const revealTimeoutRef = useRef<Record<string, number>>({});
   const visibleCards = useMemo(() => cards.slice(0, Math.min(cards.length, MAX_VISIBLE_CARDS)), [cards]);
   const revealedCard = useMemo(
     () => visibleCards.find((card) => cardMotionState[card.id]?.isRevealed) ?? null,
@@ -60,6 +59,8 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
   useEffect(() => {
     setJokerPar(null);
     setCardMotionState({});
+    Object.values(revealTimeoutRef.current).forEach((timeoutId) => window.clearTimeout(timeoutId));
+    revealTimeoutRef.current = {};
   }, [visibleCards.map((card) => card.id).join("-")]);
 
   const updateCardState = (cardId: string, changes: Partial<CardMotionState>) => {
@@ -77,9 +78,10 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
     const currentState = cardMotionState[cardId] ?? getDefaultCardState();
     if (currentState.isRevealed || currentState.isPulling || deckLocked) return;
     updateCardState(cardId, { isPulling: true, isDragging: false });
-    window.setTimeout(() => {
+    window.clearTimeout(revealTimeoutRef.current[cardId]);
+    revealTimeoutRef.current[cardId] = window.setTimeout(() => {
       updateCardState(cardId, { isPulling: false, isRevealed: true });
-    }, 220);
+    }, REVEAL_PULL_MS);
   };
 
   const handlePointerDown = (cardId: string, event: React.PointerEvent<HTMLButtonElement>) => {
@@ -157,7 +159,7 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
               const baseScale = 1 - Math.abs(relativeIndex) * 0.03;
               const totalDragOffset = cardState.dragOffset;
               const transform = cardState.isRevealed
-                ? `translate(0px, ${REVEALED_CARD_CENTER_Y_PX}px) rotate(0deg) scale(1.08)`
+                ? "translate(0px, 0px) rotate(0deg) scale(1.03)"
                 : cardState.isPulling
                   ? `translate(${baseX}px, ${baseY + 170}px) rotate(${baseRotate}deg) scale(1.08)`
                   : `translate(${baseX}px, ${baseY + totalDragOffset}px) rotate(${baseRotate + totalDragOffset * 0.05}deg) scale(${baseScale + totalDragOffset / 1000})`;
@@ -180,16 +182,21 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
                     dragStartRef.current[card.id] = null;
                   }}
                   disabled={cardState.isRevealed || deckLocked}
-                  className="absolute left-1/2 top-[24px] rounded-xl bg-transparent disabled:cursor-default"
+                  className="rounded-xl bg-transparent disabled:cursor-default"
                   style={{
+                    position: cardState.isRevealed ? "fixed" : "absolute",
+                    top: cardState.isRevealed ? "50%" : "24px",
+                    left: "50%",
                     perspective: "1100px",
                     height: `${CARD_HEIGHT_PX}px`,
                     width: `${CARD_WIDTH_PX}px`,
                     marginLeft: `${-CARD_WIDTH_PX / 2}px`,
-                    zIndex: cardState.isDragging || cardState.isPulling || cardState.isRevealed ? 30 : 10 + index,
+                    marginTop: cardState.isRevealed ? `${-CARD_HEIGHT_PX / 2}px` : undefined,
+                    zIndex: cardState.isDragging || cardState.isPulling || cardState.isRevealed ? 80 : 10 + index,
                     transform,
                     transition: cardState.isDragging ? "none" : `transform ${FLIP_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
                     touchAction: "none",
+                    pointerEvents: cardState.isRevealed ? "none" : "auto",
                     filter: cardState.isRevealed ? "drop-shadow(0 24px 30px rgba(0,0,0,0.45))" : "drop-shadow(0 18px 35px rgba(0,0,0,0.28))",
                   }}
                   aria-label={`Draw ${card.label}`}
