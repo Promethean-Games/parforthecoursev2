@@ -120,8 +120,30 @@ export function GameScreen({
     { id: "joker-01", imageSrc: cardAssetPath("reracked/joker-01.png"), label: "Joker", par: null },
     { id: "joker-02", imageSrc: cardAssetPath("reracked/joker-02.png"), label: "Joker", par: null },
   ];
+  const createSequentialDeck = (): DigitalCard[] => [
+    { id: "SEQ-C-03_01", imageSrc: cardAssetPath("sequential/SEQ-C-03_01.png"), label: "Par 3", par: 3 },
+    { id: "SEQ-C-03_02", imageSrc: cardAssetPath("sequential/SEQ-C-03_02.png"), label: "Par 3", par: 3 },
+    { id: "SEQ-C-03_03", imageSrc: cardAssetPath("sequential/SEQ-C-03_03.png"), label: "Par 3", par: 3 },
+    { id: "SEQ-C-03_04", imageSrc: cardAssetPath("sequential/SEQ-C-03_04.png"), label: "Par 3", par: 3 },
+    { id: "SEQ-C-04_01", imageSrc: cardAssetPath("sequential/SEQ-C-04_01.png"), label: "Par 4", par: 4 },
+    { id: "SEQ-C-04_02", imageSrc: cardAssetPath("sequential/SEQ-C-04_02.png"), label: "Par 4", par: 4 },
+    { id: "SEQ-C-04_03", imageSrc: cardAssetPath("sequential/SEQ-C-04_03.png"), label: "Par 4", par: 4 },
+    { id: "SEQ-C-04_04", imageSrc: cardAssetPath("sequential/SEQ-C-04_04.png"), label: "Par 4", par: 4 },
+    { id: "SEQ-C-04_05", imageSrc: cardAssetPath("sequential/SEQ-C-04_05.png"), label: "Par 4", par: 4 },
+    { id: "SEQ-C-05_01", imageSrc: cardAssetPath("sequential/SEQ-C-05_01.png"), label: "Par 5", par: 5 },
+    { id: "SEQ-C-05_02", imageSrc: cardAssetPath("sequential/SEQ-C-05_02.png"), label: "Par 5", par: 5 },
+    { id: "SEQ-C-05_03", imageSrc: cardAssetPath("sequential/SEQ-C-05_03.png"), label: "Par 5", par: 5 },
+    { id: "SEQ-C-06_01", imageSrc: cardAssetPath("sequential/SEQ-C-06_01.png"), label: "Par 6", par: 6 },
+    { id: "SEQ-C-06_02", imageSrc: cardAssetPath("sequential/SEQ-C-06_02.png"), label: "Par 6", par: 6 },
+    { id: "SEQ-C-07_01", imageSrc: cardAssetPath("sequential/SEQ-C-07_01.png"), label: "Par 7", par: 7 },
+    { id: "SEQ-C-07_02", imageSrc: cardAssetPath("sequential/SEQ-C-07_02.png"), label: "Par 7", par: 7 },
+    { id: "SEQ-C-08_01", imageSrc: cardAssetPath("sequential/SEQ-C-08_01.png"), label: "Par 8", par: 8 },
+    { id: "SEQ-C-09_01", imageSrc: cardAssetPath("sequential/SEQ-C-09_01.png"), label: "Par 9", par: 9 },
+  ];
   const createDeckForEdition = (editionId: EditionDefinition["id"]): DigitalCard[] => {
     switch (editionId) {
+      case "sequential":
+        return createSequentialDeck();
       case "reracked":
         return createRerackedDeck();
       case "classic":
@@ -152,7 +174,7 @@ export function GameScreen({
   const isInitialMount = useRef(true);
   const lastPlayerId = useRef(currentPlayer.id);
   const tournament = useTournament();
-  const isDigitalDeckEdition = playMode === "digital" && !!edition && (edition.id === "classic" || edition.id === "reracked");
+  const isDigitalDeckEdition = playMode === "digital" && !!edition && (edition.id === "classic" || edition.id === "reracked" || edition.id === "sequential");
 
   useEffect(() => {
     if (!isDigitalDeckEdition || !edition) return;

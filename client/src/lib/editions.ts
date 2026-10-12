@@ -38,8 +38,8 @@ export const EDITIONS: EditionDefinition[] = [
     description: "Sequential edition content.",
     digitalProductId: "sequential.digital",
     priceCents: 199,
-    cardCount: 16,
-    jokerCount: 2,
+    cardCount: 18,
+    jokerCount: 0,
     available: true,
   },
   {
