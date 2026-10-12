@@ -117,7 +117,7 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
   };
 
   return (
-    <div className="flex flex-col min-h-screen pb-16">
+    <div className="fixed inset-0 z-50 flex flex-col bg-background pb-16">
       <div className="flex-1 overflow-y-auto p-6">
         <div className="mb-6">
           <h2 className="text-2xl font-bold">{mode === "save" ? "Save Game" : "Load Game"}</h2>

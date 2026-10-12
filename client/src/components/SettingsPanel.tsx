@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus, Shield, Home } from "lucide-react";
 import { useTournament } from "@/contexts/TournamentContext";
-import { unlockAllTestEntitlements } from "@/lib/entitlements";
 import { PlayerSelectionDialog } from "./PlayerSelectionDialog";
 import { DirectorPortal } from "./DirectorPortal";
 import type { Settings, Player } from "@shared/schema";
@@ -24,10 +23,8 @@ interface SettingsPanelProps {
 export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer, onEndGame, onHome }: SettingsPanelProps) {
   const [newPlayerName, setNewPlayerName] = useState("");
   const [insertPosition, setInsertPosition] = useState<string>("end");
-  const [testCodeInput, setTestCodeInput] = useState("");
   const [showPlayerSelection, setShowPlayerSelection] = useState(false);
   const [titleTapCount, setTitleTapCount] = useState(0);
-  const [testCodeStatus, setTestCodeStatus] = useState<string | null>(null);
   const [directorError, setDirectorError] = useState<string | null>(null);
   const [showDirectorPortal, setShowDirectorPortal] = useState(false);
   const [directorPinInput, setDirectorPinInput] = useState("");
@@ -41,19 +38,6 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
     onAddPlayer(name, position);
     setNewPlayerName("");
     setInsertPosition("end");
-  };
-
-  const handleUnlockTestAccess = async () => {
-    if (!testCodeInput.trim()) return;
-    setTestCodeStatus(null);
-
-    const success = await unlockAllTestEntitlements(testCodeInput);
-    if (success) {
-      setTestCodeInput("");
-      setTestCodeStatus("Test access enabled. All entitlements unlocked.");
-    } else {
-      setTestCodeStatus("Invalid test code. Please check the shared tester access code.");
-    }
   };
 
   const handleLeaveRoom = () => {
@@ -235,41 +219,6 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
             <h3 className="font-semibold mb-3">About</h3>
             <p className="text-sm text-muted-foreground mb-2">Par for the Course</p>
             <p className="text-xs text-muted-foreground">Version 2.1.0</p>
-          </Card>
-
-          <Card className="p-4">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <Shield className="w-4 h-4" />
-              Test Code
-            </h3>
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <Input
-                  value={testCodeInput}
-                  onChange={(e) => setTestCodeInput(e.target.value.toUpperCase())}
-                  placeholder="Enter test code"
-                  className="flex-1 font-mono text-center tracking-widest"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleUnlockTestAccess();
-                  }}
-                  data-testid="input-test-code"
-                />
-                <Button
-                  onClick={handleUnlockTestAccess}
-                  className="bg-green-600 hover:bg-green-500"
-                  disabled={!testCodeInput.trim()}
-                  data-testid="button-unlock-test-access"
-                >
-                  Unlock
-                </Button>
-              </div>
-              {testCodeStatus && (
-                <p className="text-sm text-emerald-500">{testCodeStatus}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Enter the tester code to unlock all digital entitlements for QA and Play Store testing.
-              </p>
-            </div>
           </Card>
 
           <div className="pt-4 space-y-3">
