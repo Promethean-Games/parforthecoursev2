@@ -6,6 +6,7 @@ plugins {
 val webAssetsSourceDir = layout.projectDirectory.dir("../../dist/public")
 val generatedWebAssetsRootDir = layout.buildDirectory.dir("generated/web-assets")
 val generatedWebAssetsDir = generatedWebAssetsRootDir.map { it.dir("web") }
+val releaseKeystoreFile = file("keystore.jks")
 
 val syncWebAssets by tasks.registering(Copy::class) {
     from(webAssetsSourceDir)
@@ -45,9 +46,8 @@ android {
 
     signingConfigs {
         create("release") {
-            val keystoreFile = file("keystore.jks")
-            if (keystoreFile.exists()) {
-                storeFile = keystoreFile
+            if (releaseKeystoreFile.exists()) {
+                storeFile = releaseKeystoreFile
                 storePassword = "your-store-password" // Replace with your keystore password
                 keyAlias = "your-key-alias" // Replace with your key alias
                 keyPassword = "your-key-password" // Replace with your key password
@@ -68,7 +68,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (releaseKeystoreFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             // Disable the diagnostic panel in production builds.
             buildConfigField("Boolean", "DIAGNOSTIC_MODE", "false")
         }
@@ -86,6 +90,18 @@ android {
 
 tasks.matching { task ->
     task.name.startsWith("merge") && task.name.endsWith("Assets")
+}.configureEach {
+    dependsOn(syncWebAssets)
+}
+
+tasks.matching { task ->
+    task.name.contains("LintVitalReportModel")
+}.configureEach {
+    dependsOn(syncWebAssets)
+}
+
+tasks.matching { task ->
+    task.name.contains("lint", ignoreCase = true)
 }.configureEach {
     dependsOn(syncWebAssets)
 }
