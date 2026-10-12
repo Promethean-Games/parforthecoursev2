@@ -10,6 +10,7 @@ import com.android.billingclient.api.BillingClient.BillingResponseCode
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.ProductDetails
+import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesResponseListener
 import com.android.billingclient.api.PurchasesUpdatedListener
@@ -42,7 +43,11 @@ class PlayBillingBridge(
 
     private val billingClient: BillingClient = BillingClient.newBuilder(activity)
         .setListener(this)
-        .enablePendingPurchases()
+        .enablePendingPurchases(
+            PendingPurchasesParams.newBuilder()
+                .enableOneTimeProducts()
+                .build()
+        )
         .build()
 
     @Volatile
@@ -95,7 +100,7 @@ class PlayBillingBridge(
                 .setProductList(queryProducts)
                 .build()
 
-            billingClient.queryProductDetailsAsync(params) { result, detailsList ->
+            billingClient.queryProductDetailsAsync(params) { result, queryResult ->
                 if (result.responseCode != BillingResponseCode.OK) {
                     emitError(
                         type = "catalog_result",
@@ -106,9 +111,13 @@ class PlayBillingBridge(
                     return@queryProductDetailsAsync
                 }
 
-                val detailsById = detailsList.associateBy { it.productId }
+                val detailsList = queryResult.productDetailsList
+                val detailsById = linkedMapOf<String, ProductDetails>()
+                for (detail in detailsList) {
+                    detailsById[detail.productId] = detail
+                }
                 val products = JSONArray()
-                productIds.forEach { productId ->
+                for (productId in productIds) {
                     val detail = detailsById[productId]
                     products.put(detailToJson(productId, detail))
                 }
@@ -153,7 +162,7 @@ class PlayBillingBridge(
                 )
                 .build()
 
-            billingClient.queryProductDetailsAsync(params) { result, detailsList ->
+            billingClient.queryProductDetailsAsync(params) { result, queryResult ->
                 if (result.responseCode != BillingResponseCode.OK) {
                     emitError(
                         type = "purchase_result",
@@ -165,7 +174,14 @@ class PlayBillingBridge(
                     return@queryProductDetailsAsync
                 }
 
-                val productDetail = detailsList.firstOrNull()
+                val detailsList = queryResult.productDetailsList
+                var productDetail: ProductDetails? = null
+                for (detail in detailsList) {
+                    if (detail.productId == productId) {
+                        productDetail = detail
+                        break
+                    }
+                }
                 if (productDetail == null) {
                     emitError(
                         type = "purchase_result",

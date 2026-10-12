@@ -48,6 +48,25 @@ export interface DigitalStorePricing {
   unlockAllPrice: string | null;
 }
 
+const DEFAULT_NATIVE_GOOGLE_PLAY_CATALOG: GooglePlayCatalogResponse = {
+  editionProducts: {
+    classic: "classic",
+    reracked: "reracked",
+    sequential: "sequential",
+    "teed-off": "teed-off",
+    tournament: "tournament",
+  },
+  bundleProductId: "bundle_all_editions",
+  logicalEntitlements: {
+    edition_classic: "classic",
+    edition_reracked: "reracked",
+    edition_sequential: "sequential",
+    edition_tournament: "tournament",
+    edition_teed_off: "teed-off",
+    bundle_all_editions: "all",
+  },
+};
+
 const EMPTY_ENTITLEMENTS: EntitlementMap = {
   classic: false,
   reracked: false,
@@ -297,9 +316,32 @@ function normalizeCatalog(payload: Partial<GooglePlayCatalogResponse>): GooglePl
   };
 }
 
+function getNativeGooglePlayCatalog(): GooglePlayCatalogResponse {
+  if (typeof window === "undefined") {
+    return { ...DEFAULT_NATIVE_GOOGLE_PLAY_CATALOG };
+  }
+
+  const cached = localStorage.getItem(GOOGLE_PLAY_CATALOG_CACHE_KEY);
+  if (cached) {
+    try {
+      return normalizeCatalog(JSON.parse(cached) as Partial<GooglePlayCatalogResponse>);
+    } catch {
+      // Fall through to the app defaults below.
+    }
+  }
+
+  return { ...DEFAULT_NATIVE_GOOGLE_PLAY_CATALOG };
+}
+
 async function getGooglePlayCatalog(): Promise<GooglePlayCatalogResponse> {
   if (typeof window === "undefined") {
     throw new Error("Google Play catalog is unavailable in this environment.");
+  }
+
+  if (isGooglePlayBillingSupported()) {
+    const nativeCatalog = getNativeGooglePlayCatalog();
+    localStorage.setItem(GOOGLE_PLAY_CATALOG_CACHE_KEY, JSON.stringify(nativeCatalog));
+    return nativeCatalog;
   }
 
   try {

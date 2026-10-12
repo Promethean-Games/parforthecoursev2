@@ -32,7 +32,7 @@ val syncWebAssets by tasks.registering(Copy::class) {
 
 android {
     namespace = "com.parforthecourse.app"
-    compileSdk = 35
+    compileSdk = 36
 
     buildFeatures {
         buildConfig = true
@@ -43,10 +43,10 @@ android {
     defaultConfig {
         applicationId = "com.parforthecourse.app"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         // Keep this higher than every production artifact versionCode in Play Console.
-        versionCode = 2026101104
-        versionName = "3.14.4"
+        versionCode = 2026101201
+        versionName = "3.14.5"
         buildConfigField("String", "APP_URL", "\"https://appassets.androidplatform.net/assets/web/index.html\"")
         // Startup Diagnostic Mode: enabled by default for all non-release builds.
         // Set to false in the release block below (or manually flip to true for a beta release build).
@@ -128,7 +128,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.activity:activity-compose:1.7.2")
     implementation("androidx.webkit:webkit:1.11.0")
-    implementation("com.android.billingclient:billing-ktx:7.1.1")
+    implementation("com.android.billingclient:billing-ktx:8.0.0")
     implementation(platform("androidx.compose:compose-bom:2023.08.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
