@@ -16,7 +16,7 @@ interface DigitalCard {
 }
 
 const FLIP_DURATION_MS = 550;
-const SUPPORTED_DIGITAL_EDITIONS = new Set(["classic", "reracked", "sequential"]);
+const SUPPORTED_DIGITAL_EDITIONS = new Set(["classic", "reracked", "sequential", "tournament"]);
 
 function cardAssetPath(fileName: string): string {
   return `${import.meta.env.BASE_URL}cards/${fileName}`;
@@ -91,8 +91,33 @@ function createSequentialDeck(): DigitalCard[] {
   ];
 }
 
+function createTournamentDeck(): DigitalCard[] {
+  return [
+    { id: "1-01", imageSrc: cardAssetPath("tournament/1-01.png"), label: "Par 1", par: 1 },
+    { id: "2-01", imageSrc: cardAssetPath("tournament/2-01.png"), label: "Par 2", par: 2 },
+    { id: "2-02", imageSrc: cardAssetPath("tournament/2-02.png"), label: "Par 2", par: 2 },
+    { id: "2-03", imageSrc: cardAssetPath("tournament/2-03.png"), label: "Par 2", par: 2 },
+    { id: "2-04", imageSrc: cardAssetPath("tournament/2-04.png"), label: "Par 2", par: 2 },
+    { id: "2-05", imageSrc: cardAssetPath("tournament/2-05.png"), label: "Par 2", par: 2 },
+    { id: "3-01", imageSrc: cardAssetPath("tournament/3-01.png"), label: "Par 3", par: 3 },
+    { id: "3-02", imageSrc: cardAssetPath("tournament/3-02.png"), label: "Par 3", par: 3 },
+    { id: "3-03", imageSrc: cardAssetPath("tournament/3-03.png"), label: "Par 3", par: 3 },
+    { id: "3-04", imageSrc: cardAssetPath("tournament/3-04.png"), label: "Par 3", par: 3 },
+    { id: "3-05", imageSrc: cardAssetPath("tournament/3-05.png"), label: "Par 3", par: 3 },
+    { id: "3-06", imageSrc: cardAssetPath("tournament/3-06.png"), label: "Par 3", par: 3 },
+    { id: "3-07", imageSrc: cardAssetPath("tournament/3-07.png"), label: "Par 3", par: 3 },
+    { id: "3-08", imageSrc: cardAssetPath("tournament/3-08.png"), label: "Par 3", par: 3 },
+    { id: "3-09", imageSrc: cardAssetPath("tournament/3-09.png"), label: "Par 3", par: 3 },
+    { id: "3-10", imageSrc: cardAssetPath("tournament/3-10.png"), label: "Par 3", par: 3 },
+    { id: "4-01", imageSrc: cardAssetPath("tournament/4-01.png"), label: "Par 4", par: 4 },
+    { id: "4-02", imageSrc: cardAssetPath("tournament/4-02.png"), label: "Par 4", par: 4 },
+  ];
+}
+
 function createDeckForEdition(editionId: EditionDefinition["id"]): DigitalCard[] {
   switch (editionId) {
+    case "tournament":
+      return createTournamentDeck();
     case "sequential":
       return createSequentialDeck();
     case "reracked":

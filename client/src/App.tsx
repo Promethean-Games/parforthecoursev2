@@ -129,7 +129,12 @@ function GameApp() {
       return;
     }
 
-    if (selectedEdition.id === "classic" || selectedEdition.id === "reracked" || selectedEdition.id === "sequential") {
+    if (
+      selectedEdition.id === "classic"
+      || selectedEdition.id === "reracked"
+      || selectedEdition.id === "sequential"
+      || selectedEdition.id === "tournament"
+    ) {
       game.resetGame();
       game.setGameExperience(selectedEdition.id, "digital");
       setScreen("setup");
@@ -148,7 +153,12 @@ function GameApp() {
       await purchaseDigitalEdition(selectedEdition.id);
       const unlocked = await hasDigitalAccess(selectedEdition.id);
       if (unlocked) {
-        if (selectedEdition.id === "classic" || selectedEdition.id === "reracked" || selectedEdition.id === "sequential") {
+        if (
+          selectedEdition.id === "classic"
+          || selectedEdition.id === "reracked"
+          || selectedEdition.id === "sequential"
+          || selectedEdition.id === "tournament"
+        ) {
           game.resetGame();
           game.setGameExperience(selectedEdition.id, "digital");
           setScreen("setup");
@@ -332,7 +342,12 @@ function GameApp() {
   }
 
   if (screen === "digital-experience" && selectedEdition) {
-   if (selectedEdition.id === "classic" || selectedEdition.id === "reracked" || selectedEdition.id === "sequential") {
+   if (
+     selectedEdition.id === "classic"
+     || selectedEdition.id === "reracked"
+     || selectedEdition.id === "sequential"
+     || selectedEdition.id === "tournament"
+   ) {
       return (
         <PlayerSetup
           players={game.players}
