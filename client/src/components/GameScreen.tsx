@@ -160,8 +160,30 @@ export function GameScreen({
     { id: "4-01", imageSrc: cardAssetPath("tournament/4-01.png"), label: "Par 4", par: 4 },
     { id: "4-02", imageSrc: cardAssetPath("tournament/4-02.png"), label: "Par 4", par: 4 },
   ];
+  const createTeedOffDeck = (): DigitalCard[] => [
+    { id: "[01] Par_1", imageSrc: cardAssetPath("teedoff/[01] Par_1.png"), label: "Par 1", par: 1 },
+    { id: "[02] Par_1", imageSrc: cardAssetPath("teedoff/[02] Par_1.png"), label: "Par 1", par: 1 },
+    { id: "[03] Par_1", imageSrc: cardAssetPath("teedoff/[03] Par_1.png"), label: "Par 1", par: 1 },
+    { id: "[04] Par_1", imageSrc: cardAssetPath("teedoff/[04] Par_1.png"), label: "Par 1", par: 1 },
+    { id: "[05] Par_2", imageSrc: cardAssetPath("teedoff/[05] Par_2.png"), label: "Par 2", par: 2 },
+    { id: "[06] Par_2", imageSrc: cardAssetPath("teedoff/[06] Par_2.png"), label: "Par 2", par: 2 },
+    { id: "[07] Par_2", imageSrc: cardAssetPath("teedoff/[07] Par_2.png"), label: "Par 2", par: 2 },
+    { id: "[08] Par_2", imageSrc: cardAssetPath("teedoff/[08] Par_2.png"), label: "Par 2", par: 2 },
+    { id: "[09] Par_2", imageSrc: cardAssetPath("teedoff/[09] Par_2.png"), label: "Par 2", par: 2 },
+    { id: "[10] Par_2", imageSrc: cardAssetPath("teedoff/[10] Par_2.png"), label: "Par 2", par: 2 },
+    { id: "[11] Par_2", imageSrc: cardAssetPath("teedoff/[11] Par_2.png"), label: "Par 2", par: 2 },
+    { id: "[12] Par_2", imageSrc: cardAssetPath("teedoff/[12] Par_2.png"), label: "Par 2", par: 2 },
+    { id: "[13] Par_2", imageSrc: cardAssetPath("teedoff/[13] Par_2.png"), label: "Par 2", par: 2 },
+    { id: "[14] Par_3", imageSrc: cardAssetPath("teedoff/[14] Par_3.png"), label: "Par 3", par: 3 },
+    { id: "[15] Par_3", imageSrc: cardAssetPath("teedoff/[15] Par_3.png"), label: "Par 3", par: 3 },
+    { id: "[16] Par_3", imageSrc: cardAssetPath("teedoff/[16] Par_3.png"), label: "Par 3", par: 3 },
+    { id: "[17] Par_3", imageSrc: cardAssetPath("teedoff/[17] Par_3.png"), label: "Par 3", par: 3 },
+    { id: "[18] Par_4", imageSrc: cardAssetPath("teedoff/[18] Par_4.png"), label: "Par 4", par: 4 },
+  ];
   const createDeckForEdition = (editionId: EditionDefinition["id"]): DigitalCard[] => {
     switch (editionId) {
+      case "teed-off":
+        return createTeedOffDeck();
       case "tournament":
         return createTournamentDeck();
       case "sequential":
@@ -200,6 +222,7 @@ export function GameScreen({
     edition.id === "classic"
     || edition.id === "reracked"
     || edition.id === "sequential"
+    || edition.id === "teed-off"
     || edition.id === "tournament"
   );
 

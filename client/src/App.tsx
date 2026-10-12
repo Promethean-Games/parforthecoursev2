@@ -133,6 +133,7 @@ function GameApp() {
       selectedEdition.id === "classic"
       || selectedEdition.id === "reracked"
       || selectedEdition.id === "sequential"
+      || selectedEdition.id === "teed-off"
       || selectedEdition.id === "tournament"
     ) {
       game.resetGame();
@@ -157,6 +158,7 @@ function GameApp() {
           selectedEdition.id === "classic"
           || selectedEdition.id === "reracked"
           || selectedEdition.id === "sequential"
+          || selectedEdition.id === "teed-off"
           || selectedEdition.id === "tournament"
         ) {
           game.resetGame();
@@ -346,6 +348,7 @@ function GameApp() {
      selectedEdition.id === "classic"
      || selectedEdition.id === "reracked"
      || selectedEdition.id === "sequential"
+     || selectedEdition.id === "teed-off"
      || selectedEdition.id === "tournament"
    ) {
       return (
