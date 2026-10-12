@@ -16,8 +16,8 @@ android {
         minSdk = 24
         targetSdk = 35
         // Keep this higher than every production artifact versionCode in Play Console.
-        versionCode = 2026101101
-        versionName = "3.14.1"
+        versionCode = 2026101102
+        versionName = "3.14.2"
         // Front-end-only production host (GitHub Pages).
         buildConfigField("String", "APP_URL", "\"https://promethean-games.github.io/parforthecoursev2/\"")
         // Startup Diagnostic Mode: enabled by default for all non-release builds.
