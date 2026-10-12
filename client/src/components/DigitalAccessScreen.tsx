@@ -4,6 +4,8 @@ import { formatEditionPrice, type EditionDefinition } from "@/lib/editions";
 
 interface DigitalAccessScreenProps {
   edition: EditionDefinition;
+  editionPriceLabel?: string | null;
+  unlockAllPriceLabel?: string | null;
   isPurchasing: boolean;
   error: string | null;
   onPurchase: () => void;
@@ -14,6 +16,8 @@ interface DigitalAccessScreenProps {
 
 export function DigitalAccessScreen({
   edition,
+  editionPriceLabel,
+  unlockAllPriceLabel,
   isPurchasing,
   error,
   onPurchase,
@@ -21,7 +25,10 @@ export function DigitalAccessScreen({
   onUsePhysicalCards,
   onBack,
 }: DigitalAccessScreenProps) {
-  const priceLabel = formatEditionPrice(edition.priceCents);
+  const priceLabel = editionPriceLabel === undefined
+    ? formatEditionPrice(edition.priceCents)
+    : (editionPriceLabel ?? "Unavailable");
+  const unlockAllLabel = unlockAllPriceLabel ? `Unlock All Editions (${unlockAllPriceLabel})` : "Unlock All Editions";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#070b16] px-4 py-8 text-foreground">
@@ -68,7 +75,6 @@ export function DigitalAccessScreen({
               <p className="text-xs font-medium uppercase tracking-[0.28em] text-slate-400">Edition price</p>
               <div className="mt-4 flex items-end gap-2">
                 <span className="text-4xl font-black text-white">{priceLabel}</span>
-                <span className="pb-1 text-sm text-slate-400">USD</span>
               </div>
 
               <div className="mt-5 space-y-3">
@@ -88,7 +94,7 @@ export function DigitalAccessScreen({
                   disabled={isPurchasing}
                   data-testid="button-purchase-unlock-all"
                 >
-                  {isPurchasing ? "Unlocking..." : "Unlock All Editions ($4.99)"}
+                  {isPurchasing ? "Unlocking..." : unlockAllLabel}
                 </Button>
 
                 <Button

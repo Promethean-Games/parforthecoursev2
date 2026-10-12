@@ -29,6 +29,7 @@ This project uses a **30-day free trial + one-time purchase** model. No subscrip
 | Endpoint | Purpose |
 |---|---|
 | `GET /api/billing/google-play/config` | Returns `packageName` + `productId` for the client |
+| `GET /api/billing/google-play/digital-catalog` | Returns edition product IDs + bundle product ID for Digital Mode |
 | `GET /api/billing/google-play/status?deviceId=...` | Checks entitlement; auto-starts 30-day trial on first call |
 | `POST /api/billing/google-play/verify` | Verifies purchase token, acknowledges purchase, marks device as unlocked |
 
@@ -67,3 +68,25 @@ Digital deck access now supports:
 | `GET /api/billing/digital-entitlements?deviceId=...` | Returns edition-level unlock map for the device |
 | `POST /api/billing/stripe/create-checkout-session` | Creates Checkout session for one edition or unlock-all |
 | `POST /api/billing/stripe/complete-checkout` | Validates paid Checkout session and grants entitlements |
+
+## Android WebView Billing Bridge (Digital Mode)
+
+The Android app exposes a narrow JS bridge at `window.AndroidPlayBilling` for Digital Mode:
+
+- `queryCatalog(requestJson)` - returns localized Google Play product metadata and pricing
+- `launchPurchase(requestJson)` - launches purchase flow for one product ID
+- `syncPurchases(requestJson)` - returns currently owned/pending in-app products
+
+All callbacks are emitted as `CustomEvent("pftc-play-billing", { detail })`.
+The bridge does not expose any native entitlement-granting method.
+
+## Google Play digital product ID environment variables
+
+Set these on the server to control product mapping without app code changes:
+
+- `GOOGLE_PLAY_PRODUCT_CLASSIC`
+- `GOOGLE_PLAY_PRODUCT_RERACKED`
+- `GOOGLE_PLAY_PRODUCT_SEQUENTIAL`
+- `GOOGLE_PLAY_PRODUCT_TEED_OFF`
+- `GOOGLE_PLAY_PRODUCT_TOURNAMENT`
+- `GOOGLE_PLAY_PRODUCT_BUNDLE_ALL` (required for the Unlock All purchase button)

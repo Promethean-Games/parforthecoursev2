@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var webView: WebView
+    private var playBillingBridge: PlayBillingBridge? = null
     private var showingFallback    = false
     private var retriedInitialLoad = false
     private val secureOverlayKeys  = mutableSetOf<String>()
@@ -71,6 +72,9 @@ class MainActivity : AppCompatActivity() {
             settings.loadWithOverviewMode = true
             settings.useWideViewPort    = true
             addJavascriptInterface(ScreenSecurityBridge(), "AndroidScreenSecurity")
+            val billingBridge = PlayBillingBridge(this@MainActivity, this)
+            playBillingBridge = billingBridge
+            addJavascriptInterface(billingBridge, "AndroidPlayBilling")
 
             webViewClient = object : WebViewClient() {
 
@@ -202,6 +206,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         if (isFinishing) {
+            playBillingBridge?.destroy()
             secureOverlayKeys.clear()
             applySecureFlag()
             webView.destroy()

@@ -18,7 +18,7 @@ import { PlayModeSelectionScreen } from "@/components/PlayModeSelectionScreen";
 import { DigitalAccessScreen } from "@/components/DigitalAccessScreen";
 import { DigitalExperiencePlaceholder } from "@/components/DigitalExperiencePlaceholder";
 import { getEditionById, type EditionDefinition } from "@/lib/editions";
-import { finalizeStripeCheckoutFromUrl, hasDigitalAccess, purchaseDigitalEdition } from "@/lib/entitlements";
+import { finalizeStripeCheckoutFromUrl, getDigitalStorePricing, hasDigitalAccess, purchaseDigitalEdition } from "@/lib/entitlements";
 import { getTurnOrder, isLeader } from "@/lib/game-utils";
 
 type Screen =
@@ -84,6 +84,8 @@ function GameApp() {
   const [selectedEdition, setSelectedEdition] = useState<EditionDefinition | null>(null);
   const [isPurchasingDigital, setIsPurchasingDigital] = useState(false);
   const [digitalAccessError, setDigitalAccessError] = useState<string | null>(null);
+  const [digitalEditionPriceLabel, setDigitalEditionPriceLabel] = useState<string | null | undefined>(undefined);
+  const [digitalUnlockAllPriceLabel, setDigitalUnlockAllPriceLabel] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
     setTheme(game.settings.theme);
@@ -99,6 +101,27 @@ function GameApp() {
     });
   }, []);
 
+  useEffect(() => {
+    if (screen !== "digital-access" || !selectedEdition) return;
+    let mounted = true;
+
+    void getDigitalStorePricing()
+      .then((pricing) => {
+        if (!mounted) return;
+        setDigitalEditionPriceLabel(pricing.editionPrices[selectedEdition.id] ?? null);
+        setDigitalUnlockAllPriceLabel(pricing.unlockAllPrice);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setDigitalEditionPriceLabel(null);
+        setDigitalUnlockAllPriceLabel(null);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [screen, selectedEdition]);
+
   const handleNewGame = () => {
     game.resetGame();
     setSelectedEdition(null);
@@ -113,6 +136,8 @@ function GameApp() {
   const handleSelectEdition = (edition: EditionDefinition) => {
     setSelectedEdition(edition);
     setDigitalAccessError(null);
+    setDigitalEditionPriceLabel(undefined);
+    setDigitalUnlockAllPriceLabel(undefined);
     setScreen("mode");
   };
 
@@ -169,7 +194,22 @@ function GameApp() {
     setIsPurchasingDigital(true);
     setDigitalAccessError(null);
     try {
-      await purchaseDigitalEdition(selectedEdition.id);
+      const purchaseResult = await purchaseDigitalEdition(selectedEdition.id);
+      if (purchaseResult === "pending") {
+        setDigitalAccessError("Purchase is pending in Google Play. Your edition will unlock after payment confirmation.");
+        return;
+      }
+      if (purchaseResult === "cancelled") {
+        setDigitalAccessError("Purchase was cancelled.");
+        return;
+      }
+
+      const unlocked = await hasDigitalAccess(selectedEdition.id);
+      if (unlocked) {
+        game.resetGame();
+        game.setGameExperience(selectedEdition.id, "digital");
+        setScreen("setup");
+      }
     } catch (error) {
       setDigitalAccessError(
         error instanceof Error ? error.message : "Unable to complete digital unlock right now.",
@@ -180,10 +220,26 @@ function GameApp() {
   };
 
   const handleUnlockAllDigitalEditions = async () => {
+    if (!selectedEdition) return;
     setIsPurchasingDigital(true);
     setDigitalAccessError(null);
     try {
-      await purchaseDigitalEdition("all");
+      const purchaseResult = await purchaseDigitalEdition("all");
+      if (purchaseResult === "pending") {
+        setDigitalAccessError("Bundle purchase is pending in Google Play. Editions unlock after payment confirmation.");
+        return;
+      }
+      if (purchaseResult === "cancelled") {
+        setDigitalAccessError("Purchase was cancelled.");
+        return;
+      }
+
+      const unlocked = await hasDigitalAccess(selectedEdition.id);
+      if (unlocked) {
+        game.resetGame();
+        game.setGameExperience(selectedEdition.id, "digital");
+        setScreen("setup");
+      }
     } catch (error) {
       setDigitalAccessError(
         error instanceof Error ? error.message : "Unable to start unlock-all checkout right now.",
@@ -348,6 +404,8 @@ function GameApp() {
     return (
       <DigitalAccessScreen
         edition={selectedEdition}
+        editionPriceLabel={digitalEditionPriceLabel}
+        unlockAllPriceLabel={digitalUnlockAllPriceLabel}
         isPurchasing={isPurchasingDigital}
         error={digitalAccessError}
         onPurchase={() => void handlePurchaseDigitalEdition()}

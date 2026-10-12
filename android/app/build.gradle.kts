@@ -7,6 +7,16 @@ val webAssetsSourceDir = layout.projectDirectory.dir("../../dist/public")
 val generatedWebAssetsRootDir = layout.buildDirectory.dir("generated/web-assets")
 val generatedWebAssetsDir = generatedWebAssetsRootDir.map { it.dir("web") }
 val releaseKeystoreFile = file("keystore.jks")
+val signingStoreFileEnv = System.getenv("PFTC_SIGNING_STORE_FILE")
+val signingStorePasswordEnv = System.getenv("PFTC_SIGNING_STORE_PASSWORD")
+val signingKeyAliasEnv = System.getenv("PFTC_SIGNING_KEY_ALIAS")
+val signingKeyPasswordEnv = System.getenv("PFTC_SIGNING_KEY_PASSWORD")
+val envKeystoreFile = signingStoreFileEnv?.let { file(it) }
+val configuredReleaseKeystore = when {
+    envKeystoreFile != null && envKeystoreFile.exists() -> envKeystoreFile
+    releaseKeystoreFile.exists() -> releaseKeystoreFile
+    else -> null
+}
 
 val syncWebAssets by tasks.registering(Copy::class) {
     from(webAssetsSourceDir)
@@ -46,13 +56,19 @@ android {
 
     signingConfigs {
         create("release") {
-            if (releaseKeystoreFile.exists()) {
-                storeFile = releaseKeystoreFile
-                storePassword = "your-store-password" // Replace with your keystore password
-                keyAlias = "your-key-alias" // Replace with your key alias
-                keyPassword = "your-key-password" // Replace with your key password
+            if (configuredReleaseKeystore != null) {
+                storeFile = configuredReleaseKeystore
+                if (!signingStorePasswordEnv.isNullOrBlank()) {
+                    storePassword = signingStorePasswordEnv
+                }
+                if (!signingKeyAliasEnv.isNullOrBlank()) {
+                    keyAlias = signingKeyAliasEnv
+                }
+                if (!signingKeyPasswordEnv.isNullOrBlank()) {
+                    keyPassword = signingKeyPasswordEnv
+                }
             } else {
-                println("Warning: keystore.jks file not found. Release signing configuration will be skipped.")
+                println("Warning: release keystore not found. Release signing configuration will be skipped.")
             }
         }
     }
@@ -68,7 +84,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = if (releaseKeystoreFile.exists()) {
+            signingConfig = if (configuredReleaseKeystore != null) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")
@@ -112,6 +128,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.activity:activity-compose:1.7.2")
     implementation("androidx.webkit:webkit:1.11.0")
+    implementation("com.android.billingclient:billing-ktx:7.1.1")
     implementation(platform("androidx.compose:compose-bom:2023.08.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")

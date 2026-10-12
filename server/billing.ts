@@ -112,6 +112,27 @@ function getBillingConfig() {
   };
 }
 
+function getGooglePlayDigitalCatalog() {
+  return {
+    editionProducts: {
+      classic: process.env.GOOGLE_PLAY_PRODUCT_CLASSIC || "classic.digital",
+      reracked: process.env.GOOGLE_PLAY_PRODUCT_RERACKED || "reracked.digital",
+      sequential: process.env.GOOGLE_PLAY_PRODUCT_SEQUENTIAL || "sequential.digital",
+      "teed-off": process.env.GOOGLE_PLAY_PRODUCT_TEED_OFF || "teed_off.digital",
+      tournament: process.env.GOOGLE_PLAY_PRODUCT_TOURNAMENT || "tournament.digital",
+    },
+    bundleProductId: process.env.GOOGLE_PLAY_PRODUCT_BUNDLE_ALL || null,
+    logicalEntitlements: {
+      edition_classic: "classic",
+      edition_reracked: "reracked",
+      edition_sequential: "sequential",
+      edition_tournament: "tournament",
+      edition_teed_off: "teed-off",
+      bundle_all_editions: "all",
+    },
+  };
+}
+
 function getStripeSecretKey(): string {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) {
@@ -458,6 +479,10 @@ export function registerBillingRoutes(app: Express) {
       packageName: config.packageName,
       productId: config.productId,
     });
+  });
+
+  app.get("/api/billing/google-play/digital-catalog", (_req, res) => {
+    res.json(getGooglePlayDigitalCatalog());
   });
 
   // Check entitlement status — auto-starts trial on first call
