@@ -8,6 +8,7 @@ import android.webkit.WebResourceError
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
@@ -58,6 +59,9 @@ class MainActivity : AppCompatActivity() {
             StartupDiagnostics.stepStarted("WebView setup")
             settings.javaScriptEnabled  = true
             settings.domStorageEnabled  = true
+            settings.cacheMode = WebSettings.LOAD_NO_CACHE
+            settings.setSupportZoom(false)
+            settings.builtInZoomControls = false
             settings.loadWithOverviewMode = true
             settings.useWideViewPort    = true
             addJavascriptInterface(ScreenSecurityBridge(), "AndroidScreenSecurity")
@@ -194,7 +198,8 @@ class MainActivity : AppCompatActivity() {
     // ── Private helpers ───────────────────────────────────────────────────────
     private fun currentAppUrl(): String {
         val separator = if (BuildConfig.APP_URL.contains("?")) "&" else "?"
-        return "${BuildConfig.APP_URL}${separator}appVersion=${BuildConfig.VERSION_CODE}"
+        val cacheBust = System.currentTimeMillis()
+        return "${BuildConfig.APP_URL}${separator}appVersion=${BuildConfig.VERSION_CODE}&cacheBust=$cacheBust"
     }
 
     private fun loadAppUrl() {
