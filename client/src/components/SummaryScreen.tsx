@@ -214,14 +214,21 @@ export function SummaryScreen({
                 </p>
               )}
             </div>
-            <div
-              className={cn(
-                "rounded-full border px-3 py-1 text-sm font-semibold",
-                isGameOver ? "border-red-500 text-red-400" : "border-green-500 text-green-400",
-              )}
-            >
-              {isGameOver ? "GAME COMPLETE" : "IN PROGRESS"}
-            </div>
+            {isGameOver ? (
+              <div className="rounded-full border border-red-500 bg-red-500/10 px-3 py-1 text-sm font-semibold text-red-400">
+                GAME COMPLETE
+              </div>
+            ) : (
+              <div className="relative min-w-24 overflow-hidden rounded-full border border-primary/50 bg-primary/10 px-3 py-1.5">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-primary/25 transition-all"
+                  style={{ width: `${progressPercent}%` }}
+                />
+                <div className="relative flex items-center justify-center text-sm font-semibold text-primary">
+                  {progressPercent}%
+                </div>
+              </div>
+            )}
           </div>
 
           {!isGameOver && (

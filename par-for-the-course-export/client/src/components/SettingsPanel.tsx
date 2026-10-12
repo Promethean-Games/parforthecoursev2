@@ -311,7 +311,7 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
           <Card className="p-4">
             <h3 className="font-semibold mb-3">About</h3>
             <p className="text-sm text-muted-foreground mb-2">Par for the Course</p>
-            <p className="text-xs text-muted-foreground">Version 2.1.0</p>
+            <p className="text-xs text-muted-foreground">Version 3.1.42</p>
           </Card>
 
           <div className="pt-4">

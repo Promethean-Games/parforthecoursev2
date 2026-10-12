@@ -44,6 +44,9 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
   const [editingName, setEditingName] = useState("");
   const [confirmAction, setConfirmAction] = useState<{ type: "overwrite" | "delete" | "endGame" | "newGame"; slot: string } | null>(null);
   const { toast } = useToast();
+  const containerClassName = mode === "load"
+    ? "fixed inset-0 z-50 flex flex-col bg-background pb-16"
+    : "flex min-h-screen flex-col bg-background pb-24";
 
   const autosave = savedGames[AUTOSAVE_KEY];
   const manualSavedEntries = Object.entries(savedGames)
@@ -117,7 +120,7 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background pb-16">
+    <div className={containerClassName}>
       <div className="flex-1 overflow-y-auto p-6">
         <div className="mb-6">
           <h2 className="text-2xl font-bold">{mode === "save" ? "Save Game" : "Load Game"}</h2>

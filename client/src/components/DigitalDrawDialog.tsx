@@ -28,6 +28,9 @@ const FLIP_DURATION_MS = 650;
 const DRAW_DRAG_THRESHOLD = 90;
 const CARD_WIDTH_PX = 180;
 const CARD_HEIGHT_PX = 270;
+const CARD_STACK_TOP_PX = 24;
+const CARD_STACK_AREA_HEIGHT_PX = 380;
+const REVEALED_CARD_CENTER_Y_PX = (CARD_STACK_AREA_HEIGHT_PX - CARD_HEIGHT_PX) / 2 - CARD_STACK_TOP_PX;
 
 function getDefaultCardState(): CardMotionState {
   return {
@@ -141,7 +144,10 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
         </p>
 
         <div className="mb-5 flex justify-center">
-          <div className="relative h-[380px] w-[320px] select-none" style={{ perspective: "1100px" }}>
+          <div
+            className="relative h-[380px] w-[320px] select-none"
+            style={{ perspective: "1100px" }}
+          >
             {visibleCards.map((card, index) => {
               const cardState = cardMotionState[card.id] ?? getDefaultCardState();
               const relativeIndex = index - (visibleCards.length - 1) / 2;
@@ -150,9 +156,11 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
               const baseRotate = relativeIndex * 9;
               const baseScale = 1 - Math.abs(relativeIndex) * 0.03;
               const totalDragOffset = cardState.dragOffset;
-              const transform = cardState.isPulling
-                ? `translate(${baseX}px, ${baseY + 170}px) rotate(${baseRotate}deg) scale(1.08)`
-                : `translate(${baseX}px, ${baseY + totalDragOffset}px) rotate(${baseRotate + totalDragOffset * 0.05}deg) scale(${baseScale + totalDragOffset / 1000})`;
+              const transform = cardState.isRevealed
+                ? `translate(0px, ${REVEALED_CARD_CENTER_Y_PX}px) rotate(0deg) scale(1.08)`
+                : cardState.isPulling
+                  ? `translate(${baseX}px, ${baseY + 170}px) rotate(${baseRotate}deg) scale(1.08)`
+                  : `translate(${baseX}px, ${baseY + totalDragOffset}px) rotate(${baseRotate + totalDragOffset * 0.05}deg) scale(${baseScale + totalDragOffset / 1000})`;
 
               return (
                 <button
