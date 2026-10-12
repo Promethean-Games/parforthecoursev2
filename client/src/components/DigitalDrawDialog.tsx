@@ -29,6 +29,8 @@ const DRAW_DRAG_THRESHOLD = 90;
 const CARD_WIDTH_PX = 180;
 const CARD_HEIGHT_PX = 270;
 const REVEAL_PULL_MS = 220;
+const REVEALED_CARD_RESERVED_VERTICAL_SPACE_PX = 260;
+const REVEALED_CARD_MAX_WIDTH_PX = 440;
 
 function getDefaultCardState(): CardMotionState {
   return {
@@ -159,10 +161,12 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
               const baseScale = 1 - Math.abs(relativeIndex) * 0.03;
               const totalDragOffset = cardState.dragOffset;
               const transform = cardState.isRevealed
-                ? "translate(0px, 0px) rotate(0deg) scale(1.03)"
+                ? "translate(-50%, -50%) rotate(0deg) scale(1)"
                 : cardState.isPulling
                   ? `translate(${baseX}px, ${baseY + 170}px) rotate(${baseRotate}deg) scale(1.08)`
                   : `translate(${baseX}px, ${baseY + totalDragOffset}px) rotate(${baseRotate + totalDragOffset * 0.05}deg) scale(${baseScale + totalDragOffset / 1000})`;
+              const hideCardInBackground = deckLocked && !cardState.isRevealed;
+              const revealedCardWidth = `min(90vw, ${REVEALED_CARD_MAX_WIDTH_PX}px, calc((100vh - ${REVEALED_CARD_RESERVED_VERTICAL_SPACE_PX}px) * ${CARD_WIDTH_PX / CARD_HEIGHT_PX}))`;
 
               return (
                 <button
@@ -188,15 +192,18 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
                     top: cardState.isRevealed ? "50%" : "24px",
                     left: "50%",
                     perspective: "1100px",
-                    height: `${CARD_HEIGHT_PX}px`,
-                    width: `${CARD_WIDTH_PX}px`,
-                    marginLeft: `${-CARD_WIDTH_PX / 2}px`,
-                    marginTop: cardState.isRevealed ? `${-CARD_HEIGHT_PX / 2}px` : undefined,
+                    height: cardState.isRevealed ? "auto" : `${CARD_HEIGHT_PX}px`,
+                    width: cardState.isRevealed ? revealedCardWidth : `${CARD_WIDTH_PX}px`,
+                    aspectRatio: `${CARD_WIDTH_PX} / ${CARD_HEIGHT_PX}`,
+                    marginLeft: cardState.isRevealed ? undefined : `${-CARD_WIDTH_PX / 2}px`,
                     zIndex: cardState.isDragging || cardState.isPulling || cardState.isRevealed ? 80 : 10 + index,
                     transform,
-                    transition: cardState.isDragging ? "none" : `transform ${FLIP_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                    transition: cardState.isDragging
+                      ? "opacity 280ms ease"
+                      : `transform ${FLIP_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 280ms ease`,
                     touchAction: "none",
-                    pointerEvents: cardState.isRevealed ? "none" : "auto",
+                    pointerEvents: cardState.isRevealed || hideCardInBackground ? "none" : "auto",
+                    opacity: hideCardInBackground ? 0 : 1,
                     filter: cardState.isRevealed ? "drop-shadow(0 24px 30px rgba(0,0,0,0.45))" : "drop-shadow(0 18px 35px rgba(0,0,0,0.28))",
                   }}
                   aria-label={`Draw ${card.label}`}
