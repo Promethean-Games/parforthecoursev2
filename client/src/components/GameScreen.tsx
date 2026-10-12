@@ -430,6 +430,7 @@ export function GameScreen({
   const currentHolePreviewLabel = currentHoleCard?.par === null
     ? `Joker - Par ${par || "?"}`
     : currentHoleCard?.label ?? "";
+  const isTournamentEdition = edition?.id === "tournament";
 
   const handleNextCard = () => {
     if (!canAdvance) {
@@ -561,23 +562,25 @@ export function GameScreen({
       </div>
 
       {/* Scratch & Penalty */}
-      <div className={cn("flex gap-3 mb-4", leftHandedMode && "flex-row-reverse")}>
+      <div className={cn("mb-4", isTournamentEdition ? "block" : "flex gap-3", leftHandedMode && !isTournamentEdition && "flex-row-reverse")}>
         <Button
           variant="destructive"
-          className="flex-1 h-12"
+          className={cn("h-12", isTournamentEdition ? "w-full" : "flex-1")}
           onClick={() => setScratches(scratches + 1)}
           data-testid="button-scratch"
         >
           Scratch (+1)
         </Button>
-        <Button
-          variant="destructive"
-          className="flex-1 h-12"
-          onClick={() => setPenalties(penalties + 1)}
-          data-testid="button-penalty"
-        >
-          Penalty (+1)
-        </Button>
+        {!isTournamentEdition && (
+          <Button
+            variant="destructive"
+            className="flex-1 h-12"
+            onClick={() => setPenalties(penalties + 1)}
+            data-testid="button-penalty"
+          >
+            Penalty (+1)
+          </Button>
+        )}
       </div>
 
       {/* Score Display & Controls */}
