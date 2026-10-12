@@ -13,6 +13,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.webkit.WebViewAssetLoader
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -27,6 +28,11 @@ class MainActivity : AppCompatActivity() {
     private var showingFallback    = false
     private var retriedInitialLoad = false
     private val secureOverlayKeys  = mutableSetOf<String>()
+    private val assetLoader by lazy {
+        WebViewAssetLoader.Builder()
+            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+            .build()
+    }
 
     // ── ScreenSecurity JS bridge ──────────────────────────────────────────────
     private inner class ScreenSecurityBridge {
@@ -80,6 +86,14 @@ class MainActivity : AppCompatActivity() {
                     view: WebView?,
                     request: WebResourceRequest?
                 ): Boolean = false
+
+                override fun shouldInterceptRequest(
+                    view: WebView?,
+                    request: WebResourceRequest?
+                ): WebResourceResponse? {
+                    val requestUrl = request?.url ?: return null
+                    return assetLoader.shouldInterceptRequest(requestUrl)
+                }
 
                 override fun onReceivedError(
                     view: WebView?,

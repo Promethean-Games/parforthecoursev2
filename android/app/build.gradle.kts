@@ -3,6 +3,21 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val webAssetsSourceDir = layout.projectDirectory.dir("../../dist/public")
+val generatedWebAssetsDir = layout.buildDirectory.dir("generated/web-assets/web")
+
+val syncWebAssets by tasks.registering(Copy::class) {
+    from(webAssetsSourceDir)
+    into(generatedWebAssetsDir)
+    includeEmptyDirs = false
+
+    doFirst {
+        if (!webAssetsSourceDir.asFile.exists()) {
+            throw GradleException("Web assets not found at ${webAssetsSourceDir.asFile}. Run `npm run build` before assembling the Android app.")
+        }
+    }
+}
+
 android {
     namespace = "com.parforthecourse.app"
     compileSdk = 35
@@ -11,15 +26,16 @@ android {
         buildConfig = true
     }
 
+    sourceSets.getByName("main").assets.srcDir(generatedWebAssetsDir)
+
     defaultConfig {
         applicationId = "com.parforthecourse.app"
         minSdk = 24
         targetSdk = 35
         // Keep this higher than every production artifact versionCode in Play Console.
-        versionCode = 2026101102
-        versionName = "3.14.2"
-        // Front-end-only production host (GitHub Pages).
-        buildConfigField("String", "APP_URL", "\"https://promethean-games.github.io/parforthecoursev2/\"")
+        versionCode = 2026101103
+        versionName = "3.14.3"
+        buildConfigField("String", "APP_URL", "\"https://appassets.androidplatform.net/assets/web/index.html\"")
         // Startup Diagnostic Mode: enabled by default for all non-release builds.
         // Set to false in the release block below (or manually flip to true for a beta release build).
         buildConfigField("Boolean", "DIAGNOSTIC_MODE", "true")
@@ -67,11 +83,18 @@ android {
     }
 }
 
+tasks.matching { task ->
+    task.name.startsWith("merge") && task.name.endsWith("Assets")
+}.configureEach {
+    dependsOn(syncWebAssets)
+}
+
 dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.core:core:1.10.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.activity:activity-compose:1.7.2")
+    implementation("androidx.webkit:webkit:1.11.0")
     implementation(platform("androidx.compose:compose-bom:2023.08.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
