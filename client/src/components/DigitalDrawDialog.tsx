@@ -26,6 +26,17 @@ interface CardMotionState {
 const MAX_VISIBLE_CARDS = 5;
 const FLIP_DURATION_MS = 650;
 const DRAW_DRAG_THRESHOLD = 90;
+const CARD_WIDTH_PX = 180;
+const CARD_HEIGHT_PX = 270;
+
+function getDefaultCardState(): CardMotionState {
+  return {
+    dragOffset: 0,
+    isDragging: false,
+    isPulling: false,
+    isRevealed: false,
+  };
+}
 
 function cardAssetPath(fileName: string): string {
   return `${import.meta.env.BASE_URL}cards/${fileName}`;
@@ -41,6 +52,7 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
     () => visibleCards.find((card) => cardMotionState[card.id]?.isRevealed) ?? null,
     [visibleCards, cardMotionState],
   );
+  const deckLocked = revealedCard !== null;
 
   useEffect(() => {
     setJokerPar(null);
@@ -51,18 +63,16 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
     setCardMotionState((previous) => ({
       ...previous,
       [cardId]: {
-        dragOffset: previous[cardId]?.dragOffset ?? 0,
-        isDragging: previous[cardId]?.isDragging ?? false,
-        isPulling: previous[cardId]?.isPulling ?? false,
-        isRevealed: previous[cardId]?.isRevealed ?? false,
+        ...getDefaultCardState(),
+        ...previous[cardId],
         ...changes,
       },
     }));
   };
 
   const revealCard = (cardId: string) => {
-    const currentState = cardMotionState[cardId];
-    if (!currentState || currentState.isRevealed || currentState.isPulling) return;
+    const currentState = cardMotionState[cardId] ?? getDefaultCardState();
+    if (currentState.isRevealed || currentState.isPulling || deckLocked) return;
     updateCardState(cardId, { isPulling: true, isDragging: false });
     window.setTimeout(() => {
       updateCardState(cardId, { isPulling: false, isRevealed: true });
@@ -70,25 +80,27 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
   };
 
   const handlePointerDown = (cardId: string, event: React.PointerEvent<HTMLButtonElement>) => {
-    const currentState = cardMotionState[cardId];
-    if (!currentState || currentState.isRevealed || currentState.isPulling) return;
+    const currentState = cardMotionState[cardId] ?? getDefaultCardState();
+    if (currentState.isRevealed || currentState.isPulling || deckLocked) return;
     dragStartRef.current[cardId] = event.clientY;
     updateCardState(cardId, { isDragging: true });
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const handlePointerMove = (cardId: string, event: React.PointerEvent<HTMLButtonElement>) => {
-    const currentState = cardMotionState[cardId];
-    if (!currentState || !currentState.isDragging || dragStartRef.current[cardId] === null || dragStartRef.current[cardId] === undefined) return;
+    const currentState = cardMotionState[cardId] ?? getDefaultCardState();
+    if (!currentState.isDragging || dragStartRef.current[cardId] === null || dragStartRef.current[cardId] === undefined) return;
     const delta = event.clientY - dragStartRef.current[cardId]!;
     updateCardState(cardId, { dragOffset: Math.max(0, delta) });
   };
 
   const handlePointerUp = (cardId: string, event: React.PointerEvent<HTMLButtonElement>) => {
-    const currentState = cardMotionState[cardId];
-    if (!currentState || currentState.isRevealed || currentState.isPulling) return;
+    const currentState = cardMotionState[cardId] ?? getDefaultCardState();
+    if (currentState.isRevealed || currentState.isPulling) return;
     const shouldDraw = currentState.dragOffset > DRAW_DRAG_THRESHOLD;
-    event.currentTarget.releasePointerCapture(event.pointerId);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
     dragStartRef.current[cardId] = null;
     updateCardState(cardId, { isDragging: false });
 
@@ -129,17 +141,18 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
         </p>
 
         <div className="mb-5 flex justify-center">
-          <div className="relative h-[350px] w-[250px] select-none" style={{ perspective: "1100px" }}>
+          <div className="relative h-[380px] w-[320px] select-none" style={{ perspective: "1100px" }}>
             {visibleCards.map((card, index) => {
-              const cardState = cardMotionState[card.id] ?? { dragOffset: 0, isDragging: false, isPulling: false, isRevealed: false };
-              const baseOffset = index * 12;
-              const baseRotate = index * 5 - 10;
-              const baseScale = 1 - index * 0.04;
-              const baseOpacity = 1 - index * 0.08;
+              const cardState = cardMotionState[card.id] ?? getDefaultCardState();
+              const relativeIndex = index - (visibleCards.length - 1) / 2;
+              const baseX = relativeIndex * 38;
+              const baseY = Math.abs(relativeIndex) * 18 + index * 2;
+              const baseRotate = relativeIndex * 9;
+              const baseScale = 1 - Math.abs(relativeIndex) * 0.03;
               const totalDragOffset = cardState.dragOffset;
               const transform = cardState.isPulling
-                ? `translate(-50%, ${baseOffset + 170}px) rotate(${baseRotate}deg) scale(1.08)`
-                : `translate(-50%, ${baseOffset + totalDragOffset}px) rotate(${baseRotate + totalDragOffset * 0.14}deg) scale(${baseScale + totalDragOffset / 1000})`;
+                ? `translate(${baseX}px, ${baseY + 170}px) rotate(${baseRotate}deg) scale(1.08)`
+                : `translate(${baseX}px, ${baseY + totalDragOffset}px) rotate(${baseRotate + totalDragOffset * 0.05}deg) scale(${baseScale + totalDragOffset / 1000})`;
 
               return (
                 <button
@@ -154,13 +167,19 @@ export function DigitalDrawDialog({ cards, playerName = "Player", onReady }: Dig
                       updateCardState(card.id, { isDragging: false, dragOffset: 0 });
                     }
                   }}
-                  disabled={cardState.isRevealed || visibleCards.some((visibleCard) => cardMotionState[visibleCard.id]?.isRevealed)}
-                  className="absolute left-1/2 top-[10px] h-[300px] w-[200px] -translate-x-1/2 rounded-xl disabled:cursor-default"
+                  onPointerCancel={() => {
+                    updateCardState(card.id, { isDragging: false, dragOffset: 0 });
+                    dragStartRef.current[card.id] = null;
+                  }}
+                  disabled={cardState.isRevealed || deckLocked}
+                  className="absolute left-1/2 top-[24px] rounded-xl bg-transparent disabled:cursor-default"
                   style={{
                     perspective: "1100px",
-                    zIndex: 10 + index,
+                    height: `${CARD_HEIGHT_PX}px`,
+                    width: `${CARD_WIDTH_PX}px`,
+                    marginLeft: `${-CARD_WIDTH_PX / 2}px`,
+                    zIndex: cardState.isDragging || cardState.isPulling || cardState.isRevealed ? 30 : 10 + index,
                     transform,
-                    opacity: baseOpacity,
                     transition: cardState.isDragging ? "none" : `transform ${FLIP_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
                     touchAction: "none",
                     filter: cardState.isRevealed ? "drop-shadow(0 24px 30px rgba(0,0,0,0.45))" : "drop-shadow(0 18px 35px rgba(0,0,0,0.28))",
