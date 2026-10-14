@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { buildApiUrl } from "@/lib/apiBase";
 import { apiRequest } from "@/lib/queryClient";
 import { getBillingDeviceId } from "@/lib/billingDevice";
 import {
@@ -25,7 +26,7 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
 
   const refreshStatus = useCallback(async () => {
     const response = await fetch(
-      `/api/billing/google-play/status?deviceId=${encodeURIComponent(deviceId)}`,
+      buildApiUrl(`/api/billing/google-play/status?deviceId=${encodeURIComponent(deviceId)}`),
     );
     if (!response.ok) {
       throw new Error((await response.text()) || "Failed to check status");
@@ -57,19 +58,23 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
     setError(null);
     setIsPurchasing(true);
     try {
-      const configResponse = await fetch("/api/billing/google-play/config");
+      const configResponse = await fetch(buildApiUrl("/api/billing/google-play/config"));
       if (!configResponse.ok)
         throw new Error("Could not load purchase configuration");
 
       const config = (await configResponse.json()) as GooglePlayConfig;
       const purchaseToken = await startGooglePlayPurchase(config);
 
-      await apiRequest("POST", "/api/billing/google-play/verify", {
-        deviceId,
-        purchaseToken,
-        packageName: config.packageName,
-        productId: config.productId,
-      });
+      await apiRequest(
+        "POST",
+        buildApiUrl("/api/billing/google-play/verify"),
+        {
+          deviceId,
+          purchaseToken,
+          packageName: config.packageName,
+          productId: config.productId,
+        },
+      );
 
       await refreshStatus();
     } catch (err) {

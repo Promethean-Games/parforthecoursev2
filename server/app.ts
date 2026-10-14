@@ -23,6 +23,35 @@ export function log(message: string, source = "express") {
 
 export const app = express();
 
+const DEFAULT_ALLOWED_ORIGINS = ["https://appassets.androidplatform.net"];
+
+function getAllowedOrigins(): Set<string> {
+  const configured = (process.env.CORS_ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  return new Set([...DEFAULT_ALLOWED_ORIGINS, ...configured]);
+}
+
+function appendVaryHeader(
+  existing: string | number | string[] | undefined,
+  value: string,
+): string {
+  const existingValues = Array.isArray(existing)
+    ? existing.join(",")
+    : existing !== undefined
+      ? String(existing)
+      : "";
+  const normalized = existingValues
+    .split(",")
+    .map((item: string) => item.trim())
+    .filter(Boolean);
+  if (!normalized.includes(value)) {
+    normalized.push(value);
+  }
+  return normalized.join(", ");
+}
+
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown
@@ -34,6 +63,29 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ extended: false }));
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = getAllowedOrigins();
+  const isAllowedOrigin = Boolean(origin && allowedOrigins.has(origin));
+
+  if (isAllowedOrigin && origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Vary", appendVaryHeader(res.getHeader("Vary"), "Origin"));
+  }
+
+  if (req.method === "OPTIONS") {
+    if (!origin || isAllowedOrigin) {
+      return res.status(204).end();
+    }
+    return res.status(403).json({ error: "Origin not allowed" });
+  }
+
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

@@ -5,6 +5,7 @@ import {
   queryGooglePlayCatalog,
   syncGooglePlayPurchases,
 } from "@/lib/googlePlayBilling";
+import { buildApiUrl } from "@/lib/apiBase";
 import { apiRequest } from "@/lib/queryClient";
 import { getBillingDeviceId } from "@/lib/billingDevice";
 
@@ -345,7 +346,7 @@ async function getGooglePlayCatalog(): Promise<GooglePlayCatalogResponse> {
   }
 
   try {
-    const response = await fetch("/api/billing/google-play/digital-catalog");
+    const response = await fetch(buildApiUrl("/api/billing/google-play/digital-catalog"));
     if (!response.ok) {
       throw new Error((await response.text()) || "Failed to load Google Play catalog");
     }
@@ -393,7 +394,9 @@ async function reconcileGooglePlayEntitlements(): Promise<EntitlementMap> {
 
 async function reconcileServerEntitlements(): Promise<EntitlementMap> {
   const deviceId = getBillingDeviceId();
-  const response = await fetch(`/api/billing/digital-entitlements?deviceId=${encodeURIComponent(deviceId)}`);
+  const response = await fetch(
+    buildApiUrl(`/api/billing/digital-entitlements?deviceId=${encodeURIComponent(deviceId)}`),
+  );
   if (!response.ok) {
     throw new Error((await response.text()) || "Failed to load entitlements");
   }
@@ -535,10 +538,14 @@ async function purchaseViaGooglePlay(target: PurchaseTarget): Promise<PurchaseOu
 
 async function purchaseViaStripe(target: PurchaseTarget): Promise<PurchaseOutcome> {
   const deviceId = getBillingDeviceId();
-  const response = await apiRequest("POST", "/api/billing/stripe/create-checkout-session", {
-    deviceId,
-    target,
-  });
+  const response = await apiRequest(
+    "POST",
+    buildApiUrl("/api/billing/stripe/create-checkout-session"),
+    {
+      deviceId,
+      target,
+    },
+  );
   const data = await response.json() as { checkoutUrl?: string };
   if (!data.checkoutUrl) {
     throw new Error("Checkout URL was not returned");
@@ -570,10 +577,14 @@ export async function finalizeStripeCheckoutFromUrl(): Promise<void> {
   }
 
   const deviceId = getBillingDeviceId();
-  await apiRequest("POST", "/api/billing/stripe/complete-checkout", {
-    deviceId,
-    sessionId,
-  });
+  await apiRequest(
+    "POST",
+    buildApiUrl("/api/billing/stripe/complete-checkout"),
+    {
+      deviceId,
+      sessionId,
+    },
+  );
 
   await getDigitalEntitlements();
   url.searchParams.delete("checkout");
