@@ -248,7 +248,7 @@ const TOURNAMENT_RULES: Ruleset = {
         },
         {
           kind: "paragraph",
-          text: "From behind the Tee Box, players attempt to pocket every object ball in as few strokes as possible. Balls may be pocketed in any order, and calling shots is not required.",
+          text: "From behind the Tee Box, players attempt to pocket all balls in as few strokes as possible. Balls may be pocketed in any order, and calling shots is not required.",
         },
       ],
     },
