@@ -96,7 +96,7 @@ export function RulesViewer({ editionId, onClose }: RulesViewerProps) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="rules-title"
-      className="fixed inset-0 z-[60] overflow-y-auto bg-background"
+      className="fixed inset-0 z-[60] overflow-y-auto bg-background/85 backdrop-blur-sm"
       data-testid="rules-viewer"
     >
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b bg-background/95 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
@@ -163,7 +163,7 @@ export function RulesEditionPicker({ onSelect, onClose }: RulesEditionPickerProp
       role="dialog"
       aria-modal="true"
       aria-labelledby="rules-picker-title"
-      className="fixed inset-0 z-[60] overflow-y-auto bg-background"
+      className="fixed inset-0 z-[60] overflow-y-auto bg-background/85 backdrop-blur-sm"
       data-testid="rules-picker"
     >
       <header className="sticky top-0 flex items-center gap-3 border-b bg-background/95 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">

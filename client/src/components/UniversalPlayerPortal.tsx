@@ -215,8 +215,8 @@ export function UniversalPlayerPortal({ onClose, directorPin }: UniversalPlayerP
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <div className="sticky top-0 z-20 border-b bg-background">
+    <div className="flex flex-col min-h-screen bg-background/80">
+      <div className="sticky top-0 z-20 border-b bg-background/90 backdrop-blur">
         <div className="flex items-center gap-3 p-4">
           <Button variant="ghost" size="icon" onClick={onClose} data-testid="button-back">
             <ArrowLeft className="w-5 h-5" />

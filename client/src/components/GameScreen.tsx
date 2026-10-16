@@ -463,7 +463,7 @@ export function GameScreen({
 
   return (
     <div 
-      className={cn("flex flex-col min-h-screen p-4 pb-6", leftHandedMode && "left-handed")}
+      className={cn("flex flex-col min-h-screen p-4 pb-6 pt-[max(1rem,env(safe-area-inset-top))]", leftHandedMode && "left-handed")}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -496,7 +496,7 @@ export function GameScreen({
           <ChevronLeft className="w-6 h-6" />
         </Button>
         
-        <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border" style={{
+        <div className="arcade-glass flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border" style={{
           borderColor: currentPlayer.color,
           borderWidth: "2px"
         }}>
@@ -518,18 +518,18 @@ export function GameScreen({
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
+      <div className="arcade-glass mb-4 grid grid-cols-3 gap-4 rounded-xl p-3">
         <div className="text-center">
           <div className="text-xs uppercase text-muted-foreground font-semibold">Scratches</div>
-          <div className="text-2xl font-bold" data-testid="text-scratches">{playerStats.scratches}</div>
+          <div className="text-2xl font-black text-amber-300" data-testid="text-scratches">{playerStats.scratches}</div>
         </div>
         <div className="text-center">
           <div className="text-xs uppercase text-muted-foreground font-semibold">Total Strokes</div>
-          <div className="text-2xl font-bold" data-testid="text-total-strokes">{playerStats.strokes}</div>
+          <div className="text-2xl font-black text-amber-300" data-testid="text-total-strokes">{playerStats.strokes}</div>
         </div>
         <div className="text-center">
           <div className="text-xs uppercase text-muted-foreground font-semibold">Penalties</div>
-          <div className="text-2xl font-bold" data-testid="text-penalties">{playerStats.penalties}</div>
+          <div className="text-2xl font-black text-amber-300" data-testid="text-penalties">{playerStats.penalties}</div>
         </div>
       </div>
 
@@ -537,7 +537,7 @@ export function GameScreen({
 
       {/* Hole & Shooters Remaining */}
       <div className="flex justify-between items-start mb-3">
-        <div className="text-lg font-bold" data-testid="text-hole">Hole {currentHole}</div>
+        <div className="arcade-heading text-xl" data-testid="text-hole">Hole {currentHole}</div>
         <div className={cn("flex flex-col items-end gap-2", leftHandedMode && "items-start")}>
           <div className="text-sm text-muted-foreground" data-testid="text-players-remaining">{playerInfo}</div>
           {currentHoleCard && (

@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { LOGO_URL } from "@/lib/constants";
+import { EDITION_THEMES, type EditionTheme } from "@/lib/edition-theme";
+import { ArcadeCarousel } from "@/components/arcade/ArcadeCarousel";
+import { SceneBackdrop } from "@/components/arcade/SceneBackdrop";
 import { hasTestingAccess, setTestingAccess, unlockAllTestEntitlements } from "@/lib/entitlements";
 
 interface SplashScreenProps {
@@ -10,6 +13,15 @@ interface SplashScreenProps {
   onLoadGame: () => void;
   onStartTournamentGame?: () => void;
   onHowToPlay?: () => void;
+}
+
+interface SplashAction {
+  id: string;
+  title: string;
+  description: string;
+  theme: EditionTheme;
+  testId: string;
+  run: () => void;
 }
 
 export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame, onHowToPlay }: SplashScreenProps) {
@@ -57,66 +69,103 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame, onH
     resetTesterCodeFlow();
   };
 
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const actions = (() => {
+    const list: SplashAction[] = [
+      { id: "new-game", title: "New Game", description: "Pick an edition and tee off.", theme: EDITION_THEMES.classic, testId: "button-new-game", run: handleNewGameClick },
+      { id: "load-game", title: "Load Game", description: "Resume a saved round.", theme: EDITION_THEMES.reracked, testId: "button-load-game", run: onLoadGame },
+    ];
+    if (onHowToPlay) {
+      list.push({ id: "how-to-play", title: "How to Play", description: "Learn the rules of the course.", theme: EDITION_THEMES.sequential, testId: "button-how-to-play", run: onHowToPlay });
+    }
+    list.push({ id: "test", title: "Test", description: "Playtesting access.", theme: EDITION_THEMES["teed-off"], testId: "button-test", run: handleTestButtonClick });
+    return list;
+  })();
+
+  const items = actions.map((action) => ({ id: action.id, label: action.title, accent: action.theme.accent, action }));
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 relative">
-      <div className="mb-8">
-        <img 
-          src={LOGO_URL} 
-          alt="Par for the Course" 
-          className="w-full max-w-[280px] h-auto"
+    <div
+      className="relative flex min-h-[560px] w-full flex-col overflow-hidden text-white"
+      style={{ height: "100dvh", background: "#120b22" }}
+      data-testid="splash-screen"
+    >
+      <SceneBackdrop />
+
+      <div className="relative z-10 flex justify-center px-6 pb-1 pt-[max(1rem,env(safe-area-inset-top))]">
+        <img
+          src={LOGO_URL}
+          alt="Par for the Course"
+          className="h-auto max-h-[14vh] w-full max-w-[240px] object-contain drop-shadow-[0_3px_8px_rgba(0,0,0,0.8)]"
         />
       </div>
-      
-      <div className="w-full max-w-md space-y-4">
-        <Button 
-          size="lg"
-          className="w-full text-lg h-14"
-          onClick={handleNewGameClick}
-          data-testid="button-new-game"
-        >
-          New Game
-        </Button>
-        <Button 
-          size="lg"
-          variant="outline"
-          className="w-full text-lg h-14"
-          onClick={onLoadGame}
-          data-testid="button-load-game"
-        >
-          Load Game
-        </Button>
-        {onHowToPlay && (
-          <Button
-            size="lg"
-            variant="outline"
-            className="w-full text-lg h-14"
-            onClick={onHowToPlay}
-            data-testid="button-how-to-play"
-          >
-            How to Play
-          </Button>
-        )}
-        <Button
-          size="lg"
-          variant="secondary"
-          className="w-full text-lg h-14"
-          onClick={handleTestButtonClick}
-          data-testid="button-test"
-        >
-          Test
-        </Button>
 
-        {/* Submit Feedback */}
+      <ArcadeCarousel
+        items={items}
+        activeIndex={activeIndex}
+        onActiveIndexChange={setActiveIndex}
+        ariaLabel="Main menu"
+        testIdPrefix="splash"
+        aspect={0.6}
+        renderCard={({ action }, { isActive, cardWidth }) => (
+          <>
+            <div
+              className="flex shrink-0 items-center justify-center px-2 py-2.5"
+              style={{
+                background: `linear-gradient(180deg, ${action.theme.headerFrom}, ${action.theme.headerTo})`,
+                borderBottom: `2px solid ${action.theme.accent}`,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35)",
+              }}
+            >
+              <span
+                className="truncate text-center font-black uppercase leading-none tracking-wide"
+                style={{ fontSize: Math.max(15, Math.min(26, cardWidth * 0.095)), textShadow: "0 2px 3px #000" }}
+              >
+                {action.title}
+              </span>
+            </div>
+            <div className="relative min-h-0 flex-1">
+              <img src={action.theme.art} alt="" draggable={false} decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/60" />
+              <p className="absolute inset-x-0 bottom-0 px-3 pb-2 text-center text-sm font-semibold leading-tight text-white" style={{ textShadow: "0 1px 3px #000" }}>
+                {action.description}
+              </p>
+            </div>
+            <div
+              className="shrink-0 p-2"
+              style={{ background: `linear-gradient(180deg, ${action.theme.headerTo}, #000)`, borderTop: `2px solid ${action.theme.accent}` }}
+              data-no-swipe
+            >
+              <button
+                type="button"
+                className="h-11 w-full rounded-lg text-base font-extrabold uppercase tracking-wider shadow-md active:scale-95"
+                style={{ background: `linear-gradient(180deg, #fff8, ${action.theme.accent} 45%)`, color: action.theme.buttonText }}
+                tabIndex={isActive ? 0 : -1}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  if (isActive) action.run();
+                  else setActiveIndex(actions.findIndex((item) => item.id === action.id));
+                }}
+                data-testid={action.testId}
+              >
+                {action.title}
+              </button>
+            </div>
+          </>
+        )}
+      />
+
+      <div className="relative z-10 px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 text-center">
         <button
           onClick={() => window.open("https://forms.gle/dss9Ksbenx3WTzh29", "_blank")}
-          className="w-full text-sm text-muted-foreground hover:text-primary transition-colors py-2"
+          className="min-h-11 px-4 text-sm font-semibold uppercase tracking-widest text-white/80 underline-offset-4 hover:text-white hover:underline"
+          style={{ textShadow: "0 1px 3px #000" }}
           data-testid="button-submit-feedback"
         >
           Submit Feedback
         </button>
       </div>
-
-
       <AlertDialog open={testerCodeStep !== null} onOpenChange={(open) => {
         if (!open) {
           resetTesterCodeFlow();

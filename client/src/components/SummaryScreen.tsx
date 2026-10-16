@@ -158,7 +158,7 @@ export function SummaryScreen({
           </div>
 
           <Card className="p-4">
-            <h2 className="mb-3 text-xl font-bold">Live Leaderboard</h2>
+            <h2 className="arcade-heading mb-3 text-base">Live Leaderboard</h2>
             <div className="space-y-2">
               {tournament.leaderboard.map((entry, index) => (
                 <div
@@ -207,7 +207,7 @@ export function SummaryScreen({
 
           <div className="mb-4 flex items-start justify-between gap-2">
             <div>
-              <h2 className="text-4xl font-black leading-tight">Session Summary</h2>
+              <h2 className="arcade-title text-3xl leading-tight">Session Summary</h2>
               {!isGameOver && (
                 <p className="mt-1 text-lg text-muted-foreground">
                   Hole {boundedCurrentHole} of {normalizedTotalHoles} • Par {currentHolePar ?? "-"}
@@ -249,7 +249,7 @@ export function SummaryScreen({
           )}
 
           <Card className="mb-4 p-4">
-            <h3 className="mb-3 text-2xl font-bold">{isGameOver ? "Final Leaderboard" : "Leaderboard"}</h3>
+            <h3 className="arcade-heading mb-3 text-lg">{isGameOver ? "Final Leaderboard" : "Leaderboard"}</h3>
             <div className="mb-2 grid grid-cols-[auto_1fr_auto_auto] gap-2 px-3 text-xs uppercase text-muted-foreground">
               <div>#</div>
               <div>Player</div>
@@ -293,7 +293,7 @@ export function SummaryScreen({
           {selectedPlayer && (
             <Card className="mb-4 overflow-hidden p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h3 className="flex items-center gap-2 text-2xl font-bold">
+                <h3 className="arcade-heading flex items-center gap-2 text-lg">
                   <span className="h-5 w-5 rounded-full" style={{ backgroundColor: selectedPlayer.color }} />
                   <span>{isGameOver ? "Performance Breakdown" : "Player Stats"} ({selectedPlayer.name})</span>
                 </h3>

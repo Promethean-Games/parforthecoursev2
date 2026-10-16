@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { SceneBackdrop } from "@/components/arcade/SceneBackdrop";
 import { Card } from "@/components/ui/card";
 import { formatEditionPrice, type EditionDefinition } from "@/lib/editions";
 
@@ -33,13 +34,13 @@ export function DigitalAccessScreen({
   const unlockAllLabel = unlockAllPriceLabel ? `Unlock All Editions (${unlockAllPriceLabel})` : "Unlock All Editions";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#070b16] px-4 py-8 text-foreground">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.22),transparent_30%),radial-gradient(circle_at_bottom,_rgba(168,85,247,0.18),transparent_35%)]" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#120b22] px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] text-foreground">
+      <SceneBackdrop />
 
-      <Card className="relative z-10 w-full max-w-5xl overflow-hidden border border-cyan-400/30 bg-slate-950/80 shadow-[0_0_40px_rgba(34,211,238,0.18)] backdrop-blur-sm">
+      <Card className="relative z-10 w-full max-w-5xl overflow-hidden border border-amber-400/30 bg-slate-950/80 shadow-[0_0_40px_rgba(251,191,36,0.18)] backdrop-blur-sm">
         <div className="grid gap-6 p-6 md:grid-cols-[1.1fr_0.9fr] md:p-8">
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-cyan-200">
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-amber-200">
               Digital edition
             </div>
 
@@ -62,7 +63,7 @@ export function DigitalAccessScreen({
               <ul className="mt-4 space-y-3 text-sm text-slate-200">
                 {edition.benefits.map((benefit) => (
                   <li key={benefit} className="flex items-start gap-3">
-                    <span className="mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-400/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.5)]">
+                    <span className="mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-400/15 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.5)]">
                       ✦
                     </span>
                     <span>{benefit}</span>
@@ -73,7 +74,7 @@ export function DigitalAccessScreen({
           </div>
 
           <div className="flex flex-col justify-center">
-            <div className="rounded-3xl border border-cyan-400/30 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 p-5 shadow-[0_0_32px_rgba(34,211,238,0.12)]">
+            <div className="rounded-3xl border border-amber-400/30 bg-gradient-to-br from-slate-900 via-slate-950 to-stone-950 p-5 shadow-[0_0_32px_rgba(251,191,36,0.12)]">
               <p className="text-xs font-medium uppercase tracking-[0.28em] text-slate-400">Edition price</p>
               <div className="mt-4 flex items-end gap-2">
                 <span className="text-4xl font-black text-white">{priceLabel}</span>
@@ -81,7 +82,7 @@ export function DigitalAccessScreen({
 
               <div className="mt-5 space-y-3">
                 <Button
-                  className="h-12 w-full bg-gradient-to-r from-cyan-400 via-sky-500 to-violet-500 text-base font-semibold text-slate-950 shadow-[0_0_24px_rgba(34,211,238,0.5)] hover:brightness-110"
+                  className="h-12 w-full bg-gradient-to-r from-amber-400 via-amber-500 to-orange-600 text-base font-semibold text-slate-950 shadow-[0_0_24px_rgba(251,191,36,0.5)] hover:brightness-110"
                   onClick={onPurchase}
                   disabled={isPurchasing}
                   data-testid="button-purchase-digital-edition"
@@ -111,7 +112,7 @@ export function DigitalAccessScreen({
                 {onPreviewRules && (
                   <Button
                     variant="ghost"
-                    className="h-10 w-full text-cyan-200 underline hover:bg-slate-800 hover:text-white"
+                    className="h-10 w-full text-amber-200 underline hover:bg-slate-800 hover:text-white"
                     onClick={onPreviewRules}
                     data-testid="button-preview-rules"
                   >

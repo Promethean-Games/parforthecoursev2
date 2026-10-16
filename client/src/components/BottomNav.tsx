@@ -18,7 +18,7 @@ export function BottomNav({ activeTab, isGameEnded, onHome, onTabChange }: Botto
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t flex items-center z-40">
+    <div className="fixed bottom-0 left-0 right-0 z-40 flex h-[calc(4rem+env(safe-area-inset-bottom))] items-stretch border-t-2 border-[hsl(38_50%_34%)] bg-gradient-to-b from-[#12261b] to-[#050c08] pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_18px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,220,160,0.2)]">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = !isGameEnded ? activeTab === tab.id : tab.id === "game" && activeTab === "game";
@@ -28,8 +28,8 @@ export function BottomNav({ activeTab, isGameEnded, onHome, onTabChange }: Botto
             key={tab.id}
             variant="ghost"
             className={cn(
-              "flex-1 h-full rounded-none flex flex-col gap-1 items-center justify-center",
-              isActive && "bg-primary/10"
+              "relative h-full flex-1 flex-col items-center justify-center gap-1 rounded-none",
+              isActive && "bg-amber-400/10"
             )}
             onClick={() => {
               if (tab.id === "game" && isGameEnded) {
@@ -40,8 +40,9 @@ export function BottomNav({ activeTab, isGameEnded, onHome, onTabChange }: Botto
             }}
             data-testid={`nav-${tab.id}`}
           >
-            <Icon className={cn("w-5 h-5", isActive && "text-primary")} />
-            <span className={cn("text-xs", isActive && "text-primary font-semibold")}>
+            {isActive && <span className="absolute inset-x-3 top-0 h-[3px] rounded-b bg-amber-400 shadow-[0_0_10px_#fbbf24]" aria-hidden />}
+            <Icon className={cn("h-5 w-5 text-white/70", isActive && "text-amber-300 drop-shadow-[0_0_6px_rgba(251,191,36,0.7)]")} />
+            <span className={cn("text-[11px] uppercase tracking-wider text-white/70", isActive && "font-extrabold text-amber-300")}>
               {tab.label}
             </span>
           </Button>

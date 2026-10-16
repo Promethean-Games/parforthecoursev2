@@ -77,14 +77,14 @@ export function PlayerSetup({
   };
 
   return (
-    <div className="flex flex-col min-h-screen p-6 pb-8">
+    <div className="flex flex-col min-h-screen p-6 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
       <div className="flex flex-col items-center mb-4">
         <img 
           src={LOGO_URL} 
           alt="PftC logo" 
           className="w-24 h-auto mb-2"
         />
-        <h2 className="text-center text-sm font-semibold uppercase tracking-wide text-muted-foreground px-4">
+        <h2 className="arcade-heading px-4 text-center text-sm">
           Enter Player Names from Tallest to Shortest Height
         </h2>
         <p className="text-sm text-muted-foreground mt-1">

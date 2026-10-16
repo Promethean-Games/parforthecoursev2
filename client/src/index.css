@@ -93,12 +93,12 @@
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
-  --background: 0 0% 7%;
-  --foreground: 0 0% 98%;
-  --border: 0 0% 16%;
-  --card: 0 0% 9%;
+  --background: 150 35% 5%;
+  --foreground: 40 35% 96%;
+  --border: 38 40% 26%;
+  --card: 150 30% 8%;
   --card-foreground: 0 0% 98%;
-  --card-border: 0 0% 12%;
+  --card-border: 38 50% 34%;
   --sidebar: 0 0% 11%;
   --sidebar-foreground: 0 0% 98%;
   --sidebar-border: 0 0% 14%;
@@ -107,21 +107,21 @@
   --sidebar-accent: 0 0% 15%;
   --sidebar-accent-foreground: 0 0% 98%;
   --sidebar-ring: 142 76% 36%;
-  --popover: 0 0% 13%;
+  --popover: 150 28% 10%;
   --popover-foreground: 0 0% 98%;
-  --popover-border: 0 0% 16%;
-  --primary: 142 76% 36%;
+  --popover-border: 38 50% 34%;
+  --primary: 142 70% 38%;
   --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 17%;
+  --secondary: 150 18% 15%;
   --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 16%;
-  --muted-foreground: 0 0% 65%;
-  --accent: 142 12% 15%;
+  --muted: 150 14% 15%;
+  --muted-foreground: 40 15% 70%;
+  --accent: 142 25% 17%;
   --accent-foreground: 0 0% 98%;
   --destructive: 0 84% 40%;
   --destructive-foreground: 0 0% 98%;
-  --input: 0 0% 25%;
-  --ring: 142 76% 36%;
+  --input: 38 30% 30%;
+  --ring: 43 95% 56%;
   --chart-1: 142 76% 55%;
   --chart-2: 221 83% 70%;
   --chart-3: 262 83% 75%;
@@ -195,6 +195,90 @@
  * Even without handling focused or not, this is six possible combinations that
  * need to be distinguished from eachother visually.
  */
+@layer base {
+  /* App-wide scenic backdrop. The overlay opacity keeps text readable in each theme. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.88) 50%, rgba(255, 255, 255, 0.94) 100%),
+      url("@assets/editions/background.jpg") center bottom / cover no-repeat;
+    pointer-events: none;
+  }
+
+  .dark body::before {
+    background:
+      linear-gradient(180deg, rgba(4, 9, 7, 0.45) 0%, rgba(4, 9, 7, 0.72) 45%, rgba(4, 9, 7, 0.88) 100%),
+      url("@assets/editions/background.jpg") center bottom / cover no-repeat;
+  }
+
+  .dark body {
+    background-color: hsl(var(--background));
+  }
+
+  #root {
+    position: relative;
+    z-index: 0;
+  }
+}
+
+@layer components {
+  .arcade-title {
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #fff;
+    text-shadow: 0 2px 0 #000, 0 0 16px rgba(255, 170, 60, 0.5);
+  }
+
+  .arcade-heading {
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: hsl(43 95% 62%);
+    text-shadow: 0 1px 0 #000;
+  }
+
+  .arcade-glass {
+    background: linear-gradient(180deg, rgba(14, 30, 22, 0.88), rgba(6, 14, 10, 0.92));
+    border: 1px solid hsl(38 50% 34%);
+    box-shadow: inset 0 1px 0 rgba(255, 220, 160, 0.18), 0 6px 18px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+  }
+
+  .dark .shadcn-card {
+    background: linear-gradient(180deg, rgba(14, 30, 22, 0.88), rgba(6, 14, 10, 0.92));
+    border-color: hsl(38 50% 34%);
+    box-shadow: inset 0 1px 0 rgba(255, 220, 160, 0.18), 0 6px 18px rgba(0, 0, 0, 0.55);
+  }
+
+  .dark [role="alertdialog"],
+  .dark [role="dialog"] {
+    background: linear-gradient(180deg, rgba(16, 34, 25, 0.97), rgba(6, 14, 10, 0.98));
+    border: 2px solid hsl(38 50% 38%);
+    border-radius: 1rem;
+    box-shadow: 0 0 0 1px #000, 0 12px 40px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 220, 160, 0.2);
+  }
+
+  .dark .btn-arcade {
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -3px 0 rgba(0, 0, 0, 0.28), 0 3px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .dark .btn-arcade-outline {
+    background: rgba(0, 0, 0, 0.45);
+    border-color: hsl(38 55% 42%);
+    color: hsl(40 35% 96%);
+  }
+
+  .dark .btn-arcade-default {
+    border-color: hsl(142 80% 62%);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+  }
+}
 @layer utilities {
 
   @keyframes next-card-pulse {

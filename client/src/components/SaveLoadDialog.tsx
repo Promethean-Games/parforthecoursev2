@@ -46,8 +46,8 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
   const [confirmAction, setConfirmAction] = useState<{ type: "overwrite" | "delete" | "endGame" | "newGame"; slot: string } | null>(null);
   const { toast } = useToast();
   const containerClassName = mode === "load"
-    ? "fixed inset-0 z-50 flex flex-col bg-background pb-16"
-    : "flex min-h-screen flex-col bg-background pb-24";
+    ? "fixed inset-0 z-50 flex flex-col bg-background/90 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-sm"
+    : "flex min-h-screen flex-col pb-24";
 
   const autosave = savedGames[AUTOSAVE_KEY];
   const manualSavedEntries = Object.entries(savedGames)
@@ -131,7 +131,7 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
 
   return (
     <div className={containerClassName}>
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
         <div className="mb-6 flex items-center gap-3">
           {mode === "load" && (
             <Button
@@ -144,7 +144,7 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
               <ArrowLeft className="w-5 h-5" />
             </Button>
           )}
-          <h2 className="text-2xl font-bold">{mode === "save" ? "Save Game" : "Load Game"}</h2>
+          <h2 className="arcade-title text-2xl">{mode === "save" ? "Save Game" : "Load Game"}</h2>
         </div>
 
         <div className="space-y-3">

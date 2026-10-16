@@ -462,7 +462,7 @@ function GameScreens({ onOpenRules }: RulesHandlers) {
   }
 
   return (
-    <div className="pb-16">
+    <div className="pb-[calc(4rem+env(safe-area-inset-bottom))]">
       {activeTab === "game" && currentPlayer && (
         <GameScreen
           players={turnOrderPlayers}

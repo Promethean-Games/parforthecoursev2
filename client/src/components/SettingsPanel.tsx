@@ -79,10 +79,10 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
 
   return (
     <div className="flex flex-col min-h-screen pb-16">
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
         <div className="mb-6">
           <h2 
-            className="text-2xl font-bold cursor-default select-none" 
+            className="arcade-title text-2xl cursor-default select-none" 
             onClick={handleTitleTap}
             data-testid="text-settings-title"
           >
@@ -94,7 +94,7 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
           {/* Director PIN Prompt */}
           {showPinPrompt && (
             <Card className="p-4 border-primary">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <h3 className="arcade-heading text-sm mb-3 flex items-center gap-2">
                 <Shield className="w-4 h-4" />
                 Director Access
               </h3>
@@ -128,7 +128,7 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
 
           {/* Add Player Section */}
           <Card className="p-4">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <h3 className="arcade-heading text-sm mb-3 flex items-center gap-2">
               <UserPlus className="w-4 h-4" />
               Add Player
             </h3>
@@ -169,7 +169,7 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
           </Card>
 
           <Card className="p-4">
-            <h3 className="font-semibold mb-4">Display</h3>
+            <h3 className="arcade-heading text-sm mb-4">Display</h3>
             
             <div className="flex items-center justify-between py-3 border-b">
               <Label htmlFor="theme-toggle" className="flex-1">
@@ -199,7 +199,7 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
           </Card>
 
           <Card className="p-4">
-            <h3 className="font-semibold mb-4">Game</h3>
+            <h3 className="arcade-heading text-sm mb-4">Game</h3>
             
             <div className="flex items-center justify-between py-3">
               <Label htmlFor="autosave-toggle" className="flex-1">
@@ -216,7 +216,7 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
           </Card>
 
           <Card className="p-4">
-            <h3 className="font-semibold mb-3">About</h3>
+            <h3 className="arcade-heading text-sm mb-3">About</h3>
             <p className="text-sm text-muted-foreground mb-2">Par for the Course</p>
             <p className="text-xs text-muted-foreground">Version 3.1.42</p>
           </Card>
