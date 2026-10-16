@@ -219,6 +219,7 @@ const SEQUENTIAL_RULES: Ruleset = {
 const TOURNAMENT_RULES: Ruleset = {
   id: "tournament",
   quickReference: [
+    { label: "Goal", text: "Pocket all balls in as few strokes as possible across all 18 holes." },
     { label: "Format", text: "18 holes, assigned across the available tables by the Tournament Director. Players complete assigned holes in ascending course-number order." },
     { label: "Tee off", text: "The tallest player tees off first, from behind the Tee Box. Balls may be pocketed in any order, and calling shots is not required." },
     { label: "Scoring", text: "Scores are recorded and submitted digitally through the official Par for the Course tournament app. The fewest total strokes, including penalties, across all 18 holes wins." },
