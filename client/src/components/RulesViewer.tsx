@@ -12,11 +12,39 @@ import {
 import type { EditionId } from "@/lib/editions";
 import type { RulesState } from "@/lib/rules-session";
 
+// Key rules underlined for emphasis; the underlying rules text is not modified.
+const EMPHASIS_PATTERN = new RegExp(
+  [
+    "pocket (?:all|every object) balls? in as few strokes as possible",
+    "the lowest-numbered ball must be contacted first",
+    "pocket all stripes before pocketing solids",
+    "from behind the tee box",
+  ].join("|"),
+  "gi",
+);
+
+function Emphasized({ text }: { text: string }) {
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+  for (const match of Array.from(text.matchAll(EMPHASIS_PATTERN))) {
+    const start = match.index ?? 0;
+    if (start > last) parts.push(text.slice(last, start));
+    parts.push(
+      <u key={start} className="font-medium underline decoration-2 underline-offset-2">
+        {match[0]}
+      </u>,
+    );
+    last = start + match[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return <>{parts}</>;
+}
+
 function Item({ item }: { item: RuleItem }) {
   return (
     <>
       {item.label && <strong className="font-semibold">{item.label}. </strong>}
-      {item.text}
+      <Emphasized text={item.text} />
     </>
   );
 }
@@ -27,7 +55,7 @@ function Block({ block }: { block: RuleBlock }) {
       <div className="space-y-1">
         <p>
           {block.label && <strong className="font-semibold">{block.label}: </strong>}
-          {block.text}
+          <Emphasized text={block.text} />
         </p>
         {block.note && <p className="text-sm text-muted-foreground">{block.note}</p>}
       </div>

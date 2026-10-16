@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Save, FolderOpen, Pencil, Check, Trash2, Clock, Flag, Plus } from "lucide-react";
+import { ArrowLeft, Save, FolderOpen, Pencil, Check, Trash2, Clock, Flag, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { GameSession } from "@shared/schema";
 import { EDITIONS } from "@/lib/editions";
@@ -132,7 +132,18 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
   return (
     <div className={containerClassName}>
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="mb-6">
+        <div className="mb-6 flex items-center gap-3">
+          {mode === "load" && (
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={onClose}
+              aria-label="Back"
+              data-testid="button-load-back"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          )}
           <h2 className="text-2xl font-bold">{mode === "save" ? "Save Game" : "Load Game"}</h2>
         </div>
 
