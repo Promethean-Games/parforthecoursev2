@@ -16,6 +16,8 @@ interface ArcadeCarouselProps<T extends ArcadeCarouselItem> {
   ariaLabel: string;
   /** Card width as a fraction of card height. */
   aspect?: number;
+  /** Optional cap on card height in px, for compact cards. */
+  maxCardHeight?: number;
   /** Called when the card body (not an interactive child) is tapped while already active. */
   onActiveCardClick?: (item: T) => void;
   testIdPrefix: string;
@@ -49,6 +51,7 @@ export function ArcadeCarousel<T extends ArcadeCarouselItem>({
   renderCard,
   ariaLabel,
   aspect = 0.56,
+  maxCardHeight,
   onActiveCardClick,
   testIdPrefix,
 }: ArcadeCarouselProps<T>) {
@@ -83,7 +86,7 @@ export function ArcadeCarousel<T extends ArcadeCarouselItem>({
     return () => observer.disconnect();
   }, []);
 
-  const cardHeight = Math.max(240, size.height - 12);
+  const cardHeight = Math.min(maxCardHeight ?? Infinity, Math.max(240, size.height - 12));
   const cardWidth = Math.max(130, Math.min(cardHeight * aspect, size.width * 0.6, 320));
   const step = cardWidth * 0.8;
 

@@ -4,6 +4,10 @@ import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { LOGO_URL } from "@/lib/constants";
 import { EDITION_THEMES, type EditionTheme } from "@/lib/edition-theme";
+import newGameArt from "@assets/editions/splash-new-game.jpg";
+import loadGameArt from "@assets/editions/splash-load-game.jpg";
+import howToPlayArt from "@assets/editions/splash-how-to-play.jpg";
+import testArt from "@assets/editions/splash-test.jpg";
 import { ArcadeCarousel } from "@/components/arcade/ArcadeCarousel";
 import { SceneBackdrop } from "@/components/arcade/SceneBackdrop";
 import { hasTestingAccess, setTestingAccess, unlockAllTestEntitlements } from "@/lib/entitlements";
@@ -18,7 +22,7 @@ interface SplashScreenProps {
 interface SplashAction {
   id: string;
   title: string;
-  description: string;
+  art: string;
   theme: EditionTheme;
   testId: string;
   run: () => void;
@@ -73,13 +77,13 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame, onH
 
   const actions = (() => {
     const list: SplashAction[] = [
-      { id: "new-game", title: "New Game", description: "Pick an edition and tee off.", theme: EDITION_THEMES.classic, testId: "button-new-game", run: handleNewGameClick },
-      { id: "load-game", title: "Load Game", description: "Resume a saved round.", theme: EDITION_THEMES.reracked, testId: "button-load-game", run: onLoadGame },
+      { id: "new-game", title: "New Game", art: newGameArt, theme: EDITION_THEMES.classic, testId: "button-new-game", run: handleNewGameClick },
+      { id: "load-game", title: "Load Game", art: loadGameArt, theme: EDITION_THEMES.reracked, testId: "button-load-game", run: onLoadGame },
     ];
     if (onHowToPlay) {
-      list.push({ id: "how-to-play", title: "How to Play", description: "Learn the rules of the course.", theme: EDITION_THEMES.sequential, testId: "button-how-to-play", run: onHowToPlay });
+      list.push({ id: "how-to-play", title: "How to Play", art: howToPlayArt, theme: EDITION_THEMES.sequential, testId: "button-how-to-play", run: onHowToPlay });
     }
-    list.push({ id: "test", title: "Test", description: "Playtesting access.", theme: EDITION_THEMES["teed-off"], testId: "button-test", run: handleTestButtonClick });
+    list.push({ id: "test", title: "Test", art: testArt, theme: EDITION_THEMES.tournament, testId: "button-test", run: handleTestButtonClick });
     return list;
   })();
 
@@ -107,7 +111,8 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame, onH
         onActiveIndexChange={setActiveIndex}
         ariaLabel="Main menu"
         testIdPrefix="splash"
-        aspect={0.6}
+        aspect={1}
+        maxCardHeight={320}
         renderCard={({ action }, { isActive, cardWidth }) => (
           <>
             <div
@@ -126,11 +131,8 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame, onH
               </span>
             </div>
             <div className="relative min-h-0 flex-1">
-              <img src={action.theme.art} alt="" draggable={false} decoding="async" className="absolute inset-0 h-full w-full object-cover" />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/60" />
-              <p className="absolute inset-x-0 bottom-0 px-3 pb-2 text-center text-sm font-semibold leading-tight text-white" style={{ textShadow: "0 1px 3px #000" }}>
-                {action.description}
-              </p>
+              <img src={action.art} alt="" draggable={false} decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-black/25" />
             </div>
             <div
               className="shrink-0 p-2"
