@@ -19,7 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Eye, Undo2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, HelpCircle, Undo2 } from "lucide-react";
 import type { Player, HoleScore, SetupTime } from "@shared/schema";
 import { PAR_OPTIONS, LEADER_ICON_URL } from "@/lib/constants";
 import { getScoreCallout } from "@/lib/game-utils";
@@ -50,6 +50,7 @@ interface GameScreenProps {
   canUndo: boolean;
   onSetParForAll: (par: number) => void;
   onRecordSetupTime: (setupTime: SetupTime) => void;
+  onOpenRules?: () => void;
 }
 
 export function GameScreen({
@@ -71,6 +72,7 @@ export function GameScreen({
   canUndo,
   onSetParForAll,
   onRecordSetupTime,
+  onOpenRules,
 }: GameScreenProps) {
   interface DigitalCard {
     id: string;
@@ -466,6 +468,22 @@ export function GameScreen({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      {onOpenRules && (
+        <div className="flex justify-end mb-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 gap-1 px-2 text-muted-foreground"
+            onClick={onOpenRules}
+            aria-label="Rules"
+            data-testid="button-game-rules"
+          >
+            <HelpCircle className="w-4 h-4" />
+            Rules
+          </Button>
+        </div>
+      )}
+
       {/* Player Navigation */}
       <div className="flex items-center gap-3 mb-4">
         <Button

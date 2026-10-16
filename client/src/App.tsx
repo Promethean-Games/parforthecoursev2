@@ -19,6 +19,9 @@ import { DigitalAccessScreen } from "@/components/DigitalAccessScreen";
 import { DigitalExperiencePlaceholder } from "@/components/DigitalExperiencePlaceholder";
 import { getEditionById, type EditionDefinition } from "@/lib/editions";
 import { finalizeStripeCheckoutFromUrl, getDigitalStorePricing, hasDigitalAccess, purchaseDigitalEdition } from "@/lib/entitlements";
+import { RulesOverlay } from "@/components/RulesViewer";
+import { closeRules, openRules, RULES_CLOSED, selectRulesEdition, type RulesState } from "@/lib/rules-session";
+import { useToast } from "@/hooks/use-toast";
 import { getTurnOrder, isLeader } from "@/lib/game-utils";
 
 type Screen =
@@ -73,7 +76,11 @@ class AppErrorBoundary extends Component<{
   }
 }
 
-function GameApp() {
+interface RulesHandlers {
+  onOpenRules: (editionId?: EditionDefinition["id"], fromGame?: boolean) => void;
+}
+
+function GameScreens({ onOpenRules }: RulesHandlers) {
   const game = useGame();
   const tournament = useTournament();
   const { setTheme } = useTheme();
@@ -361,7 +368,7 @@ function GameApp() {
   if (screen === "splash") {
     return (
       <>
-        <SplashScreen onNewGame={handleNewGame} onLoadGame={handleLoadGame} onStartTournamentGame={handleStartTournamentGame} />
+        <SplashScreen onNewGame={handleNewGame} onLoadGame={handleLoadGame} onStartTournamentGame={handleStartTournamentGame} onHowToPlay={() => onOpenRules()} />
         {showSaveLoad === "load" && (
           <SaveLoadDialog
             mode="load"
@@ -377,7 +384,7 @@ function GameApp() {
   }
 
   if (screen === "edition") {
-    return <EditionSelectionScreen onSelectEdition={handleSelectEdition} onBack={() => setScreen("splash")} />;
+    return <EditionSelectionScreen onSelectEdition={handleSelectEdition} onBack={() => setScreen("splash")} onViewRules={(id) => onOpenRules(id)} />;
   }
 
   if ((screen === "mode" || screen === "digital-access" || screen === "digital-experience") && !selectedEdition) {
@@ -412,6 +419,7 @@ function GameApp() {
         onUnlockAll={() => void handleUnlockAllDigitalEditions()}
         onUsePhysicalCards={handleUsePhysicalCards}
         onBack={() => setScreen("mode")}
+        onPreviewRules={() => onOpenRules(selectedEdition.id)}
       />
     );
   }
@@ -475,6 +483,7 @@ function GameApp() {
           canUndo={true}
           onSetParForAll={(par) => game.setParForAllPlayers(game.currentHole, par)}
           onRecordSetupTime={game.recordSetupTime}
+          onOpenRules={() => onOpenRules(activeEdition.id, true)}
         />
       )}
 
@@ -517,6 +526,46 @@ function GameApp() {
 
       <BottomNav activeTab={activeTab} isGameEnded={game.isComplete} onHome={handleHome} onTabChange={handleTabChange} />
     </div>
+  );
+}
+
+function GameApp() {
+  const game = useGame();
+  const { toast } = useToast();
+  const [rulesState, setRulesState] = useState<RulesState>(RULES_CLOSED);
+
+  const saveForRules = () => {
+    if (!game.autoSaveNow() && game.settings.autoSave && game.players.length > 0) {
+      toast({
+        title: "Couldn't save progress",
+        description: "Your game is still in progress, but the automatic save failed.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleOpenRules = (editionId?: EditionDefinition["id"], fromGame?: boolean) => {
+    const next = openRules(rulesState, { editionId, fromGame });
+    if (next.state === rulesState) return;
+    if (next.save) saveForRules();
+    setRulesState(next.state);
+  };
+
+  const handleCloseRules = () => {
+    const next = closeRules(rulesState);
+    if (next.save) saveForRules();
+    setRulesState(next.state);
+  };
+
+  return (
+    <>
+      <GameScreens onOpenRules={handleOpenRules} />
+      <RulesOverlay
+        state={rulesState}
+        onSelectEdition={(id) => setRulesState((prev) => selectRulesEdition(prev, id).state)}
+        onClose={handleCloseRules}
+      />
+    </>
   );
 }
 

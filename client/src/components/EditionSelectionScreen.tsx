@@ -13,9 +13,10 @@ const editionButtonStyles: Record<EditionDefinition["id"], string> = {
 interface EditionSelectionScreenProps {
   onSelectEdition: (edition: EditionDefinition) => void;
   onBack: () => void;
+  onViewRules?: (editionId: EditionDefinition["id"]) => void;
 }
 
-export function EditionSelectionScreen({ onSelectEdition, onBack }: EditionSelectionScreenProps) {
+export function EditionSelectionScreen({ onSelectEdition, onBack, onViewRules }: EditionSelectionScreenProps) {
   return (
     <div className="flex flex-col min-h-screen p-6 pb-8">
       <div className="flex flex-col items-center mb-6">
@@ -25,14 +26,26 @@ export function EditionSelectionScreen({ onSelectEdition, onBack }: EditionSelec
 
       <div className="space-y-3 flex-1">
         {EDITIONS.map((edition) => (
-          <Button
-            key={edition.id}
-            className={`w-full h-14 text-lg font-semibold rounded-xl transition-transform hover:scale-[1.01] ${editionButtonStyles[edition.id]}`}
-            onClick={() => onSelectEdition(edition)}
-            data-testid={`button-edition-${edition.id}`}
-          >
-            {edition.name}
-          </Button>
+          <div key={edition.id} className="flex gap-2">
+            <Button
+              className={`flex-1 h-14 text-lg font-semibold rounded-xl transition-transform hover:scale-[1.01] ${editionButtonStyles[edition.id]}`}
+              onClick={() => onSelectEdition(edition)}
+              data-testid={`button-edition-${edition.id}`}
+            >
+              {edition.name}
+            </Button>
+            {onViewRules && (
+              <Button
+                variant="outline"
+                className="h-14 shrink-0 rounded-xl px-3"
+                onClick={() => onViewRules(edition.id)}
+                aria-label={`${edition.name} rules`}
+                data-testid={`button-rules-${edition.id}`}
+              >
+                Rules
+              </Button>
+            )}
+          </div>
         ))}
       </div>
 

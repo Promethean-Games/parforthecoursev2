@@ -9,9 +9,10 @@ interface SplashScreenProps {
   onNewGame: () => void;
   onLoadGame: () => void;
   onStartTournamentGame?: () => void;
+  onHowToPlay?: () => void;
 }
 
-export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: SplashScreenProps) {
+export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame, onHowToPlay }: SplashScreenProps) {
   const [testerCodeStep, setTesterCodeStep] = useState<"code" | "sign-out" | null>(null);
   const [testerCodeInput, setTesterCodeInput] = useState("");
   const [testerCodeError, setTesterCodeError] = useState<string | null>(null);
@@ -84,6 +85,17 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame }: S
         >
           Load Game
         </Button>
+        {onHowToPlay && (
+          <Button
+            size="lg"
+            variant="outline"
+            className="w-full text-lg h-14"
+            onClick={onHowToPlay}
+            data-testid="button-how-to-play"
+          >
+            How to Play
+          </Button>
+        )}
         <Button
           size="lg"
           variant="secondary"

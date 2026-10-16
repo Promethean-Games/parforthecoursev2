@@ -30,6 +30,7 @@ interface GameContextValue extends GameState {
   endGame: () => void;
   resetGame: () => void;
   saveGame: (slot: string) => void;
+  autoSaveNow: () => boolean;
   loadGame: (slot: string) => void;
   getSavedGames: () => Record<string, GameSession>;
   renameSlot: (oldSlot: string, newSlot: string) => void;
@@ -102,19 +103,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const [history, setHistory] = useState<GameState[]>([]);
 
-  useEffect(() => {
-    if (gameState.settings.autoSave && gameState.players.length > 0) {
-      localStorage.setItem("currentGame", JSON.stringify(gameState));
+  // Writes the active game to the existing "currentGame" + "__autosave__" slot. Returns false if nothing was written.
+  const persistAutoSave = (state: GameState): boolean => {
+    if (!state.settings.autoSave || state.players.length === 0) return false;
+    try {
+      localStorage.setItem("currentGame", JSON.stringify(state));
       const games = JSON.parse(localStorage.getItem("savedGames") || "{}");
       games["__autosave__"] = {
         id: "autosave",
-        ...gameState,
+        ...state,
         createdAt: games["__autosave__"]?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       localStorage.setItem("savedGames", JSON.stringify(games));
+      return true;
+    } catch (error) {
+      console.error("Auto-save failed", error);
+      return false;
     }
+  };
+
+  useEffect(() => {
+    persistAutoSave(gameState);
   }, [gameState]);
+
+  const autoSaveNow = () => persistAutoSave(gameState);
 
   const saveHistory = (newState: GameState) => {
     setHistory((prev) => [...prev.slice(-9), gameState]);
@@ -449,6 +462,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         endGame,
         resetGame,
         saveGame,
+        autoSaveNow,
         loadGame,
         getSavedGames,
         renameSlot,

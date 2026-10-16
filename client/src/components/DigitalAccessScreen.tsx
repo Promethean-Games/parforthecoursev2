@@ -12,6 +12,7 @@ interface DigitalAccessScreenProps {
   onUnlockAll: () => void;
   onUsePhysicalCards: () => void;
   onBack: () => void;
+  onPreviewRules?: () => void;
 }
 
 export function DigitalAccessScreen({
@@ -24,6 +25,7 @@ export function DigitalAccessScreen({
   onUnlockAll,
   onUsePhysicalCards,
   onBack,
+  onPreviewRules,
 }: DigitalAccessScreenProps) {
   const priceLabel = editionPriceLabel === undefined
     ? formatEditionPrice(edition.priceCents)
@@ -105,6 +107,17 @@ export function DigitalAccessScreen({
                 >
                   I own the physical cards
                 </Button>
+
+                {onPreviewRules && (
+                  <Button
+                    variant="ghost"
+                    className="h-10 w-full text-cyan-200 underline hover:bg-slate-800 hover:text-white"
+                    onClick={onPreviewRules}
+                    data-testid="button-preview-rules"
+                  >
+                    Preview Rules (free)
+                  </Button>
+                )}
 
                 <Button
                   variant="ghost"
