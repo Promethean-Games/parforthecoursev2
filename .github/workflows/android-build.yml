@@ -5,6 +5,11 @@ on:
     branches: [ main ]
     paths:
       - 'android/**'
+      - 'client/**'
+      - 'shared/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
       - '.github/workflows/android-build.yml'
   workflow_dispatch:
 
@@ -27,6 +32,29 @@ jobs:
           cache: gradle
 
       # ── Gradle wrapper permissions ──────────────────────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install web dependencies
+        run: npm ci
+
+      # Gradle bundles dist/public; without this step the APK ships with no web app
+      # (syncWebAssets reports NO-SOURCE). VITE_* values are public client config; the anon
+      # key is a public key, never the service-role key. Missing values only warn.
+      - name: Build web client
+        env:
+          VITE_BILLING_API_URL: ${{ secrets.VITE_BILLING_API_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$VITE_BILLING_API_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::warning::VITE_BILLING_API_URL / VITE_SUPABASE_ANON_KEY not set; Android purchase verification will be unavailable in this build."
+          fi
+          npx vite build
+          test -f dist/public/index.html
+
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
@@ -49,23 +77,27 @@ jobs:
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 --decode > android/app/keystore.jks
-            echo "KEYSTORE_PATH=app/keystore.jks" >> $GITHUB_ENV
+            echo "PFTC_SIGNING_STORE_FILE=$GITHUB_WORKSPACE/android/app/keystore.jks" >> $GITHUB_ENV
           else
             echo "No keystore secret found — building unsigned (debug signing)"
-            echo "KEYSTORE_PATH=" >> $GITHUB_ENV
           fi
 
       # ── Build ──────────────────────────────────────────────────────────────
       - name: Build release APK
         working-directory: android
+        # app/build.gradle.kts reads PFTC_SIGNING_*; both Gradle steps need them.
         env:
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          PFTC_SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          PFTC_SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          PFTC_SIGNING_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
         run: ./gradlew assembleRelease --no-daemon
 
       - name: Build release AAB (Play Store)
         working-directory: android
+        env:
+          PFTC_SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          PFTC_SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          PFTC_SIGNING_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
         run: ./gradlew bundleRelease --no-daemon
 
       # ── Upload artifacts ───────────────────────────────────────────────────
