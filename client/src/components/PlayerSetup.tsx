@@ -7,7 +7,8 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { PlayerColorPicker } from "./PlayerColorPicker";
 import { ChevronUp, ChevronDown, X, AlertCircle } from "lucide-react";
 import type { Player } from "@shared/schema";
-import { LOGO_URL, MAX_PLAYERS } from "@/lib/constants";
+import { MAX_PLAYERS } from "@/lib/constants";
+import logoArt from "@assets/editions/logo-landscape.png";
 
 interface PlayerSetupProps {
   players: Player[];
@@ -80,9 +81,9 @@ export function PlayerSetup({
     <div className="flex flex-col min-h-screen p-6 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
       <div className="flex flex-col items-center mb-4">
         <img 
-          src={LOGO_URL} 
+          src={logoArt} 
           alt="PftC logo" 
-          className="w-24 h-auto mb-2"
+          className="mb-2 h-auto w-full max-w-[260px] drop-shadow-[0_3px_8px_rgba(0,0,0,0.8)]"
         />
         <h2 className="arcade-heading px-4 text-center text-sm">
           Enter Player Names from Tallest to Shortest Height

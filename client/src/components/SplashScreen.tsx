@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { LOGO_URL } from "@/lib/constants";
+import logoArt from "@assets/editions/logo-landscape.png";
 import { EDITION_THEMES, type EditionTheme } from "@/lib/edition-theme";
 import newGameArt from "@assets/editions/splash-new-game.jpg";
 import loadGameArt from "@assets/editions/splash-load-game.jpg";
@@ -99,9 +99,9 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame, onH
 
       <div className="relative z-10 flex justify-center px-6 pb-1 pt-[max(1rem,env(safe-area-inset-top))]">
         <img
-          src={LOGO_URL}
+          src={logoArt}
           alt="Par for the Course"
-          className="h-auto max-h-[14vh] w-full max-w-[240px] object-contain drop-shadow-[0_3px_8px_rgba(0,0,0,0.8)]"
+          className="h-auto max-h-[17vh] w-full max-w-[340px] object-contain drop-shadow-[0_3px_8px_rgba(0,0,0,0.8)]"
         />
       </div>
 
