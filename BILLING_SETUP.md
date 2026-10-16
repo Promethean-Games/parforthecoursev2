@@ -90,3 +90,90 @@ Set these on the server to control product mapping without app code changes:
 - `GOOGLE_PLAY_PRODUCT_TEED_OFF`
 - `GOOGLE_PLAY_PRODUCT_TOURNAMENT`
 - `GOOGLE_PLAY_PRODUCT_BUNDLE_ALL` (required for the Unlock All purchase button)
+
+## Supabase Edge Function billing (pending migration - not deployed)
+
+Files: `supabase/migrations/20261016163811_billing_entitlements.sql`, `supabase/functions/billing/`, `supabase/config.toml`.
+The Express routes above stay live until the Edge Function is deployed and the client is switched over.
+
+### Confirmed Google Play product IDs (fixed in code, not env-configurable)
+
+| Entitlement | Product ID |
+|---|---|
+| Classic | `google_play_product_classic` |
+| Reracked | `google_play_product_reracked` |
+| Sequential | `google_play_product_sequential` |
+| Tournament | `google_play_product_tournament` |
+| Tee'd Off! | `google_play_product_teedoff` |
+| Digital bundle (unlock all) | `google_play_product_bundle` |
+
+Only these six are accepted by `verify`; the bundle unlocks every edition. The older IDs
+(`*.digital`, `pftc_premium_unlock`, `google_play_product_teed_off`, `google_play_product_bundle_all`) are rejected.
+The `GOOGLE_PLAY_PRODUCT_*` variables are not read by the Edge Function.
+
+### Edge Function secrets (`supabase secrets set`, never committed)
+
+| Secret | Required | Notes |
+|---|---|---|
+| `GOOGLE_PLAY_PACKAGE_NAME` | Yes (no default) | Must be verified in Play Console. The function fails closed if unset. |
+| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | Yes | Service-account JSON; server-side only. |
+| `CORS_ALLOWED_ORIGINS` | Optional | Extra web origins; `https://appassets.androidplatform.net` is always allowed. |
+
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected by Supabase.
+
+### Purchase-token rules
+
+- A purchase token is bound to one device at a time (`billing_purchase_tokens`).
+- A purchased token presented by a different device ID moves to that device (restore); the previous device loses that grant.
+- Pending or cancelled tokens never take ownership from another device.
+
+### Local validation
+
+From `supabase/functions/billing`, with an npm-capable Deno: `deno check index.ts index.test.ts` and
+`deno test --allow-read --allow-env index.test.ts`.
+
+## Client and native bridge: confirmed Google Play product IDs
+
+The client (`client/src/lib/play-products.ts`) and the Android bridge
+(`PlayBillingBridge.kt`) use only these six Play product IDs:
+`google_play_product_classic`, `google_play_product_reracked`,
+`google_play_product_sequential`, `google_play_product_tournament`,
+`google_play_product_teedoff`, `google_play_product_bundle`.
+
+- Internal edition IDs (classic, reracked, ...) are unchanged and are not Play product IDs.
+- The bundle unlocks every edition; each individual product unlocks only its edition.
+- The native catalog is built from this list; cached or server-supplied catalogs are ignored.
+- The bridge rejects any product outside the allowlist.
+- Obsolete IDs (e.g. `pftc_premium_unlock`) grant nothing.
+
+### Server-side verification flow (implemented locally, untested against Google)
+
+1. The bridge (`PlayBillingBridge.kt`) reports each purchase as
+   `{productId, purchaseToken, state, acknowledged}` in `purchase_result` and `sync_result`
+   events. Only the six allowed products are reported. Tokens are never logged.
+2. `client/src/lib/play-verification.ts` sends each PURCHASED token to the Edge Function
+   (`POST /google-play/verify` with `deviceId`, `productId`, `purchaseToken`) through
+   `client/src/lib/billing-api.ts`, then reads `GET /digital-entitlements?deviceId=`.
+   Access is granted only for editions the server confirms. Pending purchases are never
+   verified or unlocked. Transient failures retry (500 ms, 1.5 s) and keep cached entitlements.
+3. Restoration: every app start / entitlement refresh re-syncs Play purchases and re-verifies
+   them for the current device ID, so a reinstall (new device ID) restores purchases; the
+   server rebinds the token to the new device.
+4. Acknowledgement: done only by the Edge Function, after Google reports PURCHASED. The bridge
+   no longer acknowledges. Unverified purchases stay unacknowledged and are retried on every
+   sync (Google auto-refunds unacknowledged purchases after 3 days).
+5. Refunds: no refund notifications (RTDN) exist. A refund is noticed only because Play stops
+   listing the purchase, which drops the local grant at the next sync. Server-side rows are
+   not revoked until a token is re-verified.
+6. Offline: verified entitlements stay cached in localStorage; purchase tokens are never stored.
+
+### Required client build variables (public values; set at build time, never committed)
+
+- `VITE_BILLING_API_URL`: the function base, e.g. `https://<project-ref>.supabase.co/functions/v1/billing`
+- `VITE_SUPABASE_ANON_KEY`: the project's public anon/publishable key (not the service-role key)
+
+If either is missing, purchases on Android fail with a clear message and no entitlement is
+granted. Until these are set and the function is deployed, Android builds cannot unlock
+editions. Set `GOOGLE_PLAY_PACKAGE_NAME` (server secret) only after confirming it in Play Console.
+
+No real Google Play purchase has been tested.

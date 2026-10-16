@@ -4,7 +4,6 @@ import android.app.Activity
 import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
-import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClient.BillingResponseCode
 import com.android.billingclient.api.BillingClientStateListener
@@ -28,8 +27,14 @@ import java.util.UUID
  * - launchPurchase: start Google Play purchase UI for one inapp product
  * - syncPurchases: query existing purchases + pending states
  *
- * Entitlements are never granted directly from JavaScript. JS only receives
- * billing events and must reconcile ownership from returned purchase states.
+ * Purchase events carry the purchase token so the client can have the server verify
+ * the purchase with Google. Tokens are credentials: never log them. Entitlements are
+ * never granted from these events alone; the client grants only after server verification.
+ *
+ * Acknowledgement is NOT done here. The verification backend acknowledges a purchase
+ * only after Google confirms it is PURCHASED, so there is a single acknowledger. Unverified
+ * purchases stay unacknowledged and are re-sent on every sync until verified (Google
+ * refunds unacknowledged purchases after 3 days).
  */
 class PlayBillingBridge(
     private val activity: Activity,
@@ -39,6 +44,16 @@ class PlayBillingBridge(
     companion object {
         private const val TAG = "PFTCPlayBilling"
         private const val EVENT_NAME = "pftc-play-billing"
+
+        // Confirmed Google Play product IDs; the only products this bridge will query or purchase.
+        private val ALLOWED_PRODUCT_IDS = setOf(
+            "google_play_product_classic",
+            "google_play_product_reracked",
+            "google_play_product_sequential",
+            "google_play_product_tournament",
+            "google_play_product_teedoff",
+            "google_play_product_bundle"
+        )
     }
 
     private val billingClient: BillingClient = BillingClient.newBuilder(activity)
@@ -75,13 +90,13 @@ class PlayBillingBridge(
         val productIds = mutableListOf<String>()
         for (index in 0 until productIdsArray.length()) {
             val productId = productIdsArray.optString(index).trim()
-            if (productId.isNotEmpty()) {
+            if (productId.isNotEmpty() && productId in ALLOWED_PRODUCT_IDS) {
                 productIds.add(productId)
             }
         }
 
         if (productIds.isEmpty()) {
-            emitError("catalog_result", requestId, "No product IDs were provided.")
+            emitError("catalog_result", requestId, "No supported product IDs were provided.")
             return
         }
 
@@ -140,8 +155,8 @@ class PlayBillingBridge(
         val requestId = request.optString("requestId").ifBlank { newRequestId() }
         val productId = request.optString("productId").trim()
 
-        if (productId.isEmpty()) {
-            emitError("purchase_result", requestId, "No product ID was provided.")
+        if (productId.isEmpty() || productId !in ALLOWED_PRODUCT_IDS) {
+            emitError("purchase_result", requestId, "Unsupported product ID.")
             return
         }
 
@@ -250,20 +265,9 @@ class PlayBillingBridge(
                     return
                 }
 
-                val purchasedProductIds = mutableSetOf<String>()
-                val pendingProductIds = mutableSetOf<String>()
-
-                purchases.forEach { purchase ->
-                    when (purchase.purchaseState) {
-                        Purchase.PurchaseState.PURCHASED -> {
-                            purchasedProductIds.addAll(purchase.products)
-                            maybeAcknowledgePurchase(purchase)
-                        }
-                        Purchase.PurchaseState.PENDING -> {
-                            pendingProductIds.addAll(purchase.products)
-                        }
-                    }
-                }
+                val purchaseRecords = purchasesToJson(purchases)
+                val purchasedProductIds = productIdsWithState(purchaseRecords, "purchased")
+                val pendingProductIds = productIdsWithState(purchaseRecords, "pending")
 
                 val status = when {
                     purchasedProductIds.isNotEmpty() -> "purchased"
@@ -279,6 +283,7 @@ class PlayBillingBridge(
                         .put("status", status)
                         .put("purchasedProductIds", JSONArray(purchasedProductIds.toList()))
                         .put("pendingProductIds", JSONArray(pendingProductIds.toList()))
+                        .put("purchases", purchaseRecords)
                 )
             }
 
@@ -322,20 +327,7 @@ class PlayBillingBridge(
                 return@PurchasesResponseListener
             }
 
-            val ownedProductIds = mutableSetOf<String>()
-            val pendingProductIds = mutableSetOf<String>()
-
-            purchases.forEach { purchase ->
-                when (purchase.purchaseState) {
-                    Purchase.PurchaseState.PURCHASED -> {
-                        ownedProductIds.addAll(purchase.products)
-                        maybeAcknowledgePurchase(purchase)
-                    }
-                    Purchase.PurchaseState.PENDING -> {
-                        pendingProductIds.addAll(purchase.products)
-                    }
-                }
-            }
+            val purchaseRecords = purchasesToJson(purchases)
 
             emitEvent(
                 type = "sync_result",
@@ -343,31 +335,46 @@ class PlayBillingBridge(
                 payload = JSONObject()
                     .put("ok", true)
                     .put("authoritative", true)
-                    .put("ownedProductIds", JSONArray(ownedProductIds.toList()))
-                    .put("pendingProductIds", JSONArray(pendingProductIds.toList()))
+                    .put("ownedProductIds", JSONArray(productIdsWithState(purchaseRecords, "purchased").toList()))
+                    .put("pendingProductIds", JSONArray(productIdsWithState(purchaseRecords, "pending").toList()))
+                    .put("purchases", purchaseRecords)
             )
         }
 
         billingClient.queryPurchasesAsync(params, listener)
     }
 
-    private fun maybeAcknowledgePurchase(purchase: Purchase) {
-        if (purchase.isAcknowledged) return
-        val token = purchase.purchaseToken
-        if (token.isBlank()) return
-
-        val params = AcknowledgePurchaseParams.newBuilder()
-            .setPurchaseToken(token)
-            .build()
-
-        billingClient.acknowledgePurchase(params) { result ->
-            if (result.responseCode != BillingResponseCode.OK) {
-                Log.w(
-                    TAG,
-                    "Purchase acknowledge failed code=${result.responseCode} msg=${result.debugMessage}"
+    // One record per allowed product in a PURCHASED or PENDING purchase. Contains the purchase token.
+    private fun purchasesToJson(purchases: List<Purchase>): JSONArray {
+        val records = JSONArray()
+        for (purchase in purchases) {
+            val state = when (purchase.purchaseState) {
+                Purchase.PurchaseState.PURCHASED -> "purchased"
+                Purchase.PurchaseState.PENDING -> "pending"
+                else -> null
+            }
+            if (state == null || purchase.purchaseToken.isBlank()) continue
+            for (productId in purchase.products) {
+                if (productId !in ALLOWED_PRODUCT_IDS) continue
+                records.put(
+                    JSONObject()
+                        .put("productId", productId)
+                        .put("purchaseToken", purchase.purchaseToken)
+                        .put("state", state)
+                        .put("acknowledged", purchase.isAcknowledged)
                 )
             }
         }
+        return records
+    }
+
+    private fun productIdsWithState(records: JSONArray, state: String): Set<String> {
+        val ids = linkedSetOf<String>()
+        for (index in 0 until records.length()) {
+            val record = records.getJSONObject(index)
+            if (record.getString("state") == state) ids.add(record.getString("productId"))
+        }
+        return ids
     }
 
     private fun ensureConnection() {

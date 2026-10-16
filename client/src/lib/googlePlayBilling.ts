@@ -21,6 +21,7 @@ interface BridgeEnvelope {
     purchasedProductIds?: string[];
     pendingProductIds?: string[];
     ownedProductIds?: string[];
+    purchases?: unknown;
     authoritative?: boolean;
     billingReady?: boolean;
   };
@@ -52,16 +53,46 @@ export interface GooglePlayAccessStatus {
   checkedAt: string;
 }
 
+// A purchase as reported by the device. `purchaseToken` is a credential: keep it in memory only,
+// never log it or persist it, and send it only to the billing verification endpoint.
+export interface GooglePlayPurchaseRecord {
+  productId: string;
+  purchaseToken: string;
+  state: "purchased" | "pending";
+  acknowledged: boolean;
+}
+
 export interface GooglePlayPurchaseResult {
   status: "purchased" | "pending" | "cancelled";
   purchasedProductIds: string[];
   pendingProductIds: string[];
+  purchases: GooglePlayPurchaseRecord[];
 }
 
 export interface GooglePlaySyncResult {
   authoritative: boolean;
   ownedProductIds: string[];
   pendingProductIds: string[];
+  purchases: GooglePlayPurchaseRecord[];
+}
+
+export function parsePurchaseRecords(raw: unknown): GooglePlayPurchaseRecord[] {
+  if (!Array.isArray(raw)) return [];
+  const records: GooglePlayPurchaseRecord[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const { productId, purchaseToken, state, acknowledged } = item as Record<string, unknown>;
+    if (
+      typeof productId !== "string"
+      || typeof purchaseToken !== "string"
+      || purchaseToken.length === 0
+      || (state !== "purchased" && state !== "pending")
+    ) {
+      continue;
+    }
+    records.push({ productId, purchaseToken, state, acknowledged: Boolean(acknowledged) });
+  }
+  return records;
 }
 
 const BILLING_EVENT_NAME = "pftc-play-billing";
@@ -193,6 +224,7 @@ export async function purchaseGooglePlayProduct(productId: string): Promise<Goog
       status,
       purchasedProductIds: Array.isArray(payload.purchasedProductIds) ? payload.purchasedProductIds : [],
       pendingProductIds: Array.isArray(payload.pendingProductIds) ? payload.pendingProductIds : [],
+      purchases: parsePurchaseRecords(payload.purchases),
     };
   }
 
@@ -217,6 +249,7 @@ export async function syncGooglePlayPurchases(): Promise<GooglePlaySyncResult> {
     authoritative: Boolean(payload.authoritative),
     ownedProductIds: Array.isArray(payload.ownedProductIds) ? payload.ownedProductIds : [],
     pendingProductIds: Array.isArray(payload.pendingProductIds) ? payload.pendingProductIds : [],
+    purchases: parsePurchaseRecords(payload.purchases),
   };
 }
 

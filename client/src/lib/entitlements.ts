@@ -8,6 +8,19 @@ import {
 import { buildApiUrl } from "@/lib/apiBase";
 import { apiRequest } from "@/lib/queryClient";
 import { getBillingDeviceId } from "@/lib/billingDevice";
+import { createBillingApi, resolveBillingApiConfig, type BillingEnv } from "@/lib/billing-api";
+import { reconcileVerifiedPurchases, type VerificationResult } from "@/lib/play-verification";
+import {
+  buildGooglePlayCatalog,
+  isAllowedProductId,
+  normalizeCatalog,
+  productIdForTarget,
+  resolveEntitlementsFromOwnedProducts,
+  resolvePendingFromProducts,
+  type EntitlementMap,
+  type GooglePlayCatalogResponse,
+  type LogicalEntitlementId,
+} from "@/lib/play-products";
 
 const STORAGE_KEY = "digitalEditionEntitlements";
 const TEST_ACCESS_STORAGE_KEY = "digitalEditionTestAccess";
@@ -19,24 +32,9 @@ const PENDING_STATE_CACHE_KEY = "digitalEditionPendingState";
 // Temporary Play Store QA unlock. Remove after tester access is no longer needed.
 export const TEST_ACCESS_CODE = "PLAYTEST";
 
-type EntitlementMap = Record<EditionId, boolean>;
 type PendingMap = Record<EditionId, boolean>;
 export type PurchaseTarget = EditionId | "all";
 export type PurchaseOutcome = "purchased" | "pending" | "cancelled";
-
-type LogicalEntitlementId =
-  | "edition_classic"
-  | "edition_reracked"
-  | "edition_sequential"
-  | "edition_tournament"
-  | "edition_teed_off"
-  | "bundle_all_editions";
-
-interface GooglePlayCatalogResponse {
-  editionProducts: Record<EditionId, string | null>;
-  bundleProductId: string | null;
-  logicalEntitlements: Record<LogicalEntitlementId, string>;
-}
 
 interface StorePriceCache {
   editionPrices: Partial<Record<EditionId, string>>;
@@ -48,25 +46,6 @@ export interface DigitalStorePricing {
   editionPrices: Partial<Record<EditionId, string>>;
   unlockAllPrice: string | null;
 }
-
-const DEFAULT_NATIVE_GOOGLE_PLAY_CATALOG: GooglePlayCatalogResponse = {
-  editionProducts: {
-    classic: "classic",
-    reracked: "reracked",
-    sequential: "sequential",
-    "teed-off": "teed-off",
-    tournament: "tournament",
-  },
-  bundleProductId: "bundle_all_editions",
-  logicalEntitlements: {
-    edition_classic: "classic",
-    edition_reracked: "reracked",
-    edition_sequential: "sequential",
-    edition_tournament: "tournament",
-    edition_teed_off: "teed-off",
-    bundle_all_editions: "all",
-  },
-};
 
 const EMPTY_ENTITLEMENTS: EntitlementMap = {
   classic: false,
@@ -243,104 +222,14 @@ export async function unlockAllTestEntitlements(code: string): Promise<boolean> 
   return true;
 }
 
-function mergePendingFromProducts(
-  pendingProductIds: Set<string>,
-  editionProducts: Record<EditionId, string | null>,
-): PendingMap {
-  const pending: PendingMap = { ...EMPTY_PENDING };
-  (Object.keys(editionProducts) as EditionId[]).forEach((editionId) => {
-    const productId = editionProducts[editionId];
-    if (productId && pendingProductIds.has(productId)) {
-      pending[editionId] = true;
-    }
-  });
-  return pending;
-}
-
-function resolveEntitlementsFromOwnedProducts(
-  ownedProductIds: Set<string>,
-  editionProducts: Record<EditionId, string | null>,
-  bundleProductId: string | null,
-): EntitlementMap {
-  if (bundleProductId && ownedProductIds.has(bundleProductId)) {
-    return {
-      classic: true,
-      reracked: true,
-      sequential: true,
-      "teed-off": true,
-      tournament: true,
-    };
-  }
-
-  const next: EntitlementMap = { ...EMPTY_ENTITLEMENTS };
-  (Object.keys(editionProducts) as EditionId[]).forEach((editionId) => {
-    const productId = editionProducts[editionId];
-    if (productId && ownedProductIds.has(productId)) {
-      next[editionId] = true;
-    }
-  });
-  return next;
-}
-
-function normalizeCatalog(payload: Partial<GooglePlayCatalogResponse>): GooglePlayCatalogResponse {
-  const editionProducts: Partial<Record<EditionId, string | null>> = payload.editionProducts ?? {};
-  return {
-    editionProducts: {
-      classic: typeof editionProducts.classic === "string" && editionProducts.classic.trim().length > 0
-        ? editionProducts.classic
-        : null,
-      reracked: typeof editionProducts.reracked === "string" && editionProducts.reracked.trim().length > 0
-        ? editionProducts.reracked
-        : null,
-      sequential: typeof editionProducts.sequential === "string" && editionProducts.sequential.trim().length > 0
-        ? editionProducts.sequential
-        : null,
-      "teed-off": typeof editionProducts["teed-off"] === "string" && editionProducts["teed-off"].trim().length > 0
-        ? editionProducts["teed-off"]
-        : null,
-      tournament: typeof editionProducts.tournament === "string" && editionProducts.tournament.trim().length > 0
-        ? editionProducts.tournament
-        : null,
-    },
-    bundleProductId:
-      typeof payload.bundleProductId === "string" && payload.bundleProductId.trim().length > 0
-        ? payload.bundleProductId
-        : null,
-    logicalEntitlements: {
-      edition_classic: payload.logicalEntitlements?.edition_classic ?? "classic",
-      edition_reracked: payload.logicalEntitlements?.edition_reracked ?? "reracked",
-      edition_sequential: payload.logicalEntitlements?.edition_sequential ?? "sequential",
-      edition_tournament: payload.logicalEntitlements?.edition_tournament ?? "tournament",
-      edition_teed_off: payload.logicalEntitlements?.edition_teed_off ?? "teed-off",
-      bundle_all_editions: payload.logicalEntitlements?.bundle_all_editions ?? "all",
-    },
-  };
-}
-
-function getNativeGooglePlayCatalog(): GooglePlayCatalogResponse {
-  if (typeof window === "undefined") {
-    return { ...DEFAULT_NATIVE_GOOGLE_PLAY_CATALOG };
-  }
-
-  const cached = localStorage.getItem(GOOGLE_PLAY_CATALOG_CACHE_KEY);
-  if (cached) {
-    try {
-      return normalizeCatalog(JSON.parse(cached) as Partial<GooglePlayCatalogResponse>);
-    } catch {
-      // Fall through to the app defaults below.
-    }
-  }
-
-  return { ...DEFAULT_NATIVE_GOOGLE_PLAY_CATALOG };
-}
-
 async function getGooglePlayCatalog(): Promise<GooglePlayCatalogResponse> {
   if (typeof window === "undefined") {
     throw new Error("Google Play catalog is unavailable in this environment.");
   }
 
   if (isGooglePlayBillingSupported()) {
-    const nativeCatalog = getNativeGooglePlayCatalog();
+    // The native catalog is fixed in code; a cached copy from an older build is never trusted.
+    const nativeCatalog = buildGooglePlayCatalog();
     localStorage.setItem(GOOGLE_PLAY_CATALOG_CACHE_KEY, JSON.stringify(nativeCatalog));
     return nativeCatalog;
   }
@@ -371,25 +260,38 @@ async function getGooglePlayCatalog(): Promise<GooglePlayCatalogResponse> {
   }
 }
 
-async function reconcileGooglePlayEntitlements(): Promise<EntitlementMap> {
-  const catalog = await getGooglePlayCatalog();
-  const synced = await syncGooglePlayPurchases();
-  if (!synced.authoritative) {
-    throw new Error("Google Play purchase data is not authoritative.");
-  }
+// Config is resolved lazily so a device with no purchases to verify never needs it.
+function getBillingApi() {
+  return createBillingApi(resolveBillingApiConfig(import.meta.env as BillingEnv), {
+    fetch: (input, init) => fetch(input, init),
+    getDeviceId: getBillingDeviceId,
+  });
+}
 
-  const owned = new Set(synced.ownedProductIds);
-  const pending = new Set(synced.pendingProductIds);
-  const resolved = resolveEntitlementsFromOwnedProducts(
-    owned,
-    catalog.editionProducts,
-    catalog.bundleProductId,
-  );
-  const pendingMap = mergePendingFromProducts(pending, catalog.editionProducts);
+let reconcileInFlight: Promise<VerificationResult> | null = null;
 
-  writeEntitlements(resolved);
-  writePendingState(pendingMap);
-  return resolved;
+// Grants come only from purchases the Supabase billing function verified with Google Play.
+// Repeated calls share one run; the server upsert is idempotent for repeated tokens.
+function reconcileGooglePlayEntitlements(): Promise<VerificationResult> {
+  if (reconcileInFlight) return reconcileInFlight;
+
+  reconcileInFlight = (async () => {
+    const result = await reconcileVerifiedPurchases({
+      sync: syncGooglePlayPurchases,
+      verifyPurchase: (purchase) => getBillingApi().verifyPurchase(purchase),
+      fetchEntitlements: () => getBillingApi().fetchEntitlements(),
+      readCached: readStoredEntitlements,
+    });
+    if (result.authoritative) {
+      writeEntitlements(result.entitlements);
+      writePendingState(result.pending);
+    }
+    return result;
+  })().finally(() => {
+    reconcileInFlight = null;
+  });
+
+  return reconcileInFlight;
 }
 
 async function reconcileServerEntitlements(): Promise<EntitlementMap> {
@@ -485,8 +387,10 @@ export async function getDigitalEntitlements(): Promise<EntitlementMap> {
 
   if (isGooglePlayBillingSupported()) {
     try {
-      return await reconcileGooglePlayEntitlements();
+      const result = await reconcileGooglePlayEntitlements();
+      return result.authoritative ? result.entitlements : readStoredEntitlements();
     } catch {
+      // Includes missing config and network failures: keep previously verified entitlements.
       return readStoredEntitlements();
     }
   }
@@ -505,9 +409,9 @@ export async function hasDigitalAccess(editionId: EditionId): Promise<boolean> {
 
 async function purchaseViaGooglePlay(target: PurchaseTarget): Promise<PurchaseOutcome> {
   const catalog = await getGooglePlayCatalog();
-  const productId = target === "all" ? catalog.bundleProductId : catalog.editionProducts[target];
+  const productId = productIdForTarget(target, catalog);
 
-  if (!productId) {
+  if (!productId || !isAllowedProductId(productId)) {
     throw new Error("This product is not configured in Google Play Console yet.");
   }
 
@@ -530,10 +434,19 @@ async function purchaseViaGooglePlay(target: PurchaseTarget): Promise<PurchaseOu
     return "cancelled";
   }
 
-  await reconcileGooglePlayEntitlements().catch(() => {
-    // Keep prior verified entitlements if reconciliation fails.
-  });
-  return "purchased";
+  // Never grant from the purchase result itself: verify with the server first. Errors
+  // (e.g. missing billing config) propagate so the user sees a clear message.
+  const result = await reconcileGooglePlayEntitlements();
+  const outcome = result.outcomes[productId];
+  if (outcome === "verified") {
+    return "purchased";
+  }
+  if (outcome === "unavailable") {
+    throw new Error(
+      "Your purchase went through but could not be verified yet. Check your connection and reopen the app; it will unlock automatically.",
+    );
+  }
+  throw new Error("Google Play purchase could not be verified.");
 }
 
 async function purchaseViaStripe(target: PurchaseTarget): Promise<PurchaseOutcome> {

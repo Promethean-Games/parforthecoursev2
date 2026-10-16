@@ -1,0 +1,9 @@
+# Local Supabase config for the billing Edge Function (review only; not linked or deployed).
+# project_id is a local label only; link the real project with `supabase link` at deploy time.
+project_id = "par-for-the-course"
+
+[functions.billing]
+# Gateway JWT check stays ON: clients must send the public anon key as `apikey` and
+# `Authorization: Bearer`. If the project uses the newer publishable keys and the gateway
+# rejects them, switch this to false (the function does its own validation and has no user identity).
+verify_jwt = true

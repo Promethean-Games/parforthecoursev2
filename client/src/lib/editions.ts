@@ -1,3 +1,5 @@
+import { EDITION_PRODUCT_IDS } from "./play-products";
+
 export type EditionId = "classic" | "reracked" | "sequential" | "teed-off" | "tournament";
 
 export interface EditionDefinition {
@@ -18,7 +20,7 @@ export const EDITIONS: EditionDefinition[] = [
     id: "classic",
     name: "Classic",
     description: "Original Par for the Course edition.",
-    digitalProductId: "classic.digital",
+    digitalProductId: EDITION_PRODUCT_IDS.classic,
     priceCents: 199,
     cardCount: 16,
     jokerCount: 2,
@@ -34,7 +36,7 @@ export const EDITIONS: EditionDefinition[] = [
     id: "reracked",
     name: "Reracked",
     description: "Reracked edition content.",
-    digitalProductId: "reracked.digital",
+    digitalProductId: EDITION_PRODUCT_IDS.reracked,
     priceCents: 199,
     cardCount: 16,
     jokerCount: 2,
@@ -50,7 +52,7 @@ export const EDITIONS: EditionDefinition[] = [
     id: "sequential",
     name: "Sequential",
     description: "Sequential edition content.",
-    digitalProductId: "sequential.digital",
+    digitalProductId: EDITION_PRODUCT_IDS.sequential,
     priceCents: 199,
     cardCount: 18,
     jokerCount: 0,
@@ -66,7 +68,7 @@ export const EDITIONS: EditionDefinition[] = [
     id: "teed-off",
     name: "Tee'd Off!",
     description: "Tee'd Off! edition content.",
-    digitalProductId: "teed_off.digital",
+    digitalProductId: EDITION_PRODUCT_IDS["teed-off"],
     priceCents: 199,
     cardCount: 18,
     jokerCount: 0,
@@ -82,7 +84,7 @@ export const EDITIONS: EditionDefinition[] = [
     id: "tournament",
     name: "Tournament",
     description: "Tournament edition content.",
-    digitalProductId: "tournament.digital",
+    digitalProductId: EDITION_PRODUCT_IDS.tournament,
     priceCents: 199,
     cardCount: 18,
     jokerCount: 0,
