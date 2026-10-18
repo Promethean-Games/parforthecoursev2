@@ -88,7 +88,7 @@ jobs:
         # app/build.gradle.kts reads PFTC_SIGNING_*; both Gradle steps need them.
         env:
           PFTC_SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          PFTC_SIGNING_KEY_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          PFTC_SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           PFTC_SIGNING_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: ./gradlew assembleRelease --no-daemon
 
@@ -96,7 +96,7 @@ jobs:
         working-directory: android
         env:
           PFTC_SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          PFTC_SIGNING_KEY_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          PFTC_SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           PFTC_SIGNING_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: ./gradlew bundleRelease --no-daemon
 
