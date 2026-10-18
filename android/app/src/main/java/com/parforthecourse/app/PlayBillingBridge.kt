@@ -43,6 +43,7 @@ class PlayBillingBridge(
 
     companion object {
         private const val TAG = "PFTCPlayBilling"
+        private const val DIAG_TAG = "PftCBillingDiag"
         private const val EVENT_NAME = "pftc-play-billing"
 
         // Confirmed Google Play product IDs; the only products this bridge will query or purchase.
@@ -72,6 +73,10 @@ class PlayBillingBridge(
     private var activePurchaseRequestId: String? = null
 
     init {
+        Log.i(
+            DIAG_TAG,
+            "app package=${activity.packageName} buildType=${BuildConfig.BUILD_TYPE}"
+        )
         ensureConnection()
     }
 
@@ -116,6 +121,11 @@ class PlayBillingBridge(
                 .build()
 
             billingClient.queryProductDetailsAsync(params) { result, queryResult ->
+                Log.i(
+                    DIAG_TAG,
+                    "catalog product query responseCode=${result.responseCode} debugMessage=${result.debugMessage}"
+                )
+                logProductDetails(queryResult.productDetailsList, productIds)
                 if (result.responseCode != BillingResponseCode.OK) {
                     emitError(
                         type = "catalog_result",
@@ -178,6 +188,11 @@ class PlayBillingBridge(
                 .build()
 
             billingClient.queryProductDetailsAsync(params) { result, queryResult ->
+                Log.i(
+                    DIAG_TAG,
+                    "purchase product query productId=$productId responseCode=${result.responseCode} debugMessage=${result.debugMessage}"
+                )
+                logProductDetails(queryResult.productDetailsList, listOf(productId))
                 if (result.responseCode != BillingResponseCode.OK) {
                     emitError(
                         type = "purchase_result",
@@ -217,6 +232,10 @@ class PlayBillingBridge(
                         .build()
 
                     val launchResult = billingClient.launchBillingFlow(activity, billingParams)
+                    Log.i(
+                        DIAG_TAG,
+                        "launchBillingFlow productId=$productId responseCode=${launchResult.responseCode} debugMessage=${launchResult.debugMessage}"
+                    )
                     if (launchResult.responseCode != BillingResponseCode.OK) {
                         emitError(
                             type = "purchase_result",
@@ -248,6 +267,10 @@ class PlayBillingBridge(
         billingResult: com.android.billingclient.api.BillingResult,
         purchases: MutableList<Purchase>?
     ) {
+        Log.i(
+            DIAG_TAG,
+            "onPurchasesUpdated responseCode=${billingResult.responseCode} debugMessage=${billingResult.debugMessage}"
+        )
         val requestId = activePurchaseRequestId ?: newRequestId()
 
         when (billingResult.responseCode) {
@@ -386,6 +409,10 @@ class PlayBillingBridge(
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(result: com.android.billingclient.api.BillingResult) {
                 isConnected = result.responseCode == BillingResponseCode.OK
+                Log.i(
+                    DIAG_TAG,
+                    "billing connection responseCode=${result.responseCode} debugMessage=${result.debugMessage}"
+                )
                 if (!isConnected) {
                     Log.w(
                         TAG,
@@ -414,6 +441,10 @@ class PlayBillingBridge(
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(result: com.android.billingclient.api.BillingResult) {
                 isConnected = result.responseCode == BillingResponseCode.OK
+                Log.i(
+                    DIAG_TAG,
+                    "billing connection responseCode=${result.responseCode} debugMessage=${result.debugMessage}"
+                )
                 if (!isConnected) {
                     emitError(
                         type = operation,
@@ -447,6 +478,20 @@ class PlayBillingBridge(
             .put("formattedPrice", oneTimeDetails?.formattedPrice ?: JSONObject.NULL)
             .put("priceCurrencyCode", oneTimeDetails?.priceCurrencyCode ?: JSONObject.NULL)
             .put("priceAmountMicros", oneTimeDetails?.priceAmountMicros ?: JSONObject.NULL)
+    }
+
+    private fun logProductDetails(details: List<ProductDetails>, requestedProductIds: List<String>) {
+        val classicReturned = details.any { it.productId == "google_play_product_classic" }
+        Log.i(
+            DIAG_TAG,
+            "product details requested=$requestedProductIds classicProductReturned=$classicReturned"
+        )
+        details.forEach { detail ->
+            Log.i(
+                DIAG_TAG,
+                "ProductDetails productId=${detail.productId} productType=${detail.productType}"
+            )
+        }
     }
 
     private fun emitError(type: String, requestId: String, message: String, code: Int? = null) {
