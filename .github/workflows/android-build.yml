@@ -90,7 +90,12 @@ jobs:
         run: |
           set -euo pipefail
           sha256sum android/app/keystore.jks
-          keytool -list -v -alias "$KEY_ALIAS" -keystore android/app/keystore.jks -storepass:env KEYSTORE_PASSWORD > "$RUNNER_TEMP/keystore-info.txt"
+          if ! keytool -list -v -alias "$KEY_ALIAS" -keystore android/app/keystore.jks -storepass:env KEYSTORE_PASSWORD > "$RUNNER_TEMP/keystore-info.txt" 2>&1; then
+            echo "keytool failed:"
+            grep -iE "exception|password|alias|not exist|invalid" "$RUNNER_TEMP/keystore-info.txt" | head -3 || true
+            rm -f "$RUNNER_TEMP/keystore-info.txt"
+            exit 1
+          fi
           grep -m1 "SHA1:" "$RUNNER_TEMP/keystore-info.txt"
           rm -f "$RUNNER_TEMP/keystore-info.txt"
 
