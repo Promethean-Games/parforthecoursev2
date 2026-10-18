@@ -82,13 +82,25 @@ jobs:
             echo "No keystore secret found — building unsigned (debug signing)"
           fi
 
+      # TEMPORARY: verify decoded keystore. Remove after signing is confirmed.
+      - name: Verify decoded keystore (temporary)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          sha256sum android/app/keystore.jks
+          keytool -list -v -alias "$KEY_ALIAS" -keystore android/app/keystore.jks -storepass:env KEYSTORE_PASSWORD > "$RUNNER_TEMP/keystore-info.txt"
+          grep -m1 "SHA1:" "$RUNNER_TEMP/keystore-info.txt"
+          rm -f "$RUNNER_TEMP/keystore-info.txt"
+
       # ── Build ──────────────────────────────────────────────────────────────
       - name: Build release APK
         working-directory: android
         # app/build.gradle.kts reads PFTC_SIGNING_*; both Gradle steps need them.
         env:
           PFTC_SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          PFTC_SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          PFTC_SIGNING_KEY_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           PFTC_SIGNING_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: ./gradlew assembleRelease --no-daemon
 
@@ -96,7 +108,7 @@ jobs:
         working-directory: android
         env:
           PFTC_SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          PFTC_SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          PFTC_SIGNING_KEY_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           PFTC_SIGNING_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: ./gradlew bundleRelease --no-daemon
 
