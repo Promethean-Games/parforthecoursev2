@@ -82,6 +82,23 @@ jobs:
             echo "No keystore secret found — building unsigned (debug signing)"
           fi
 
+      # TEMPORARY: verify decoded keystore. Remove after signing is confirmed.
+      - name: Verify decoded keystore (temporary)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          sha256sum android/app/keystore.jks
+          if ! keytool -list -v -alias "$KEY_ALIAS" -keystore android/app/keystore.jks -storepass:env KEYSTORE_PASSWORD > "$RUNNER_TEMP/keystore-info.txt" 2>&1; then
+            echo "keytool failed:"
+            grep -iE "exception|password|alias|not exist|invalid" "$RUNNER_TEMP/keystore-info.txt" | head -3 || true
+            rm -f "$RUNNER_TEMP/keystore-info.txt"
+            exit 1
+          fi
+          grep -m1 "SHA1:" "$RUNNER_TEMP/keystore-info.txt"
+          rm -f "$RUNNER_TEMP/keystore-info.txt"
+
       # ── Build ──────────────────────────────────────────────────────────────
       - name: Build release APK
         working-directory: android
