@@ -35,6 +35,18 @@ function emptyMap(): EntitlementMap {
   return { classic: false, reracked: false, sequential: false, "teed-off": false, tournament: false };
 }
 
+export type RestoreStatus = "restored" | "none" | "unavailable" | "rejected";
+
+// Summarises a reconciliation run for the "Restore purchases" action. Never grants anything itself.
+export function classifyRestore(result: VerificationResult): RestoreStatus {
+  if (!result.authoritative) return "unavailable";
+  const outcomes = Object.values(result.outcomes);
+  if (outcomes.length === 0) return "none";
+  if (outcomes.includes("verified")) return "restored";
+  if (outcomes.includes("unavailable")) return "unavailable";
+  return "rejected";
+}
+
 // Entitlements are granted only for products whose purchase token the server verified AND whose
 // editions the server's entitlement record confirms. A purchase reported by the device alone,
 // or a pending purchase, never grants access.

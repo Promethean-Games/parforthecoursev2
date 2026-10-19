@@ -8,8 +8,13 @@ import {
 import { buildApiUrl } from "@/lib/apiBase";
 import { apiRequest } from "@/lib/queryClient";
 import { getBillingDeviceId } from "@/lib/billingDevice";
-import { createBillingApi, resolveBillingApiConfig, type BillingEnv } from "@/lib/billing-api";
-import { reconcileVerifiedPurchases, type VerificationResult } from "@/lib/play-verification";
+import { BillingConfigError, createBillingApi, resolveBillingApiConfig, type BillingEnv } from "@/lib/billing-api";
+import {
+  classifyRestore,
+  reconcileVerifiedPurchases,
+  type RestoreStatus,
+  type VerificationResult,
+} from "@/lib/play-verification";
 import {
   buildGooglePlayCatalog,
   isAllowedProductId,
@@ -405,6 +410,31 @@ export async function getDigitalEntitlements(): Promise<EntitlementMap> {
 export async function hasDigitalAccess(editionId: EditionId): Promise<boolean> {
   const entitlements = await getDigitalEntitlements();
   return Boolean(entitlements[editionId]);
+}
+
+export interface RestoreResult {
+  status: RestoreStatus | "not-configured" | "no-play";
+  entitlements: EntitlementMap;
+}
+
+// Re-queries Google Play for owned purchases and sends them through the same server-side
+// verification as a fresh purchase. Previously verified entitlements are never cleared by a failure.
+export async function restoreDigitalPurchases(): Promise<RestoreResult> {
+  if (!isGooglePlayBillingSupported()) {
+    return { status: "no-play", entitlements: await getDigitalEntitlements() };
+  }
+  try {
+    const result = await reconcileGooglePlayEntitlements();
+    return {
+      status: classifyRestore(result),
+      entitlements: result.authoritative ? result.entitlements : readStoredEntitlements(),
+    };
+  } catch (error) {
+    if (error instanceof BillingConfigError) {
+      return { status: "not-configured", entitlements: readStoredEntitlements() };
+    }
+    throw error;
+  }
 }
 
 async function purchaseViaGooglePlay(target: PurchaseTarget): Promise<PurchaseOutcome> {

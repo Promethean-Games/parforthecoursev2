@@ -18,7 +18,7 @@ import { PlayModeSelectionScreen } from "@/components/PlayModeSelectionScreen";
 import { DigitalAccessScreen } from "@/components/DigitalAccessScreen";
 import { DigitalExperiencePlaceholder } from "@/components/DigitalExperiencePlaceholder";
 import { getEditionById, type EditionDefinition } from "@/lib/editions";
-import { finalizeStripeCheckoutFromUrl, getDigitalStorePricing, hasDigitalAccess, purchaseDigitalEdition } from "@/lib/entitlements";
+import { finalizeStripeCheckoutFromUrl, getDigitalStorePricing, hasDigitalAccess, purchaseDigitalEdition, restoreDigitalPurchases } from "@/lib/entitlements";
 import { RulesOverlay } from "@/components/RulesViewer";
 import { closeRules, openRules, RULES_CLOSED, selectRulesEdition, type RulesState } from "@/lib/rules-session";
 import { useToast } from "@/hooks/use-toast";
@@ -91,6 +91,8 @@ function GameScreens({ onOpenRules }: RulesHandlers) {
   const [selectedEdition, setSelectedEdition] = useState<EditionDefinition | null>(null);
   const [isPurchasingDigital, setIsPurchasingDigital] = useState(false);
   const [digitalAccessError, setDigitalAccessError] = useState<string | null>(null);
+  const [isRestoringDigital, setIsRestoringDigital] = useState(false);
+  const [restoreFailed, setRestoreFailed] = useState(false);
   const [digitalEditionPriceLabel, setDigitalEditionPriceLabel] = useState<string | null | undefined>(undefined);
   const [digitalUnlockAllPriceLabel, setDigitalUnlockAllPriceLabel] = useState<string | null | undefined>(undefined);
 
@@ -223,6 +225,40 @@ function GameScreens({ onOpenRules }: RulesHandlers) {
       );
     } finally {
       setIsPurchasingDigital(false);
+    }
+  };
+
+  const handleRestorePurchases = async () => {
+    if (!selectedEdition) return;
+    setIsRestoringDigital(true);
+    setRestoreFailed(false);
+    setDigitalAccessError(null);
+    try {
+      const { status, entitlements } = await restoreDigitalPurchases();
+      if (entitlements[selectedEdition.id]) {
+        game.resetGame();
+        game.setGameExperience(selectedEdition.id, "digital");
+        setScreen("setup");
+        return;
+      }
+
+      const messages: Record<string, string> = {
+        restored: `Your purchases were restored, but ${selectedEdition.name} isn't included. You can buy it below.`,
+        none: "No Google Play purchases were found for this account. If you bought on another account, switch to it in Google Play and retry.",
+        unavailable: "We couldn't verify your purchase right now. Check your connection and tap Retry.",
+        rejected: "Google Play purchase could not be verified. Tap Retry, or contact support if this continues.",
+        "not-configured": "Purchase verification isn't available in this version of the app yet. Your purchase is safe; please update the app and retry.",
+        "no-play": "Restoring purchases requires Google Play on this device.",
+      };
+      setDigitalAccessError(messages[status] ?? "Unable to restore purchases right now.");
+      setRestoreFailed(status === "unavailable" || status === "rejected" || status === "not-configured");
+    } catch (error) {
+      setRestoreFailed(true);
+      setDigitalAccessError(
+        error instanceof Error ? `${error.message} Tap Retry.` : "Unable to restore purchases right now. Tap Retry.",
+      );
+    } finally {
+      setIsRestoringDigital(false);
     }
   };
 
@@ -414,6 +450,9 @@ function GameScreens({ onOpenRules }: RulesHandlers) {
         editionPriceLabel={digitalEditionPriceLabel}
         unlockAllPriceLabel={digitalUnlockAllPriceLabel}
         isPurchasing={isPurchasingDigital}
+        isRestoring={isRestoringDigital}
+        restoreFailed={restoreFailed}
+        onRestore={() => void handleRestorePurchases()}
         error={digitalAccessError}
         onPurchase={() => void handlePurchaseDigitalEdition()}
         onUnlockAll={() => void handleUnlockAllDigitalEditions()}

@@ -8,7 +8,7 @@ import {
   createBillingApi,
   resolveBillingApiConfig,
 } from "./billing-api";
-import { reconcileVerifiedPurchases, type VerificationDeps } from "./play-verification";
+import { classifyRestore, reconcileVerifiedPurchases, type VerificationDeps, type VerificationResult } from "./play-verification";
 import { parsePurchaseRecords, type GooglePlayPurchaseRecord, type GooglePlaySyncResult } from "./googlePlayBilling";
 import { BUNDLE_PRODUCT_ID, EDITION_PRODUCT_IDS, resolveEntitlementsFromOwnedProducts, type EntitlementMap } from "./play-products";
 
@@ -296,4 +296,24 @@ test("native bridge: single acknowledger, token never logged; backend acknowledg
     assert.equal(/console\.\w+\([^)]*[tT]oken/.test(src), false, `${file} must not log tokens`);
     assert.equal(/(localStorage|sessionStorage)\.setItem\([^)]*[tT]oken/.test(src), false, `${file} must not persist tokens`);
   }
+});
+
+test("classifyRestore summarises reconciliation without granting anything", () => {
+  const base: VerificationResult = { entitlements: NONE, pending: NONE, authoritative: true, outcomes: {} };
+  assert.equal(classifyRestore({ ...base, authoritative: false }), "unavailable");
+  assert.equal(classifyRestore(base), "none");
+  assert.equal(classifyRestore({ ...base, outcomes: { [EDITION_PRODUCT_IDS.classic]: "verified" } }), "restored");
+  assert.equal(classifyRestore({ ...base, outcomes: { [EDITION_PRODUCT_IDS.classic]: "unavailable" } }), "unavailable");
+  assert.equal(classifyRestore({ ...base, outcomes: { [EDITION_PRODUCT_IDS.classic]: "rejected" } }), "rejected");
+  assert.equal(classifyRestore({ ...base, outcomes: { a: "rejected", b: "verified" } }), "restored");
+});
+
+test("restore of an already-owned purchase verifies server-side and grants only after verification", async () => {
+  const server = new FakeServer();
+  server.googleState.set("tok-classic", 0);
+  const { deps } = setup(server, syncOf(purchase(EDITION_PRODUCT_IDS.classic, "tok-classic")));
+  const result = await reconcileVerifiedPurchases(deps);
+  assert.equal(classifyRestore(result), "restored");
+  assert.equal(result.entitlements.classic, true);
+  assert.ok(server.calls.some((c) => c.path === "/google-play/verify"));
 });
