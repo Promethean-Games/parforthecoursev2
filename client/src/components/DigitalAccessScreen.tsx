@@ -8,7 +8,10 @@ interface DigitalAccessScreenProps {
   editionPriceLabel?: string | null;
   unlockAllPriceLabel?: string | null;
   isPurchasing: boolean;
+  isRestoring?: boolean;
+  restoreFailed?: boolean;
   error: string | null;
+  onRestore?: () => void;
   onPurchase: () => void;
   onUnlockAll: () => void;
   onUsePhysicalCards: () => void;
@@ -21,7 +24,10 @@ export function DigitalAccessScreen({
   editionPriceLabel,
   unlockAllPriceLabel,
   isPurchasing,
+  isRestoring = false,
+  restoreFailed = false,
   error,
+  onRestore,
   onPurchase,
   onUnlockAll,
   onUsePhysicalCards,
@@ -84,7 +90,7 @@ export function DigitalAccessScreen({
                 <Button
                   className="h-12 w-full bg-gradient-to-r from-amber-400 via-amber-500 to-orange-600 text-base font-semibold text-slate-950 shadow-[0_0_24px_rgba(251,191,36,0.5)] hover:brightness-110"
                   onClick={onPurchase}
-                  disabled={isPurchasing}
+                  disabled={isPurchasing || isRestoring}
                   data-testid="button-purchase-digital-edition"
                 >
                   {isPurchasing ? "Unlocking..." : `Buy ${edition.name} — ${priceLabel}`}
@@ -94,11 +100,27 @@ export function DigitalAccessScreen({
                   variant="secondary"
                   className="h-12 w-full"
                   onClick={onUnlockAll}
-                  disabled={isPurchasing}
+                  disabled={isPurchasing || isRestoring}
                   data-testid="button-purchase-unlock-all"
                 >
                   {isPurchasing ? "Unlocking..." : unlockAllLabel}
                 </Button>
+
+                {onRestore && (
+                  <Button
+                    variant="outline"
+                    className="h-12 w-full border-amber-400/50 bg-slate-900/50 text-amber-100 hover:bg-slate-800"
+                    onClick={onRestore}
+                    disabled={isPurchasing || isRestoring}
+                    data-testid="button-restore-purchases"
+                  >
+                    {isRestoring
+                      ? "Checking Google Play..."
+                      : restoreFailed
+                        ? "Retry restore purchases"
+                        : "Restore purchases"}
+                  </Button>
+                )}
 
                 <Button
                   variant="outline"

@@ -321,6 +321,12 @@ class PlayBillingBridge(
                 )
             }
 
+            BillingResponseCode.ITEM_ALREADY_OWNED -> {
+                // The user already owns the product: return the existing purchases so JS can
+                // verify them server-side. Nothing is granted here.
+                queryOwnedPurchasesForPurchaseResult(requestId)
+            }
+
             else -> {
                 emitError(
                     type = "purchase_result",
@@ -332,6 +338,45 @@ class PlayBillingBridge(
         }
 
         activePurchaseRequestId = null
+    }
+
+    private fun queryOwnedPurchasesForPurchaseResult(requestId: String) {
+        val params = QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.INAPP)
+            .build()
+
+        billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
+            if (billingResult.responseCode != BillingResponseCode.OK) {
+                emitError(
+                    type = "purchase_result",
+                    requestId = requestId,
+                    message = "Could not restore existing purchase (${billingResult.responseCode}): ${billingResult.debugMessage}",
+                    code = billingResult.responseCode
+                )
+                return@queryPurchasesAsync
+            }
+
+            val purchaseRecords = purchasesToJson(purchases)
+            val purchasedProductIds = productIdsWithState(purchaseRecords, "purchased")
+            val pendingProductIds = productIdsWithState(purchaseRecords, "pending")
+            val status = when {
+                purchasedProductIds.isNotEmpty() -> "purchased"
+                pendingProductIds.isNotEmpty() -> "pending"
+                else -> "failed"
+            }
+
+            emitEvent(
+                type = "purchase_result",
+                requestId = requestId,
+                payload = JSONObject()
+                    .put("ok", status != "failed")
+                    .put("status", status)
+                    .put("message", if (status == "failed") "Item already owned but no purchase could be restored." else "")
+                    .put("purchasedProductIds", JSONArray(purchasedProductIds.toList()))
+                    .put("pendingProductIds", JSONArray(pendingProductIds.toList()))
+                    .put("purchases", purchaseRecords)
+            )
+        }
     }
 
     private fun queryOwnedPurchases(requestId: String) {
