@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -7,10 +7,13 @@ import { EDITION_THEMES, type EditionTheme } from "@/lib/edition-theme";
 import newGameArt from "@assets/editions/splash-new-game.jpg";
 import loadGameArt from "@assets/editions/splash-load-game.jpg";
 import howToPlayArt from "@assets/editions/splash-how-to-play.jpg";
-import testArt from "@assets/editions/splash-test.jpg";
 import { ArcadeCarousel } from "@/components/arcade/ArcadeCarousel";
 import { SceneBackdrop } from "@/components/arcade/SceneBackdrop";
 import { hasTestingAccess, setTestingAccess, unlockAllTestEntitlements } from "@/lib/entitlements";
+
+// Hidden tester access: tap the header logo this many times, each within the window of the last.
+const SECRET_TAP_COUNT = 7;
+const SECRET_TAP_WINDOW_MS = 2000;
 
 interface SplashScreenProps {
   onNewGame: () => void;
@@ -57,6 +60,19 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame, onH
     setTesterCodeStep("code");
   };
 
+  const secretTaps = useRef({ count: 0, last: 0 });
+
+  const handleLogoTap = () => {
+    const now = Date.now();
+    const taps = secretTaps.current;
+    taps.count = now - taps.last > SECRET_TAP_WINDOW_MS ? 1 : taps.count + 1;
+    taps.last = now;
+    if (taps.count >= SECRET_TAP_COUNT) {
+      taps.count = 0;
+      handleTestButtonClick();
+    }
+  };
+
   const handleTesterCodeSubmit = async () => {
     const success = await unlockAllTestEntitlements(testerCodeInput);
     if (!success) {
@@ -83,7 +99,6 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame, onH
     if (onHowToPlay) {
       list.push({ id: "how-to-play", title: "How to Play", art: howToPlayArt, theme: EDITION_THEMES.sequential, testId: "button-how-to-play", run: onHowToPlay });
     }
-    list.push({ id: "test", title: "Test", art: testArt, theme: EDITION_THEMES.tournament, testId: "button-test", run: handleTestButtonClick });
     return list;
   })();
 
@@ -101,7 +116,10 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame, onH
         <img
           src={logoArt}
           alt="Par for the Course"
-          className="h-auto max-h-[17vh] w-full max-w-[340px] object-contain drop-shadow-[0_3px_8px_rgba(0,0,0,0.8)]"
+          draggable={false}
+          onClick={handleLogoTap}
+          className="h-auto max-h-[17vh] w-full max-w-[340px] select-none object-contain drop-shadow-[0_3px_8px_rgba(0,0,0,0.8)]"
+          data-testid="splash-logo"
         />
       </div>
 
