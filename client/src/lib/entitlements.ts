@@ -407,6 +407,11 @@ export async function getDigitalEntitlements(): Promise<EntitlementMap> {
   }
 }
 
+// Instant, offline answer from entitlements verified earlier (or tester access). Never grants anything new.
+export function hasCachedDigitalAccess(editionId: EditionId): boolean {
+  return Boolean(readEntitlements()[editionId]);
+}
+
 export async function hasDigitalAccess(editionId: EditionId): Promise<boolean> {
   const entitlements = await getDigitalEntitlements();
   return Boolean(entitlements[editionId]);

@@ -7,6 +7,7 @@ import { SceneBackdrop } from "@/components/arcade/SceneBackdrop";
 interface PlayModeSelectionScreenProps {
   edition: EditionDefinition;
   onSelectMode: (mode: PlayMode) => void;
+  busy?: boolean;
   onBack: () => void;
 }
 
@@ -15,7 +16,7 @@ const MODES: { mode: PlayMode; label: string; description: string; testId: strin
   { mode: "digital", label: "Digital Cards", description: "Play using the digital card deck.", testId: "button-mode-digital" },
 ];
 
-export function PlayModeSelectionScreen({ edition, onSelectMode, onBack }: PlayModeSelectionScreenProps) {
+export function PlayModeSelectionScreen({ edition, onSelectMode, busy = false, onBack }: PlayModeSelectionScreenProps) {
   const theme = EDITION_THEMES[edition.id];
 
   return (
@@ -56,9 +57,10 @@ export function PlayModeSelectionScreen({ edition, onSelectMode, onBack }: PlayM
                   className="h-14 w-full rounded-lg text-lg font-extrabold uppercase tracking-wider shadow-md active:scale-95"
                   style={{ background: `linear-gradient(180deg, #fff8, ${theme.accent} 45%)`, color: theme.buttonText }}
                   onClick={() => onSelectMode(mode)}
+                  disabled={busy}
                   data-testid={testId}
                 >
-                  {label}
+                  {busy && mode === "digital" ? "Checking..." : label}
                 </button>
                 <p className="text-center text-sm font-semibold text-white" style={{ textShadow: "0 1px 3px #000" }}>
                   {description}

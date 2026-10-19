@@ -1,4 +1,4 @@
-import { useState, useEffect, Component, type ReactNode, type ErrorInfo } from "react";
+import { useState, useEffect, useRef, Component, type ReactNode, type ErrorInfo } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
@@ -18,7 +18,7 @@ import { PlayModeSelectionScreen } from "@/components/PlayModeSelectionScreen";
 import { DigitalAccessScreen } from "@/components/DigitalAccessScreen";
 import { DigitalExperiencePlaceholder } from "@/components/DigitalExperiencePlaceholder";
 import { getEditionById, type EditionDefinition } from "@/lib/editions";
-import { finalizeStripeCheckoutFromUrl, getDigitalStorePricing, hasDigitalAccess, purchaseDigitalEdition, restoreDigitalPurchases } from "@/lib/entitlements";
+import { finalizeStripeCheckoutFromUrl, getDigitalStorePricing, getDigitalEntitlements, hasCachedDigitalAccess, hasDigitalAccess, purchaseDigitalEdition, restoreDigitalPurchases } from "@/lib/entitlements";
 import { RulesOverlay } from "@/components/RulesViewer";
 import { closeRules, openRules, RULES_CLOSED, selectRulesEdition, type RulesState } from "@/lib/rules-session";
 import { useToast } from "@/hooks/use-toast";
@@ -91,6 +91,8 @@ function GameScreens({ onOpenRules }: RulesHandlers) {
   const [selectedEdition, setSelectedEdition] = useState<EditionDefinition | null>(null);
   const [isPurchasingDigital, setIsPurchasingDigital] = useState(false);
   const [digitalAccessError, setDigitalAccessError] = useState<string | null>(null);
+  const [isCheckingDigital, setIsCheckingDigital] = useState(false);
+  const checkingDigitalRef = useRef(false);
   const [isRestoringDigital, setIsRestoringDigital] = useState(false);
   const [restoreFailed, setRestoreFailed] = useState(false);
   const [digitalEditionPriceLabel, setDigitalEditionPriceLabel] = useState<string | null | undefined>(undefined);
@@ -163,11 +165,16 @@ function GameScreens({ onOpenRules }: RulesHandlers) {
   };
 
   const handleSelectDigitalMode = async () => {
-    if (!selectedEdition) return;
+    if (!selectedEdition || checkingDigitalRef.current) return;
+    checkingDigitalRef.current = true;
+    setIsCheckingDigital(true);
     setDigitalAccessError(null);
     game.setGameExperience(selectedEdition.id, "digital");
     try {
-      const unlocked = await hasDigitalAccess(selectedEdition.id);
+      // Previously verified owners start immediately; the cache is refreshed in the background.
+      const cachedUnlocked = hasCachedDigitalAccess(selectedEdition.id);
+      if (cachedUnlocked) void getDigitalEntitlements().catch(() => undefined);
+      const unlocked = cachedUnlocked || await hasDigitalAccess(selectedEdition.id);
       if (!unlocked) {
         setScreen("digital-access");
         return;
@@ -194,6 +201,9 @@ function GameScreens({ onOpenRules }: RulesHandlers) {
           : "Unable to verify digital access right now. You can still purchase this edition below.",
       );
       setScreen("digital-access");
+    } finally {
+      checkingDigitalRef.current = false;
+      setIsCheckingDigital(false);
     }
   };
 
@@ -431,6 +441,7 @@ function GameScreens({ onOpenRules }: RulesHandlers) {
     return (
       <PlayModeSelectionScreen
         edition={selectedEdition}
+        busy={isCheckingDigital}
         onSelectMode={(mode) => {
           if (mode === "physical") {
             handleSelectPhysicalMode();

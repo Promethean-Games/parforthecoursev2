@@ -45,8 +45,8 @@ android {
         minSdk = 24
         targetSdk = 36
         // Keep this higher than every production artifact versionCode in Play Console.
-        versionCode = 2026101901
-        versionName = "4.0"
+        versionCode = 2026101902
+        versionName = "4.0.1"
         buildConfigField("String", "APP_URL", "\"https://appassets.androidplatform.net/assets/web/index.html\"")
         // Startup Diagnostic Mode: enabled by default for all non-release builds.
         // Set to false in the release block below (or manually flip to true for a beta release build).
