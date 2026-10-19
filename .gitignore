@@ -35,3 +35,10 @@ android/app/keystore.jks
 # Android generated outputs
 android/.gradle/
 android/app/build/
+
+# Generated Android artifacts and local tooling state
+*.apk
+*.aab
+android/app/debug/
+android/app/release/
+supabase/.temp/
