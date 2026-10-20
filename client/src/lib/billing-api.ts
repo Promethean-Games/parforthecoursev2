@@ -40,6 +40,18 @@ export interface BillingEnv {
   VITE_SUPABASE_ANON_KEY?: string;
 }
 
+export interface NativeBillingConfig {
+  required?: boolean;
+  baseUrl?: string;
+  anonKey?: string;
+}
+
+declare global {
+  interface Window {
+    __PFTC_BILLING_CONFIG__?: NativeBillingConfig;
+  }
+}
+
 export interface ServerEntitlements {
   unlockAll: boolean;
   entitlements: EntitlementMap;
@@ -56,9 +68,21 @@ export interface BillingApiDeps {
 const DEFAULT_RETRY_DELAYS_MS = [500, 1500];
 const DEFAULT_TIMEOUT_MS = 15_000;
 
-export function resolveBillingApiConfig(env: BillingEnv | undefined): BillingApiConfig {
-  const baseUrl = (env?.VITE_BILLING_API_URL ?? "").trim().replace(/\/+$/, "");
-  const anonKey = (env?.VITE_SUPABASE_ANON_KEY ?? "").trim();
+export function resolveBillingApiConfig(
+  env: BillingEnv | undefined,
+  nativeConfig?: NativeBillingConfig,
+): BillingApiConfig {
+  const nativeBaseUrl = (nativeConfig?.baseUrl ?? "").trim();
+  const nativeAnonKey = (nativeConfig?.anonKey ?? "").trim();
+  const hasNativeConfig = Boolean(nativeBaseUrl && nativeAnonKey);
+  if (nativeConfig?.required && !hasNativeConfig) {
+    throw new BillingConfigError("iOS billing is not configured for this app build.");
+  }
+
+  const baseUrl = (hasNativeConfig ? nativeBaseUrl : env?.VITE_BILLING_API_URL ?? "")
+    .trim()
+    .replace(/\/+$/, "");
+  const anonKey = (hasNativeConfig ? nativeAnonKey : env?.VITE_SUPABASE_ANON_KEY ?? "").trim();
 
   if (!baseUrl) {
     throw new BillingConfigError(

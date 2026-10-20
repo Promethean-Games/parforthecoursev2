@@ -1,0 +1,8 @@
+#include "Debug.xcconfig"
+
+IOS_PRODUCTION_BUILD = YES
+IOS_BILLING_CONFIG_REQUIRED = YES
+IOS_BILLING_API_URL =
+IOS_SUPABASE_ANON_KEY =
+
+#include? "Sandbox.local.xcconfig"

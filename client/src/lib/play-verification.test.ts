@@ -302,6 +302,35 @@ test("billing API URL and key must be configured; https is required", async () =
   assert.equal(resolveBillingApiConfig({ VITE_BILLING_API_URL: "https://x.co/functions/v1/billing/", VITE_SUPABASE_ANON_KEY: "k" }).baseUrl, "https://x.co/functions/v1/billing");
 });
 
+test("native Sandbox billing config overrides the shared web build config", () => {
+  assert.deepEqual(
+    resolveBillingApiConfig(
+      { VITE_BILLING_API_URL: "https://production.example/functions/v1/billing", VITE_SUPABASE_ANON_KEY: "production-key" },
+      { required: true, baseUrl: "https://sandbox.example/functions/v1/billing/", anonKey: "sandbox-public-key" },
+    ),
+    { baseUrl: "https://sandbox.example/functions/v1/billing", anonKey: "sandbox-public-key" },
+  );
+});
+
+test("required native Sandbox billing config never falls back to shared production values", () => {
+  const productionEnv = {
+    VITE_BILLING_API_URL: "https://production.example/functions/v1/billing",
+    VITE_SUPABASE_ANON_KEY: "production-key",
+  };
+  assert.throws(
+    () => resolveBillingApiConfig(productionEnv, { required: true }),
+    BillingConfigError,
+  );
+  assert.throws(
+    () => resolveBillingApiConfig(productionEnv, {
+      required: true,
+      baseUrl: "http://sandbox.example/functions/v1/billing",
+      anonKey: "sandbox-public-key",
+    }),
+    /https/,
+  );
+});
+
 test("missing configuration surfaces as a config error with a purchase to verify", async () => {
   const deps: VerificationDeps = {
     sync: async () => syncOf(purchase(BUNDLE_PRODUCT_ID, "tok-b")),

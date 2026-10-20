@@ -46,6 +46,29 @@ struct WebViewContainer: UIViewRepresentable {
 		controller.addUserScript(
 			WKUserScript(source: platformScript, injectionTime: .atDocumentStart, forMainFrameOnly: true)
 		)
+		let nativeBillingConfig: [String: Any] = [
+			"required": AppConfig.isIOSBillingConfigRequired,
+			"baseUrl": AppConfig.billingAPIURL,
+			"anonKey": AppConfig.supabaseAnonKey,
+		]
+		let billingConfigJSON: String
+		if let data = try? JSONSerialization.data(withJSONObject: nativeBillingConfig),
+			let json = String(data: data, encoding: .utf8)
+		{
+			billingConfigJSON = json
+		} else {
+			billingConfigJSON = "{\"required\":true}"
+		}
+		let billingConfigScript = """
+		Object.defineProperty(window, '__PFTC_BILLING_CONFIG__', {
+		  value: Object.freeze(\(billingConfigJSON)),
+		  writable: false,
+		  configurable: false
+		});
+		"""
+		controller.addUserScript(
+			WKUserScript(source: billingConfigScript, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+		)
 		controller.add(context.coordinator, name: "AndroidScreenSecurity")
 		controller.add(context.coordinator, name: "PFTCiOSBilling")
 

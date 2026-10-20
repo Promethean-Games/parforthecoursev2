@@ -1,6 +1,7 @@
 # Xcode user-local files
 **/xcuserdata/
 **/*.xcuserstate
+Config/Sandbox.local.xcconfig
 
 # Build artifacts
 build/
@@ -8,4 +9,3 @@ DerivedData/
 
 # CocoaPods (none currently used, but safe defaults)
 Pods/
-

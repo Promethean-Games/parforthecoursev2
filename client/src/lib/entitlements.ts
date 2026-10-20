@@ -290,7 +290,9 @@ async function getGooglePlayCatalog(): Promise<GooglePlayCatalogResponse> {
 
 // Config is resolved lazily so a device with no purchases to verify never needs it.
 function getBillingApi() {
-  return createBillingApi(resolveBillingApiConfig(import.meta.env as BillingEnv), {
+  const nativeConfig =
+    typeof window === "undefined" ? undefined : window.__PFTC_BILLING_CONFIG__;
+  return createBillingApi(resolveBillingApiConfig(import.meta.env as BillingEnv, nativeConfig), {
     fetch: (input, init) => fetch(input, init),
     getDeviceId: getBillingDeviceId,
   });

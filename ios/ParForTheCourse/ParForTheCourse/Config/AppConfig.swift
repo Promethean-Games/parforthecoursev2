@@ -18,6 +18,20 @@ enum AppConfig {
 			.uppercased() == "YES"
 	}
 
+	static var isIOSBillingConfigRequired: Bool {
+		(Bundle.main.object(forInfoDictionaryKey: "IOSBillingConfigRequired") as? String)?
+			.trimmingCharacters(in: .whitespacesAndNewlines)
+			.uppercased() == "YES"
+	}
+
+	static var billingAPIURL: String {
+		Bundle.main.object(forInfoDictionaryKey: "IOSBillingAPIURL") as? String ?? ""
+	}
+
+	static var supabaseAnonKey: String {
+		Bundle.main.object(forInfoDictionaryKey: "IOSSupabaseAnonKey") as? String ?? ""
+	}
+
 	static func isAllowedAppURL(_ url: URL) -> Bool {
 		guard
 			let expected = URL(string: appURLString),

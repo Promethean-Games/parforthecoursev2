@@ -62,5 +62,11 @@
 	<string>$(DIAGNOSTIC_MODE)</string>
 	<key>IOSProductionBuild</key>
 	<string>$(IOS_PRODUCTION_BUILD)</string>
+	<key>IOSBillingConfigRequired</key>
+	<string>$(IOS_BILLING_CONFIG_REQUIRED)</string>
+	<key>IOSBillingAPIURL</key>
+	<string>$(IOS_BILLING_API_URL)</string>
+	<key>IOSSupabaseAnonKey</key>
+	<string>$(IOS_SUPABASE_ANON_KEY)</string>
 </dict>
 </plist>
