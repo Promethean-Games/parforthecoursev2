@@ -7,3 +7,7 @@ project_id = "par-for-the-course"
 # `Authorization: Bearer`. If the project uses the newer publishable keys and the gateway
 # rejects them, switch this to false (the function does its own validation and has no user identity).
 verify_jwt = true
+
+[functions.apple-notifications]
+# Apple cannot send a Supabase JWT; this endpoint verifies Apple's signed notification itself.
+verify_jwt = false

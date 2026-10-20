@@ -255,6 +255,34 @@ test("requests carry the device id, product id, token and public key; never a pa
   assert.equal("packageName" in (call.body ?? {}), false);
 });
 
+test("Apple verification sends only the device id and signed transaction to the Apple route", async () => {
+  const calls: Array<{ url: string; body?: unknown; headers?: HeadersInit }> = [];
+  const api = createBillingApi(CONFIG, {
+    fetch: async (input, init) => {
+      calls.push({
+        url: String(input),
+        body: init?.body ? JSON.parse(String(init.body)) : undefined,
+        headers: init?.headers,
+      });
+      return new Response("{}", { status: 200 });
+    },
+    getDeviceId: () => "ios-device",
+    retryDelaysMs: [],
+  });
+
+  await api.verifyApplePurchase({ signedTransaction: "apple-signed-jws" });
+  assert.equal(calls[0].url, `${CONFIG.baseUrl}/apple/verify`);
+  assert.deepEqual(calls[0].body, {
+    deviceId: "ios-device",
+    signedTransaction: "apple-signed-jws",
+  });
+  assert.equal((calls[0].headers as Record<string, string>).apikey, "public-anon-key");
+  await assert.rejects(
+    api.verifyApplePurchase({ signedTransaction: "x".repeat(20_001) }),
+    BillingRejectedError,
+  );
+});
+
 test("error messages never contain the purchase token", async () => {
   const server = new FakeServer();
   server.failNext = 10;

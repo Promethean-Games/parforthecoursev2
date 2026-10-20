@@ -17,6 +17,7 @@
 		A10000172A8D00010000A001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A10000272A8D00010000A001 /* PrivacyInfo.xcprivacy */; };
 		A10000182A8D00010000A001 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A10000282A8D00010000A001 /* WebKit.framework */; };
 		A10000192A8D00010000A001 /* Network.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A10000292A8D00010000A001 /* Network.framework */; };
+		A10000402A8D00010000A001 /* AppleBillingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000332A8D00010000A001 /* AppleBillingManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +35,7 @@
 		A10000302A8D00010000A001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Resources/Info.plist; sourceTree = "<group>"; };
 		A10000312A8D00010000A001 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		A10000322A8D00010000A001 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		A10000332A8D00010000A001 /* AppleBillingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleBillingManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +61,14 @@
 			);
 			sourceTree = "<group>";
 		};
+		A10000082A8D00010000A001 /* Billing */ = {
+			isa = PBXGroup;
+			children = (
+				A10000332A8D00010000A001 /* AppleBillingManager.swift */,
+			);
+			path = Billing;
+			sourceTree = "<group>";
+		};
 		A10000022A8D00010000A001 /* ParForTheCourse */ = {
 			isa = PBXGroup;
 			children = (
@@ -66,6 +76,7 @@
 				A10000212A8D00010000A001 /* ContentView.swift */,
 				A10000062A8D00010000A001 /* Web */,
 				A10000072A8D00010000A001 /* Config */,
+				A10000082A8D00010000A001 /* Billing */,
 				A10000302A8D00010000A001 /* Info.plist */,
 				A10000272A8D00010000A001 /* PrivacyInfo.xcprivacy */,
 				A10000262A8D00010000A001 /* LaunchScreen.storyboard */,
@@ -194,6 +205,7 @@
 				A10000122A8D00010000A001 /* AppConfig.swift in Sources */,
 				A10000132A8D00010000A001 /* StartupDiagnostics.swift in Sources */,
 				A10000142A8D00010000A001 /* WebViewContainer.swift in Sources */,
+				A10000402A8D00010000A001 /* AppleBillingManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -218,7 +230,7 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -240,7 +252,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -258,7 +270,7 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ParForTheCourse/Resources/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -283,7 +295,7 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ParForTheCourse/Resources/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -323,5 +335,3 @@
 	};
 	rootObject = A100000A2A8D00010000A001 /* Project object */;
 }
-
-

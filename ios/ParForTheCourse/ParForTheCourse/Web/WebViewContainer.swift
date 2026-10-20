@@ -3,8 +3,10 @@ import UIKit
 import WebKit
 
 struct WebViewContainer: UIViewRepresentable {
+	let billingManager: AppleBillingManager
+
 	func makeCoordinator() -> Coordinator {
-		Coordinator()
+		Coordinator(billingManager: billingManager)
 	}
 
 	func makeUIView(context: Context) -> WKWebView {
@@ -31,9 +33,10 @@ struct WebViewContainer: UIViewRepresentable {
 		"""
 
 		controller.addUserScript(
-			WKUserScript(source: bridgeScript, injectionTime: .atDocumentStart, forMainFrameOnly: false)
+			WKUserScript(source: bridgeScript, injectionTime: .atDocumentStart, forMainFrameOnly: true)
 		)
 		controller.add(context.coordinator, name: "AndroidScreenSecurity")
+		controller.add(context.coordinator, name: "PFTCiOSBilling")
 
 		config.defaultWebpagePreferences.allowsContentJavaScript = true
 		let webView = WKWebView(frame: .zero, configuration: config)
@@ -56,12 +59,20 @@ struct WebViewContainer: UIViewRepresentable {
 
 	final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
 		private weak var webView: WKWebView?
+		private let billingManager: AppleBillingManager
 		private var retriedInitialLoad = false
 		private var showingFallback = false
 		private var secureOverlayKeys = Set<String>()
 
+		init(billingManager: AppleBillingManager) {
+			self.billingManager = billingManager
+		}
+
 		func bind(webView: WKWebView) {
 			self.webView = webView
+			billingManager.emit = { [weak self] event in
+				self?.dispatch(event)
+			}
 		}
 
 		func loadAppURL() {
@@ -78,7 +89,29 @@ struct WebViewContainer: UIViewRepresentable {
 			StartupDiagnostics.stepStarted("Page loading: \(webView.url?.absoluteString ?? "unknown")")
 		}
 
+		func webView(
+			_ webView: WKWebView,
+			decidePolicyFor navigationAction: WKNavigationAction,
+			decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+		) {
+			guard navigationAction.targetFrame?.isMainFrame == true,
+				let url = navigationAction.request.url,
+				AppConfig.isAllowedAppURL(url)
+			else {
+				decisionHandler(.cancel)
+				return
+			}
+			decisionHandler(.allow)
+		}
+
 		func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+			if navigationResponse.isForMainFrame,
+				let url = navigationResponse.response.url,
+				!AppConfig.isAllowedAppURL(url)
+			{
+				decisionHandler(.cancel)
+				return
+			}
 			if let response = navigationResponse.response as? HTTPURLResponse, response.statusCode >= 400 {
 				StartupDiagnostics.stepFailed(step: "Main frame HTTP response", message: "HTTP \(response.statusCode)", httpStatusCode: response.statusCode)
 				decisionHandler(.cancel)
@@ -113,8 +146,32 @@ struct WebViewContainer: UIViewRepresentable {
 		}
 
 		func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-			guard message.name == "AndroidScreenSecurity" else { return }
-			guard let body = message.body as? [String: Any], let action = body["action"] as? String else { return }
+			guard message.frameInfo.isMainFrame,
+				let messageURL = message.frameInfo.request.url,
+				AppConfig.isAllowedAppURL(messageURL)
+			else {
+				return
+			}
+
+			if message.name == "PFTCiOSBilling" {
+				guard let raw = message.body as? String,
+					let data = raw.data(using: .utf8),
+					let body = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+				else {
+					return
+				}
+				Task { @MainActor [weak self] in
+					await self?.billingManager.handle(body)
+				}
+				return
+			}
+
+			guard message.name == "AndroidScreenSecurity",
+				let body = message.body as? [String: Any],
+				let action = body["action"] as? String
+			else {
+				return
+			}
 
 			switch action {
 			case "setCardVisibility":
@@ -129,6 +186,16 @@ struct WebViewContainer: UIViewRepresentable {
 			default:
 				return
 			}
+		}
+
+		private func dispatch(_ event: [String: Any]) {
+			guard let webView,
+				let data = try? JSONSerialization.data(withJSONObject: event, options: [.fragmentsAllowed]),
+				let json = String(data: data, encoding: .utf8)
+			else {
+				return
+			}
+			webView.evaluateJavaScript("window.dispatchEvent(new CustomEvent('pftc-ios-billing', { detail: \(json) }));")
 		}
 
 		private func handleMainFrameLoadFailure(message: String) {
@@ -203,5 +270,4 @@ struct WebViewContainer: UIViewRepresentable {
 		}
 	}
 }
-
 

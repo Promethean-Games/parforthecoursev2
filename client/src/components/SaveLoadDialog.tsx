@@ -47,7 +47,7 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
   const { toast } = useToast();
   const containerClassName = mode === "load"
     ? "fixed inset-0 z-50 flex flex-col bg-background/90 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-sm"
-    : "flex min-h-screen flex-col pb-24";
+    : "flex h-full min-h-0 flex-col overflow-hidden";
 
   const autosave = savedGames[AUTOSAVE_KEY];
   const manualSavedEntries = Object.entries(savedGames)
@@ -131,8 +131,8 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
 
   return (
     <div className={containerClassName}>
-      <div className="flex-1 overflow-y-auto p-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
-        <div className="mb-6 flex items-center gap-3">
+      <div className={`flex-1 min-h-0 px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] ${mode === "load" ? "overflow-y-auto" : "overflow-hidden"}`}>
+        <div className="mb-3 flex items-center gap-3">
           {mode === "load" && (
             <Button
               size="icon"
@@ -147,7 +147,7 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
           <h2 className="arcade-title text-2xl">{mode === "save" ? "Save Game" : "Load Game"}</h2>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Autosave Section - Load Only */}
           {mode === "load" && (
             <Card className="p-4 border-dashed" data-testid="slot-autosave">
@@ -207,7 +207,7 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
 
           {/* Game Actions - Save mode only */}
           {mode === "save" && (
-            <div className="pt-2 space-y-3">
+            <div className="space-y-2">
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   variant="outline"
@@ -238,8 +238,8 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
             const populatedGame = savedGame ?? null;
 
             return (
-              <Card key={slot.key} className="p-4" data-testid={`slot-${slot.label}`}>
-                <div className="flex items-center justify-between mb-2 gap-2">
+              <Card key={slot.key} className="p-3" data-testid={`slot-${slot.label}`}>
+                <div className="flex items-center justify-between mb-1 gap-2">
                   {isEditing ? (
                     <div className="flex items-center gap-2 flex-1">
                       <Input
@@ -309,7 +309,7 @@ export function SaveLoadDialog({ mode, savedGames, onSave, onLoad, onRename, onD
                 {isEmpty ? (
                   <Button
                     variant="outline"
-                    className="w-full h-14"
+                    className="w-full h-11"
                     onClick={() => {
                       if (mode === "save") {
                         onSave?.(slot.key);

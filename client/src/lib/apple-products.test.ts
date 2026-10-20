@@ -47,3 +47,21 @@ test("client, Edge Function and migration use the same Apple identifiers", () =>
   assert.ok(migration.includes("when 'com.parforthecourse.app.edition.bundle'     then 'all'"));
   assert.ok(edge.includes('if (productId === APPLE_BUNDLE_PRODUCT_ID) return "all"'));
 });
+
+test("StoreKit bridge carries the approved non-consumables and supports recovery", () => {
+  const native = readFileSync(
+    "ios/ParForTheCourse/ParForTheCourse/Billing/AppleBillingManager.swift",
+    "utf8",
+  );
+  const project = readFileSync("ios/ParForTheCourse/ParForTheCourse.xcodeproj/project.pbxproj", "utf8");
+  for (const productId of [...Object.values(EXPECTED), EXPECTED_BUNDLE]) {
+    assert.ok(native.includes(productId), `StoreKit bridge missing ${productId}`);
+  }
+  assert.match(native, /filter\s*\{\s*\$0\.type == \.nonConsumable\s*\}/);
+  assert.match(native, /Transaction\.updates/);
+  assert.match(native, /Transaction\.currentEntitlements/);
+  assert.match(native, /Transaction\.unfinished/);
+  assert.match(native, /AppStore\.sync\(\)/);
+  assert.match(native, /await transaction\.finish\(\)/);
+  assert.match(project, /IPHONEOS_DEPLOYMENT_TARGET = 15\.0;/);
+});

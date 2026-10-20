@@ -1,5 +1,7 @@
 export type EditionId = "classic" | "reracked" | "sequential" | "teed-off" | "tournament";
 
+export const APPLE_BUNDLE_ID = "com.parforthecourse.app";
+
 export const APPLE_EDITION_PRODUCT_IDS: Record<EditionId, string> = {
   classic: "com.parforthecourse.app.edition.classic",
   reracked: "com.parforthecourse.app.edition.reracked",

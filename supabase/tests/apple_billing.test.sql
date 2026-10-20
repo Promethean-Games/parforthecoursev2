@@ -12,10 +12,14 @@ declare
   v_row public.billing_entitlements;
   v_device text;
   v_count integer;
+  v_applied boolean;
   v_purchase_date timestamptz := now() - interval '1 day';
+  v_refund_signed_date timestamptz := now() + interval '2 minutes';
+  v_reversal_signed_date timestamptz := now() + interval '3 minutes';
   v_function regprocedure;
   v_google_rpc_definition text;
   v_apple_rpc_definition text;
+  v_apple_revocation_rpc_definition text;
 begin
   -- Function owners, lock identity and access boundary are part of the migration contract.
   foreach v_function in array array[
@@ -24,7 +28,8 @@ begin
     'public.billing_recompute_entitlements(text)'::regprocedure,
     'public.billing_record_play_verification(text,text,text,text,integer,jsonb,integer)'::regprocedure,
     'public.billing_apple_grant_for_product(text)'::regprocedure,
-    'public.billing_record_apple_verification(text,text,text,text,text,text,timestamp with time zone,timestamp with time zone,integer,timestamp with time zone,jsonb)'::regprocedure
+    'public.billing_record_apple_verification(text,text,text,text,text,text,timestamp with time zone,timestamp with time zone,integer,timestamp with time zone,jsonb)'::regprocedure,
+    'public.billing_record_apple_revocation(text,text,text,text,text,text,timestamp with time zone,timestamp with time zone,integer,timestamp with time zone,jsonb)'::regprocedure
   ]
   loop
     if (select pg_get_userbyid(p.proowner) from pg_proc p where p.oid = v_function) <> 'postgres' then
@@ -36,8 +41,11 @@ begin
     into v_google_rpc_definition;
   select pg_get_functiondef('public.billing_record_apple_verification(text,text,text,text,text,text,timestamp with time zone,timestamp with time zone,integer,timestamp with time zone,jsonb)'::regprocedure)
     into v_apple_rpc_definition;
+  select pg_get_functiondef('public.billing_record_apple_revocation(text,text,text,text,text,text,timestamp with time zone,timestamp with time zone,integer,timestamp with time zone,jsonb)'::regprocedure)
+    into v_apple_revocation_rpc_definition;
   if position('hashtext(''billing_record_play_verification'')' in v_google_rpc_definition) = 0
-     or position('hashtext(''billing_record_play_verification'')' in v_apple_rpc_definition) = 0 then
+     or position('hashtext(''billing_record_play_verification'')' in v_apple_rpc_definition) = 0
+     or position('hashtext(''billing_record_play_verification'')' in v_apple_revocation_rpc_definition) = 0 then
     raise exception 'Google and Apple RPCs must use the same transaction advisory lock';
   end if;
   if has_function_privilege('anon', 'public.billing_record_apple_verification(text,text,text,text,text,text,timestamptz,timestamptz,integer,timestamptz,jsonb)', 'EXECUTE')
@@ -47,6 +55,10 @@ begin
      or has_function_privilege('anon', 'public.billing_get_or_create_entitlement(text,integer)', 'EXECUTE')
      or has_function_privilege('authenticated', 'public.billing_get_or_create_entitlement(text,integer)', 'EXECUTE')
      or not has_function_privilege('service_role', 'public.billing_record_apple_verification(text,text,text,text,text,text,timestamptz,timestamptz,integer,timestamptz,jsonb)', 'EXECUTE')
+     or not has_function_privilege('service_role', 'public.billing_record_apple_revocation(text,text,text,text,text,text,timestamptz,timestamptz,integer,timestamptz,jsonb)', 'EXECUTE')
+     or has_function_privilege('anon', 'public.billing_record_apple_revocation(text,text,text,text,text,text,timestamptz,timestamptz,integer,timestamptz,jsonb)', 'EXECUTE')
+     or has_function_privilege('authenticated', 'public.billing_record_apple_revocation(text,text,text,text,text,text,timestamptz,timestamptz,integer,timestamptz,jsonb)', 'EXECUTE')
+     or has_function_privilege('service_role', 'public.billing_record_apple_revocation(text,text,text,text,text,text,timestamptz,integer,timestamptz,jsonb)', 'EXECUTE')
      or has_function_privilege('service_role', 'public.billing_recompute_entitlements(text)', 'EXECUTE')
      or has_function_privilege('service_role', 'public.billing_apple_grant_for_product(text)', 'EXECUTE')
      or has_table_privilege('service_role', 'public.billing_apple_transactions', 'SELECT')
@@ -190,6 +202,92 @@ begin
       raise exception 'Apple revocation did not remove access for device %', v_device;
     end if;
   end loop;
+
+  select count(*) into v_count from public.billing_apple_device_claims
+   where environment = 'Sandbox' and original_transaction_id = 'stage1-apple-original-1';
+  select public.billing_record_apple_revocation(
+    'Sandbox', 'stage1-apple-original-1', 'stage1-apple-transaction-1',
+    'com.parforthecourse.app.edition.classic', 'com.parforthecourse.app', 'REFUND',
+    v_refund_signed_date, now(), 1, now() + interval '2 minutes',
+    '{"test":true,"notification":"REFUND"}'::jsonb
+  ) into v_applied;
+  if not v_applied then
+    raise exception 'Apple refund notification did not update an existing transaction';
+  end if;
+  select public.billing_record_apple_revocation(
+    'Sandbox', 'stage1-apple-original-1', 'stage1-apple-transaction-1',
+    'com.parforthecourse.app.edition.classic', 'com.parforthecourse.app', 'REFUND',
+    v_refund_signed_date, now(), 1, now() + interval '2 minutes',
+    '{"test":true,"notification":"REFUND"}'::jsonb
+  ) into v_applied;
+  if v_applied then
+    raise exception 'Duplicate Apple refund notification was applied twice';
+  end if;
+  select public.billing_record_apple_revocation(
+    'Sandbox', 'stage1-apple-original-1', 'stage1-apple-transaction-1',
+    'com.parforthecourse.app.edition.classic', 'com.parforthecourse.app', 'REFUND_REVERSED',
+    v_refund_signed_date - interval '1 second', null, null, now() + interval '3 minutes',
+    '{"test":true,"notification":"stale REFUND_REVERSED"}'::jsonb
+  ) into v_applied;
+  if v_applied then
+    raise exception 'Out-of-order Apple refund reversal was applied';
+  end if;
+  select * into v_row from public.billing_entitlements
+   where device_id = 'stage1-apple-device-a';
+  if v_row.edition_entitlements ->> 'classic' <> 'false' then
+    raise exception 'Stale Apple refund reversal restored revoked access';
+  end if;
+  if (select count(*) from public.billing_apple_device_claims
+       where environment = 'Sandbox' and original_transaction_id = 'stage1-apple-original-1') <> v_count then
+    raise exception 'Apple refund notification created a new device claim';
+  end if;
+
+  select public.billing_record_apple_revocation(
+    'Sandbox', 'stage1-apple-original-1', 'stage1-apple-transaction-1',
+    'com.parforthecourse.app.edition.classic', 'com.parforthecourse.app', 'REFUND_REVERSED',
+    v_reversal_signed_date, null, null, now() + interval '3 minutes',
+    '{"test":true,"notification":"REFUND_REVERSED"}'::jsonb
+  ) into v_applied;
+  if not v_applied then
+    raise exception 'Apple refund reversal did not update the existing transaction';
+  end if;
+  if (select count(*) from public.billing_apple_device_claims
+       where environment = 'Sandbox' and original_transaction_id = 'stage1-apple-original-1') <> v_count then
+    raise exception 'Apple refund reversal changed the existing device claims';
+  end if;
+  for v_device in select unnest(array['stage1-apple-device-a', 'stage1-apple-device-b'])
+  loop
+    select * into v_row from public.billing_entitlements where device_id = v_device;
+    if v_row.edition_entitlements ->> 'classic' <> 'true' then
+      raise exception 'Apple refund reversal did not restore access for device %', v_device;
+    end if;
+  end loop;
+  select public.billing_record_apple_revocation(
+    'Sandbox', 'stage1-apple-original-1', 'stage1-apple-transaction-1',
+    'com.parforthecourse.app.edition.classic', 'com.parforthecourse.app', 'REFUND',
+    v_reversal_signed_date - interval '1 second', now(), 1, now() + interval '4 minutes',
+    '{"test":true,"notification":"stale REFUND"}'::jsonb
+  ) into v_applied;
+  if v_applied then
+    raise exception 'Out-of-order Apple refund was applied after refund reversal';
+  end if;
+  select * into v_row from public.billing_entitlements
+   where device_id = 'stage1-apple-device-a';
+  if v_row.edition_entitlements ->> 'classic' <> 'true' then
+    raise exception 'Stale Apple refund removed restored access';
+  end if;
+
+  select public.billing_record_apple_revocation(
+    'Sandbox', 'stage1-apple-unclaimed-original', 'stage1-apple-unclaimed-transaction',
+    'com.parforthecourse.app.edition.classic', 'com.parforthecourse.app', 'REFUND',
+    now(), now(), 1, now(), '{"test":true}'::jsonb
+  ) into v_applied;
+  if v_applied or exists (
+    select 1 from public.billing_apple_device_claims
+     where original_transaction_id = 'stage1-apple-unclaimed-original'
+  ) then
+    raise exception 'Apple notification for an unknown transaction created a claim';
+  end if;
 
   -- Unsupported products and bundle mismatches are rejected by the service-role RPC.
   begin

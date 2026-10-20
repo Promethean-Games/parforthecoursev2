@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { SceneBackdrop } from "@/components/arcade/SceneBackdrop";
 import { Card } from "@/components/ui/card";
 import { formatEditionPrice, type EditionDefinition } from "@/lib/editions";
+import { isAppleStoreKitBillingSupported } from "@/lib/appleStoreKitBilling";
 
 interface DigitalAccessScreenProps {
   edition: EditionDefinition;
@@ -115,7 +116,7 @@ export function DigitalAccessScreen({
                     data-testid="button-restore-purchases"
                   >
                     {isRestoring
-                      ? "Checking Google Play..."
+                      ? isAppleStoreKitBillingSupported() ? "Checking App Store..." : "Checking Google Play..."
                       : restoreFailed
                         ? "Retry restore purchases"
                         : "Restore purchases"}

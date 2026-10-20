@@ -172,6 +172,17 @@ export function createBillingApi(config: BillingApiConfig, deps: BillingApiDeps)
       await withRetry(() => request("/google-play/verify", { method: "POST", body }));
     },
 
+    async verifyApplePurchase(input: { signedTransaction: string }): Promise<void> {
+      if (!input.signedTransaction || input.signedTransaction.length > 20_000) {
+        throw new BillingRejectedError("Invalid signed Apple transaction.", 400);
+      }
+      const body = JSON.stringify({
+        deviceId: deps.getDeviceId(),
+        signedTransaction: input.signedTransaction,
+      });
+      await withRetry(() => request("/apple/verify", { method: "POST", body }));
+    },
+
     async fetchEntitlements(): Promise<ServerEntitlements> {
       const deviceId = encodeURIComponent(deps.getDeviceId());
       const data = await withRetry(() =>

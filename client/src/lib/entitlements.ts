@@ -8,7 +8,13 @@ import {
 import { buildApiUrl } from "@/lib/apiBase";
 import { apiRequest } from "@/lib/queryClient";
 import { getBillingDeviceId } from "@/lib/billingDevice";
-import { BillingConfigError, createBillingApi, resolveBillingApiConfig, type BillingEnv } from "@/lib/billing-api";
+import {
+  BillingConfigError,
+  BillingRejectedError,
+  createBillingApi,
+  resolveBillingApiConfig,
+  type BillingEnv,
+} from "@/lib/billing-api";
 import {
   classifyRestore,
   reconcileVerifiedPurchases,
@@ -26,6 +32,21 @@ import {
   type GooglePlayCatalogResponse,
   type LogicalEntitlementId,
 } from "@/lib/play-products";
+import {
+  APPLE_BUNDLE_PRODUCT_ID,
+  APPLE_EDITION_PRODUCT_IDS,
+  ALLOWED_APPLE_PRODUCT_IDS,
+  appleGrantForProduct,
+} from "@/lib/apple-products";
+import {
+  finishAppleStoreTransaction,
+  isAppleStoreKitBillingSupported,
+  listenForAppleTransactionUpdates,
+  purchaseAppleStoreProduct,
+  queryAppleStoreProducts,
+  syncAppleStoreTransactions,
+  type AppleTransactionRecord,
+} from "@/lib/appleStoreKitBilling";
 
 const STORAGE_KEY = "digitalEditionEntitlements";
 const TEST_ACCESS_STORAGE_KEY = "digitalEditionTestAccess";
@@ -158,7 +179,7 @@ function buildFallbackStorePricing(): DigitalStorePricing {
 }
 
 export function hasTestingAccess(): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined" || isAppleStoreKitBillingSupported()) return false;
   return localStorage.getItem(TEST_ACCESS_STORAGE_KEY) === "true";
 }
 
@@ -179,7 +200,7 @@ function readEntitlements(): EntitlementMap {
 }
 
 export function setTestingAccess(enabled: boolean): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || isAppleStoreKitBillingSupported()) return;
 
   if (enabled) {
     const baseline = readStoredEntitlements();
@@ -219,6 +240,7 @@ export function setTestingAccess(enabled: boolean): void {
 }
 
 export async function unlockAllTestEntitlements(code: string): Promise<boolean> {
+  if (isAppleStoreKitBillingSupported()) return false;
   if (code.trim().toUpperCase() !== TEST_ACCESS_CODE) {
     return false;
   }
@@ -274,6 +296,71 @@ function getBillingApi() {
 }
 
 let reconcileInFlight: Promise<VerificationResult> | null = null;
+const appleTransactionReconciliations = new Map<string, Promise<EntitlementMap>>();
+let appleUpdatesListenerInstalled = false;
+
+function ensureAppleTransactionUpdatesListener(): void {
+  if (!isAppleStoreKitBillingSupported() || appleUpdatesListenerInstalled) return;
+  appleUpdatesListenerInstalled = true;
+  listenForAppleTransactionUpdates((transaction) => {
+    void reconcileAppleTransaction(transaction, true).catch((error) => {
+      console.error(
+        "Apple transaction update could not be verified:",
+        error instanceof Error ? error.message : error,
+      );
+    });
+  });
+}
+
+function reconcileAppleTransaction(
+  transaction: AppleTransactionRecord,
+  finishAfterVerification: boolean,
+): Promise<EntitlementMap> {
+  if (!ALLOWED_APPLE_PRODUCT_IDS.has(transaction.productId)) {
+    return Promise.reject(new Error("Unsupported Apple product."));
+  }
+
+  const existing = appleTransactionReconciliations.get(transaction.transactionId);
+  if (existing) return existing;
+
+  const reconciliation = (async () => {
+    const billingApi = getBillingApi();
+    await billingApi.verifyApplePurchase({ signedTransaction: transaction.signedTransaction });
+    const serverEntitlements = await billingApi.fetchEntitlements();
+    writeEntitlements(serverEntitlements.entitlements);
+    const pending = readPendingState();
+    const grant = appleGrantForProduct(transaction.productId);
+    if (grant === "all") {
+      (Object.keys(pending) as EditionId[]).forEach((editionId) => {
+        pending[editionId] = false;
+      });
+    } else if (grant) {
+      pending[grant] = false;
+    }
+    writePendingState(pending);
+    if (finishAfterVerification && transaction.unfinished) {
+      await finishAppleStoreTransaction(transaction.transactionId);
+    }
+    return serverEntitlements.entitlements;
+  })();
+
+  appleTransactionReconciliations.set(transaction.transactionId, reconciliation);
+  void reconciliation.catch(() => {
+    appleTransactionReconciliations.delete(transaction.transactionId);
+  });
+  return reconciliation;
+}
+
+async function reconcileAppleStoreTransactions(restore = false): Promise<EntitlementMap> {
+  ensureAppleTransactionUpdatesListener();
+  const transactions = await syncAppleStoreTransactions(restore);
+  for (const transaction of transactions) {
+    await reconcileAppleTransaction(transaction, true);
+  }
+  const serverEntitlements = await getBillingApi().fetchEntitlements();
+  writeEntitlements(serverEntitlements.entitlements);
+  return serverEntitlements.entitlements;
+}
 
 // Grants come only from purchases the Supabase billing function verified with Google Play.
 // Repeated calls share one run; the server upsert is idempotent for repeated tokens.
@@ -322,6 +409,31 @@ async function reconcileServerEntitlements(): Promise<EntitlementMap> {
 
 export async function getDigitalStorePricing(): Promise<DigitalStorePricing> {
   const fallbackPricing = buildFallbackStorePricing();
+  if (isAppleStoreKitBillingSupported()) {
+    const editionPrices: Partial<Record<EditionId, string>> = {};
+    let unlockAllPrice: string | null = null;
+    try {
+      const products = await queryAppleStoreProducts();
+      for (const product of products) {
+        if (!product.available || !product.formattedPrice) continue;
+        const target = appleGrantForProduct(product.productId);
+        if (target === "all") {
+          unlockAllPrice = product.formattedPrice;
+        } else if (target) {
+          editionPrices[target] = product.formattedPrice;
+        }
+      }
+    } catch {
+      // Do not show estimated non-App-Store pricing in the iOS purchase flow.
+    }
+    return {
+      editionPrices: Object.fromEntries(
+        Object.keys(APPLE_EDITION_PRODUCT_IDS).map((id) => [id, editionPrices[id as EditionId] ?? "Unavailable"]),
+      ) as Partial<Record<EditionId, string>>,
+      unlockAllPrice,
+    };
+  }
+
   if (hasTestingAccess()) {
     return fallbackPricing;
   }
@@ -386,6 +498,14 @@ export async function getDigitalStorePricing(): Promise<DigitalStorePricing> {
 }
 
 export async function getDigitalEntitlements(): Promise<EntitlementMap> {
+  if (isAppleStoreKitBillingSupported()) {
+    try {
+      return await reconcileAppleStoreTransactions();
+    } catch {
+      return { ...EMPTY_ENTITLEMENTS };
+    }
+  }
+
   if (hasTestingAccess()) {
     return readEntitlements();
   }
@@ -409,6 +529,7 @@ export async function getDigitalEntitlements(): Promise<EntitlementMap> {
 
 // Instant, offline answer from entitlements verified earlier (or tester access). Never grants anything new.
 export function hasCachedDigitalAccess(editionId: EditionId): boolean {
+  if (isAppleStoreKitBillingSupported()) return false;
   return Boolean(readEntitlements()[editionId]);
 }
 
@@ -425,6 +546,24 @@ export interface RestoreResult {
 // Re-queries Google Play for owned purchases and sends them through the same server-side
 // verification as a fresh purchase. Previously verified entitlements are never cleared by a failure.
 export async function restoreDigitalPurchases(): Promise<RestoreResult> {
+  if (isAppleStoreKitBillingSupported()) {
+    try {
+      const entitlements = await reconcileAppleStoreTransactions(true);
+      return {
+        status: Object.values(entitlements).some(Boolean) ? "restored" : "none",
+        entitlements,
+      };
+    } catch (error) {
+      if (error instanceof BillingConfigError) {
+        return { status: "not-configured", entitlements: { ...EMPTY_ENTITLEMENTS } };
+      }
+      return {
+        status: error instanceof BillingRejectedError ? "rejected" : "unavailable",
+        entitlements: { ...EMPTY_ENTITLEMENTS },
+      };
+    }
+  }
+
   if (!isGooglePlayBillingSupported()) {
     return { status: "no-play", entitlements: await getDigitalEntitlements() };
   }
@@ -484,6 +623,35 @@ async function purchaseViaGooglePlay(target: PurchaseTarget): Promise<PurchaseOu
   throw new Error("Google Play purchase could not be verified.");
 }
 
+async function purchaseViaApple(target: PurchaseTarget): Promise<PurchaseOutcome> {
+  ensureAppleTransactionUpdatesListener();
+  const productId = target === "all" ? APPLE_BUNDLE_PRODUCT_ID : APPLE_EDITION_PRODUCT_IDS[target];
+  const purchase = await purchaseAppleStoreProduct(productId);
+
+  if (purchase.status === "pending") {
+    const pending = readPendingState();
+    if (target === "all") {
+      (Object.keys(pending) as EditionId[]).forEach((editionId) => {
+        pending[editionId] = true;
+      });
+    } else {
+      pending[target] = true;
+    }
+    writePendingState(pending);
+    return "pending";
+  }
+  if (purchase.status === "cancelled") return "cancelled";
+
+  const entitlements = await reconcileAppleTransaction(purchase.transaction, true);
+  const hasRequestedEntitlement = target === "all"
+    ? Object.values(entitlements).every(Boolean)
+    : entitlements[target];
+  if (!hasRequestedEntitlement) {
+    throw new Error("Apple purchase was received, but the server has not confirmed access yet.");
+  }
+  return "purchased";
+}
+
 async function purchaseViaStripe(target: PurchaseTarget): Promise<PurchaseOutcome> {
   const deviceId = getBillingDeviceId();
   const response = await apiRequest(
@@ -510,12 +678,15 @@ export async function purchaseDigitalEdition(target: PurchaseTarget): Promise<Pu
   if (isGooglePlayBillingSupported()) {
     return purchaseViaGooglePlay(target);
   }
+  if (isAppleStoreKitBillingSupported()) {
+    return purchaseViaApple(target);
+  }
 
   return purchaseViaStripe(target);
 }
 
 export async function finalizeStripeCheckoutFromUrl(): Promise<void> {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || isAppleStoreKitBillingSupported()) return;
 
   const url = new URL(window.location.href);
   const checkoutState = url.searchParams.get("checkout");
@@ -541,6 +712,7 @@ export async function finalizeStripeCheckoutFromUrl(): Promise<void> {
 }
 
 export async function setMockDigitalAccess(editionId: EditionId, unlocked: boolean): Promise<void> {
+  if (isAppleStoreKitBillingSupported()) return;
   const entitlements = readEntitlements();
   entitlements[editionId] = unlocked;
   writeEntitlements(entitlements);

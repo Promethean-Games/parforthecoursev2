@@ -1,9 +1,10 @@
 import SwiftUI
 
 struct ContentView: View {
+	@StateObject private var billingManager = AppleBillingManager()
+
 	var body: some View {
-		WebViewContainer()
+		WebViewContainer(billingManager: billingManager)
 			.ignoresSafeArea()
 	}
 }
-

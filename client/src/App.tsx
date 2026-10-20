@@ -19,6 +19,7 @@ import { DigitalAccessScreen } from "@/components/DigitalAccessScreen";
 import { DigitalExperiencePlaceholder } from "@/components/DigitalExperiencePlaceholder";
 import { getEditionById, type EditionDefinition } from "@/lib/editions";
 import { finalizeStripeCheckoutFromUrl, getDigitalStorePricing, getDigitalEntitlements, hasCachedDigitalAccess, hasDigitalAccess, purchaseDigitalEdition, restoreDigitalPurchases } from "@/lib/entitlements";
+import { isAppleStoreKitBillingSupported } from "@/lib/appleStoreKitBilling";
 import { RulesOverlay } from "@/components/RulesViewer";
 import { closeRules, openRules, RULES_CLOSED, selectRulesEdition, type RulesState } from "@/lib/rules-session";
 import { useToast } from "@/hooks/use-toast";
@@ -110,6 +111,15 @@ function GameScreens({ onOpenRules }: RulesHandlers) {
           : "Unable to finalize payment. Please try opening Digital Cards again.",
       );
     });
+  }, []);
+
+  useEffect(() => {
+    const refreshEntitlements = () => {
+      if (document.visibilityState === "visible") void getDigitalEntitlements();
+    };
+    refreshEntitlements();
+    document.addEventListener("visibilitychange", refreshEntitlements);
+    return () => document.removeEventListener("visibilitychange", refreshEntitlements);
   }, []);
 
   useEffect(() => {
@@ -215,7 +225,11 @@ function GameScreens({ onOpenRules }: RulesHandlers) {
     try {
       const purchaseResult = await purchaseDigitalEdition(selectedEdition.id);
       if (purchaseResult === "pending") {
-        setDigitalAccessError("Purchase is pending in Google Play. Your edition will unlock after payment confirmation.");
+        setDigitalAccessError(
+          isAppleStoreKitBillingSupported()
+            ? "Purchase is pending approval. Your edition will unlock after payment confirmation."
+            : "Purchase is pending in Google Play. Your edition will unlock after payment confirmation.",
+        );
         return;
       }
       if (purchaseResult === "cancelled") {
@@ -254,7 +268,9 @@ function GameScreens({ onOpenRules }: RulesHandlers) {
 
       const messages: Record<string, string> = {
         restored: `Your purchases were restored, but ${selectedEdition.name} isn't included. You can buy it below.`,
-        none: "No Google Play purchases were found for this account. If you bought on another account, switch to it in Google Play and retry.",
+        none: isAppleStoreKitBillingSupported()
+          ? "No App Store purchases were found for this Apple Account."
+          : "No Google Play purchases were found for this account. If you bought on another account, switch to it in Google Play and retry.",
         unavailable: "We couldn't verify your purchase right now. Check your connection and tap Retry.",
         rejected: "Google Play purchase could not be verified. Tap Retry, or contact support if this continues.",
         "not-configured": "Purchase verification isn't available in this version of the app yet. Your purchase is safe; please update the app and retry.",
@@ -279,7 +295,11 @@ function GameScreens({ onOpenRules }: RulesHandlers) {
     try {
       const purchaseResult = await purchaseDigitalEdition("all");
       if (purchaseResult === "pending") {
-        setDigitalAccessError("Bundle purchase is pending in Google Play. Editions unlock after payment confirmation.");
+        setDigitalAccessError(
+          isAppleStoreKitBillingSupported()
+            ? "Bundle purchase is pending approval. Editions unlock after payment confirmation."
+            : "Bundle purchase is pending in Google Play. Editions unlock after payment confirmation.",
+        );
         return;
       }
       if (purchaseResult === "cancelled") {
@@ -512,7 +532,7 @@ function GameScreens({ onOpenRules }: RulesHandlers) {
   }
 
   return (
-    <div className="pb-[calc(4rem+env(safe-area-inset-bottom))]">
+    <div className={activeTab === "game" || activeTab === "save" ? "h-dvh overflow-hidden pb-[calc(4rem+env(safe-area-inset-bottom))]" : "pb-[calc(4rem+env(safe-area-inset-bottom))]"}>
       {activeTab === "game" && currentPlayer && (
         <GameScreen
           players={turnOrderPlayers}

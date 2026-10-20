@@ -10,6 +10,7 @@ import { useTournament } from "@/contexts/TournamentContext";
 import { PlayerSelectionDialog } from "./PlayerSelectionDialog";
 import { DirectorPortal } from "./DirectorPortal";
 import type { Settings, Player } from "@shared/schema";
+import { isAppleStoreKitBillingSupported } from "@/lib/appleStoreKitBilling";
 
 interface SettingsPanelProps {
   settings: Settings;
@@ -31,6 +32,7 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
   const [showPinPrompt, setShowPinPrompt] = useState(false);
 
   const tournament = useTournament();
+  const isAppleNativeApp = isAppleStoreKitBillingSupported();
 
   const handleAddPlayer = () => {
     const name = newPlayerName.trim() || `Player ${players.length + 1}`;
@@ -45,6 +47,7 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
   };
 
   const handleTitleTap = () => {
+    if (isAppleNativeApp) return;
     const newCount = titleTapCount + 1;
     setTitleTapCount(newCount);
     if (newCount >= 5) {
@@ -73,7 +76,7 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
     }
   };
 
-  if (showDirectorPortal) {
+  if (showDirectorPortal && !isAppleNativeApp) {
     return <DirectorPortal onClose={() => setShowDirectorPortal(false)} />;
   }
 
@@ -83,7 +86,7 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
         <div className="mb-6">
           <h2 
             className="arcade-title text-2xl cursor-default select-none" 
-            onClick={handleTitleTap}
+            onClick={isAppleNativeApp ? undefined : handleTitleTap}
             data-testid="text-settings-title"
           >
             Settings
@@ -92,7 +95,7 @@ export function SettingsPanel({ settings, players, onUpdateSettings, onAddPlayer
 
         <div className="space-y-4">
           {/* Director PIN Prompt */}
-          {showPinPrompt && (
+          {showPinPrompt && !isAppleNativeApp && (
             <Card className="p-4 border-primary">
               <h3 className="arcade-heading text-sm mb-3 flex items-center gap-2">
                 <Shield className="w-4 h-4" />

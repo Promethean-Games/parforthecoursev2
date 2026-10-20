@@ -4,8 +4,9 @@
 //   GET  /google-play/digital-catalog
 //   GET  /google-play/status?deviceId=
 //   POST /google-play/verify
+//   POST /apple/verify
 //   GET  /digital-entitlements?deviceId=
-// Stripe and Apple routes intentionally stay on the Express server.
+// Stripe routes remain on the Express server; Apple server notifications use their own function.
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
@@ -14,7 +15,12 @@ const ANDROID_PUBLISHER_SCOPE = "https://www.googleapis.com/auth/androidpublishe
 const DEFAULT_ALLOWED_ORIGINS = ["https://appassets.androidplatform.net"];
 const GOOGLE_FETCH_TIMEOUT_MS = 10_000;
 
-type EditionId = "classic" | "reracked" | "sequential" | "teed-off" | "tournament";
+type EditionId =
+  | "classic"
+  | "reracked"
+  | "sequential"
+  | "teed-off"
+  | "tournament";
 type EntitlementMap = Record<EditionId, boolean>;
 
 // Confirmed in Google Play Console. Intentionally constants, not env-overridable, so the
@@ -51,18 +57,29 @@ const playVerifySchema = z.object({
   productId: z.string().min(1).optional(),
 });
 
+const appleVerifySchema = z.object({
+  deviceId: z.string().min(1).max(200),
+  signedTransaction: z.string().min(1).max(20_000),
+}).strict();
+
 const env = (name: string) => Deno.env.get(name);
 
-const supabase = createClient(env("SUPABASE_URL")!, env("SUPABASE_SERVICE_ROLE_KEY")!, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+const supabase = createClient(
+  env("SUPABASE_URL")!,
+  env("SUPABASE_SERVICE_ROLE_KEY")!,
+  {
+    auth: { persistSession: false, autoRefreshToken: false },
+  },
+);
 
 // ---------- config ----------
 
 // Mandatory secret: never defaulted, so a misconfigured deployment fails closed.
 function getPackageName(): string {
   const packageName = env("GOOGLE_PLAY_PACKAGE_NAME")?.trim();
-  if (!packageName) throw new ConfigError("GOOGLE_PLAY_PACKAGE_NAME is not configured");
+  if (!packageName) {
+    throw new ConfigError("GOOGLE_PLAY_PACKAGE_NAME is not configured");
+  }
   return packageName;
 }
 
@@ -89,7 +106,9 @@ function getGooglePlayDigitalCatalog() {
 // ---------- entitlement formatting (unchanged contracts) ----------
 
 function readEditionEntitlements(raw: unknown): EntitlementMap {
-  const parsed = (raw && typeof raw === "object" ? raw : {}) as Partial<EntitlementMap>;
+  const parsed = (raw && typeof raw === "object" ? raw : {}) as Partial<
+    EntitlementMap
+  >;
   return {
     classic: Boolean(parsed.classic),
     reracked: Boolean(parsed.reracked),
@@ -101,7 +120,13 @@ function readEditionEntitlements(raw: unknown): EntitlementMap {
 
 function formatDigitalEntitlementsResponse(row: EntitlementRow) {
   const entitlements = row.unlock_all_digital
-    ? { classic: true, reracked: true, sequential: true, "teed-off": true, tournament: true }
+    ? {
+      classic: true,
+      reracked: true,
+      sequential: true,
+      "teed-off": true,
+      tournament: true,
+    }
     : readEditionEntitlements(row.edition_entitlements);
   return { unlockAll: row.unlock_all_digital, entitlements };
 }
@@ -114,7 +139,9 @@ function formatAccessResponse(row: EntitlementRow) {
 
   let daysLeftInTrial: number | null = null;
   if (trialActive && trialEndsAt) {
-    daysLeftInTrial = Math.ceil((trialEndsAt.getTime() - now) / (1000 * 60 * 60 * 24));
+    daysLeftInTrial = Math.ceil(
+      (trialEndsAt.getTime() - now) / (1000 * 60 * 60 * 24),
+    );
   }
 
   let message: string;
@@ -145,11 +172,16 @@ function firstRow<T>(data: T | T[] | null): T {
   return row;
 }
 
-async function getOrCreateEntitlement(deviceId: string): Promise<EntitlementRow> {
-  const { data, error } = await supabase.rpc("billing_get_or_create_entitlement", {
-    p_device_id: deviceId,
-    p_trial_days: TRIAL_DAYS,
-  });
+async function getOrCreateEntitlement(
+  deviceId: string,
+): Promise<EntitlementRow> {
+  const { data, error } = await supabase.rpc(
+    "billing_get_or_create_entitlement",
+    {
+      p_device_id: deviceId,
+      p_trial_days: TRIAL_DAYS,
+    },
+  );
   if (error) throw error;
   return firstRow<EntitlementRow>(data);
 }
@@ -162,11 +194,17 @@ function base64url(input: string | ArrayBuffer): string {
   const bytes = typeof input === "string" ? encoder.encode(input) : new Uint8Array(input);
   let binary = "";
   for (const b of bytes) binary += String.fromCharCode(b);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(
+    /=+$/,
+    "",
+  );
 }
 
 function pemToPkcs8(pem: string): ArrayBuffer {
-  const body = pem.replace(/-----(BEGIN|END) PRIVATE KEY-----/g, "").replace(/\s+/g, "");
+  const body = pem.replace(/-----(BEGIN|END) PRIVATE KEY-----/g, "").replace(
+    /\s+/g,
+    "",
+  );
   const binary = atob(body);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -181,19 +219,28 @@ async function getAccessToken(): Promise<string> {
   }
 
   const raw = env("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON");
-  if (!raw) throw new ConfigError("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is not configured");
+  if (!raw) {
+    throw new ConfigError("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is not configured");
+  }
 
-  let credentials: { client_email?: string; private_key?: string; token_uri?: string };
+  let credentials: {
+    client_email?: string;
+    private_key?: string;
+    token_uri?: string;
+  };
   try {
     credentials = JSON.parse(raw);
   } catch {
     throw new ConfigError("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is not valid JSON");
   }
   if (!credentials.client_email || !credentials.private_key) {
-    throw new ConfigError("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is missing client_email or private_key");
+    throw new ConfigError(
+      "GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is missing client_email or private_key",
+    );
   }
 
-  const tokenUri = credentials.token_uri || "https://oauth2.googleapis.com/token";
+  const tokenUri = credentials.token_uri ||
+    "https://oauth2.googleapis.com/token";
   const iat = Math.floor(Date.now() / 1000);
   const claims = {
     iss: credentials.client_email,
@@ -211,7 +258,11 @@ async function getAccessToken(): Promise<string> {
     false,
     ["sign"],
   );
-  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, encoder.encode(unsigned));
+  const signature = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    key,
+    encoder.encode(unsigned),
+  );
 
   const response = await fetch(tokenUri, {
     method: "POST",
@@ -225,8 +276,13 @@ async function getAccessToken(): Promise<string> {
   if (!response.ok) {
     throw new Error(`Google token exchange failed (${response.status})`);
   }
-  const body = await response.json() as { access_token?: string; expires_in?: number };
-  if (!body.access_token) throw new Error("Could not retrieve Google Play access token");
+  const body = await response.json() as {
+    access_token?: string;
+    expires_in?: number;
+  };
+  if (!body.access_token) {
+    throw new Error("Could not retrieve Google Play access token");
+  }
 
   cachedToken = {
     value: body.access_token,
@@ -235,10 +291,16 @@ async function getAccessToken(): Promise<string> {
   return cachedToken.value;
 }
 
-function playTokenUrl(packageName: string, productId: string, purchaseToken: string): string {
-  return `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(
-    packageName,
-  )}/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
+function playTokenUrl(
+  packageName: string,
+  productId: string,
+  purchaseToken: string,
+): string {
+  return `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${
+    encodeURIComponent(
+      packageName,
+    )
+  }/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
 }
 
 async function fetchPlayProductPurchase(
@@ -247,10 +309,16 @@ async function fetchPlayProductPurchase(
   purchaseToken: string,
 ): Promise<Record<string, unknown>> {
   const accessToken = await getAccessToken();
-  const response = await fetch(playTokenUrl(packageName, productId, purchaseToken), {
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    signal: AbortSignal.timeout(GOOGLE_FETCH_TIMEOUT_MS),
-  });
+  const response = await fetch(
+    playTokenUrl(packageName, productId, purchaseToken),
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      signal: AbortSignal.timeout(GOOGLE_FETCH_TIMEOUT_MS),
+    },
+  );
   if (!response.ok) {
     // Body is logged by the caller only as a status; it can echo request details.
     throw new Error(`Play verification failed (${response.status})`);
@@ -264,12 +332,18 @@ async function acknowledgePurchase(
   purchaseToken: string,
 ): Promise<void> {
   const accessToken = await getAccessToken();
-  const response = await fetch(`${playTokenUrl(packageName, productId, purchaseToken)}:acknowledge`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({}),
-    signal: AbortSignal.timeout(GOOGLE_FETCH_TIMEOUT_MS),
-  });
+  const response = await fetch(
+    `${playTokenUrl(packageName, productId, purchaseToken)}:acknowledge`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+      signal: AbortSignal.timeout(GOOGLE_FETCH_TIMEOUT_MS),
+    },
+  );
   if (!response.ok) {
     // The legacy server ignored this result; surface it in logs without failing verification.
     console.warn(`Play acknowledge returned ${response.status}`);
@@ -296,7 +370,11 @@ function corsHeaders(origin: string | null): Record<string, string> {
   };
 }
 
-function json(body: unknown, status: number, cors: Record<string, string>): Response {
+function json(
+  body: unknown,
+  status: number,
+  cors: Record<string, string>,
+): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { "Content-Type": "application/json", ...cors },
@@ -315,16 +393,26 @@ export async function handler(req: Request): Promise<Response> {
   }
 
   const url = new URL(req.url);
-  const route = url.pathname.replace(/^.*?\/billing(?=\/|$)/, "").replace(/\/+$/, "");
+  const route = url.pathname.replace(/^.*?\/billing(?=\/|$)/, "").replace(
+    /\/+$/,
+    "",
+  );
   const deviceId = url.searchParams.get("deviceId") ?? "";
 
   try {
     if (req.method === "GET" && route === "/google-play/config") {
       try {
         const config = getBillingConfig();
-        return json({ packageName: config.packageName, productId: config.productId }, 200, cors);
+        return json(
+          { packageName: config.packageName, productId: config.productId },
+          200,
+          cors,
+        );
       } catch (error) {
-        console.error("Billing configuration error:", error instanceof Error ? error.message : error);
+        console.error(
+          "Billing configuration error:",
+          error instanceof Error ? error.message : error,
+        );
         return json({ error: "Billing is not configured" }, 500, cors);
       }
     }
@@ -336,7 +424,11 @@ export async function handler(req: Request): Promise<Response> {
     if (req.method === "GET" && route === "/google-play/status") {
       if (!deviceId) return json({ error: "deviceId is required" }, 400, cors);
       try {
-        return json(formatAccessResponse(await getOrCreateEntitlement(deviceId)), 200, cors);
+        return json(
+          formatAccessResponse(await getOrCreateEntitlement(deviceId)),
+          200,
+          cors,
+        );
       } catch (error) {
         console.error("Error checking billing status:", error);
         return json({ error: "Failed to check purchase status" }, 500, cors);
@@ -346,7 +438,13 @@ export async function handler(req: Request): Promise<Response> {
     if (req.method === "GET" && route === "/digital-entitlements") {
       if (!deviceId) return json({ error: "deviceId is required" }, 400, cors);
       try {
-        return json(formatDigitalEntitlementsResponse(await getOrCreateEntitlement(deviceId)), 200, cors);
+        return json(
+          formatDigitalEntitlementsResponse(
+            await getOrCreateEntitlement(deviceId),
+          ),
+          200,
+          cors,
+        );
       } catch (error) {
         console.error("Error getting digital entitlements:", error);
         return json({ error: "Failed to get digital entitlements" }, 500, cors);
@@ -362,7 +460,11 @@ export async function handler(req: Request): Promise<Response> {
       }
       const parsed = playVerifySchema.safeParse(payload);
       if (!parsed.success) {
-        return json({ error: parsed.error.errors[0]?.message || "Invalid request" }, 400, cors);
+        return json(
+          { error: parsed.error.errors[0]?.message || "Invalid request" },
+          400,
+          cors,
+        );
       }
 
       try {
@@ -370,7 +472,9 @@ export async function handler(req: Request): Promise<Response> {
         const productId = parsed.data.productId || BUNDLE_PRODUCT_ID;
 
         // Reject before calling Google: only the configured app and the six confirmed products.
-        if (parsed.data.packageName && parsed.data.packageName !== packageName) {
+        if (
+          parsed.data.packageName && parsed.data.packageName !== packageName
+        ) {
           return json({ error: "Unsupported packageName" }, 400, cors);
         }
         if (!ALLOWED_PRODUCT_IDS.has(productId)) {
@@ -378,7 +482,11 @@ export async function handler(req: Request): Promise<Response> {
         }
 
         const { deviceId: verifyDeviceId, purchaseToken } = parsed.data;
-        const playPayload = await fetchPlayProductPurchase(packageName, productId, purchaseToken);
+        const playPayload = await fetchPlayProductPurchase(
+          packageName,
+          productId,
+          purchaseToken,
+        );
 
         // purchaseState: 0=Purchased, 1=Cancelled, 2=Pending
         const purchaseState = typeof playPayload.purchaseState === "number" ? playPayload.purchaseState : -1;
@@ -386,27 +494,97 @@ export async function handler(req: Request): Promise<Response> {
         if (purchaseState === 0) {
           const acknowledgeState = typeof playPayload.acknowledgeState === "number" ? playPayload.acknowledgeState : 1;
           if (acknowledgeState === 0) {
-            await acknowledgePurchase(packageName, productId, purchaseToken).catch((err) =>
-              console.warn("Failed to acknowledge purchase:", err instanceof Error ? err.message : err)
-            );
+            await acknowledgePurchase(packageName, productId, purchaseToken)
+              .catch((err) =>
+                console.warn(
+                  "Failed to acknowledge purchase:",
+                  err instanceof Error ? err.message : err,
+                )
+              );
           }
         }
 
-        const { data, error } = await supabase.rpc("billing_record_play_verification", {
-          p_device_id: verifyDeviceId,
-          p_purchase_token: purchaseToken,
-          p_product_id: productId,
-          p_package_name: packageName,
-          p_purchase_state: purchaseState,
-          p_play_payload: playPayload,
-          p_trial_days: TRIAL_DAYS,
-        });
+        const { data, error } = await supabase.rpc(
+          "billing_record_play_verification",
+          {
+            p_device_id: verifyDeviceId,
+            p_purchase_token: purchaseToken,
+            p_product_id: productId,
+            p_package_name: packageName,
+            p_purchase_state: purchaseState,
+            p_play_payload: playPayload,
+            p_trial_days: TRIAL_DAYS,
+          },
+        );
         if (error) throw error;
 
-        return json(formatAccessResponse(firstRow<EntitlementRow>(data)), 200, cors);
+        return json(
+          formatAccessResponse(firstRow<EntitlementRow>(data)),
+          200,
+          cors,
+        );
       } catch (error) {
-        console.error("Error verifying Google Play purchase:", error instanceof Error ? error.message : error);
-        return json({ error: "Failed to verify Google Play purchase" }, 500, cors);
+        console.error(
+          "Error verifying Google Play purchase:",
+          error instanceof Error ? error.message : error,
+        );
+        return json(
+          { error: "Failed to verify Google Play purchase" },
+          500,
+          cors,
+        );
+      }
+    }
+
+    if (req.method === "POST" && route === "/apple/verify") {
+      let payload: unknown;
+      try {
+        payload = await req.json();
+      } catch {
+        return json({ error: "Invalid request" }, 400, cors);
+      }
+      const parsed = appleVerifySchema.safeParse(payload);
+      if (!parsed.success) {
+        return json(
+          { error: parsed.error.errors[0]?.message || "Invalid request" },
+          400,
+          cors,
+        );
+      }
+
+      let appleVerificationError: (new (message?: string) => Error) | undefined;
+      try {
+        const {
+          AppleTransactionVerificationError,
+          getAppleAllowedEnvironment,
+          getAppleTransactionVerifier,
+          verifyAndRecordAppleTransaction,
+        } = await import("./apple-verification.ts");
+        appleVerificationError = AppleTransactionVerificationError;
+        const environment = getAppleAllowedEnvironment();
+        const entitlement = await verifyAndRecordAppleTransaction(
+          { ...parsed.data },
+          environment,
+          getAppleTransactionVerifier(environment),
+          async (args) => {
+            const { data, error } = await supabase.rpc(
+              "billing_record_apple_verification",
+              args,
+            );
+            if (error) throw error;
+            return firstRow<EntitlementRow>(data);
+          },
+        );
+        return json(formatAccessResponse(entitlement), 200, cors);
+      } catch (error) {
+        if (appleVerificationError && error instanceof appleVerificationError) {
+          return json({ error: "Invalid Apple transaction" }, 400, cors);
+        }
+        console.error(
+          "Error verifying Apple purchase:",
+          error instanceof Error ? error.message : error,
+        );
+        return json({ error: "Failed to verify Apple purchase" }, 500, cors);
       }
     }
 

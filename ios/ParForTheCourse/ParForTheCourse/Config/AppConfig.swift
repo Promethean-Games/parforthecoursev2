@@ -12,6 +12,23 @@ enum AppConfig {
 		URL(string: appURLString)!
 	}
 
+	static func isAllowedAppURL(_ url: URL) -> Bool {
+		guard
+			let expected = URL(string: appURLString),
+			url.scheme == "https",
+			url.scheme == expected.scheme,
+			url.host == expected.host,
+			url.port == expected.port,
+			url.user == nil,
+			url.password == nil
+		else {
+			return false
+		}
+
+		let allowedPath = expected.path.hasSuffix("/") ? expected.path : "\(expected.path)/"
+		return url.path == String(allowedPath.dropLast()) || url.path.hasPrefix(allowedPath)
+	}
+
 	static var diagnosticMode: Bool {
 		if let flag = Bundle.main.object(forInfoDictionaryKey: "DiagnosticMode") as? Bool {
 			return flag
@@ -28,5 +45,4 @@ enum AppConfig {
 		return "\(version) (\(build))"
 	}
 }
-
 

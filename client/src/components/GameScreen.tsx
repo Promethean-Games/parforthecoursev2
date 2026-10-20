@@ -463,17 +463,17 @@ export function GameScreen({
 
   return (
     <div 
-      className={cn("flex flex-col min-h-screen p-4 pb-6 pt-[max(1rem,env(safe-area-inset-top))]", leftHandedMode && "left-handed")}
+      className={cn("flex h-full min-h-0 flex-col overflow-hidden px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]", leftHandedMode && "left-handed")}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
       {onOpenRules && (
-        <div className="flex justify-end mb-1">
+        <div className="flex shrink-0 justify-end">
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 gap-1 px-2 text-muted-foreground"
+            className="h-7 gap-1 px-2 text-muted-foreground"
             onClick={onOpenRules}
             aria-label="Rules"
             data-testid="button-game-rules"
@@ -485,7 +485,7 @@ export function GameScreen({
       )}
 
       {/* Player Navigation */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex shrink-0 items-center gap-3 mb-2">
         <Button
           size="icon"
           variant="outline"
@@ -518,7 +518,7 @@ export function GameScreen({
       </div>
 
       {/* Stats Row */}
-      <div className="arcade-glass mb-4 grid grid-cols-3 gap-4 rounded-xl p-3">
+      <div className="arcade-glass mb-2 grid shrink-0 grid-cols-3 gap-4 rounded-xl p-2">
         <div className="text-center">
           <div className="text-xs uppercase text-muted-foreground font-semibold">Scratches</div>
           <div className="text-2xl font-black text-amber-300" data-testid="text-scratches">{playerStats.scratches}</div>
@@ -533,10 +533,10 @@ export function GameScreen({
         </div>
       </div>
 
-      <div className="h-0.5 mb-4" style={{ backgroundColor: currentPlayer.color }} />
+      <div className="h-0.5 mb-2 shrink-0" style={{ backgroundColor: currentPlayer.color }} />
 
       {/* Hole & Shooters Remaining */}
-      <div className="flex justify-between items-start mb-3">
+      <div className="flex shrink-0 justify-between items-start mb-2">
         <div className="arcade-heading text-xl" data-testid="text-hole">Hole {currentHole}</div>
         <div className={cn("flex flex-col items-end gap-2", leftHandedMode && "items-start")}>
           <div className="text-sm text-muted-foreground" data-testid="text-players-remaining">{playerInfo}</div>
@@ -557,7 +557,7 @@ export function GameScreen({
       </div>
 
       {/* Par Selection */}
-      <div className={cn("flex items-center gap-3 mb-3", leftHandedMode && "flex-row-reverse")}>
+      <div className={cn("flex shrink-0 items-center gap-3 mb-2", leftHandedMode && "flex-row-reverse")}>
         <label htmlFor="par-select" className="text-base font-medium">Par:</label>
         <Select value={par > 0 ? par.toString() : ""} onValueChange={(v) => setPar(parseInt(v))}>
           <SelectTrigger className="w-32 h-11" id="par-select" data-testid="select-par">
@@ -582,7 +582,7 @@ export function GameScreen({
       </div>
 
       {/* Scratch & Penalty */}
-      <div className={cn("mb-4", isTournamentEdition ? "block" : "flex gap-3", leftHandedMode && !isTournamentEdition && "flex-row-reverse")}>
+      <div className={cn("mb-2 shrink-0", isTournamentEdition ? "block" : "flex gap-3", leftHandedMode && !isTournamentEdition && "flex-row-reverse")}>
         <Button
           variant="destructive"
           className={cn("h-12", isTournamentEdition ? "w-full" : "flex-1")}
@@ -604,9 +604,9 @@ export function GameScreen({
       </div>
 
       {/* Score Display & Controls */}
-      <div className={cn("flex gap-4 items-center mb-4", leftHandedMode && "flex-row-reverse")}>
+      <div className={cn("flex min-h-0 flex-1 gap-4 items-center mb-2", leftHandedMode && "flex-row-reverse")}>
         <div className="flex-1 text-center">
-          <div className="text-8xl font-extrabold leading-none" data-testid="text-score">
+          <div className="text-7xl font-extrabold leading-none" data-testid="text-score">
             {strokes + scratches + penalties}
           </div>
           {(scratches > 0 || penalties > 0) && (
@@ -618,16 +618,16 @@ export function GameScreen({
             {par > 0 && strokes > 0 && getScoreCallout(strokes + scratches + penalties, par)}
           </div>
         </div>
-        <div className="flex flex-col gap-3 w-28">
+        <div className="flex h-full max-h-56 min-h-0 w-28 flex-col gap-2">
           <Button
-            className="h-20 text-3xl"
+            className="h-auto min-h-0 flex-1 text-3xl"
             onClick={() => setStrokes(Math.max(0, strokes + 1))}
             data-testid="button-score-plus"
           >
             ▲
           </Button>
           <Button
-            className="h-20 text-3xl"
+            className="h-auto min-h-0 flex-1 text-3xl"
             onClick={() => setStrokes(Math.max(0, strokes - 1))}
             data-testid="button-score-minus"
           >
@@ -637,7 +637,7 @@ export function GameScreen({
       </div>
 
       {/* Undo & Next Card */}
-      <div className={cn("flex gap-3", leftHandedMode && "flex-row-reverse")}>
+      <div className={cn("flex shrink-0 gap-3", leftHandedMode && "flex-row-reverse")}>
         <Button
           variant="destructive"
           className="flex-1 h-12 text-base"
