@@ -1,4 +1,4 @@
 APP_URL = https://promethean-games.github.io/parforthecoursev2/
 DIAGNOSTIC_MODE = YES
-
+IOS_PRODUCTION_BUILD = NO
 

@@ -60,6 +60,7 @@
 	<string>$(APP_URL)</string>
 	<key>DiagnosticMode</key>
 	<string>$(DIAGNOSTIC_MODE)</string>
+	<key>IOSProductionBuild</key>
+	<string>$(IOS_PRODUCTION_BUILD)</string>
 </dict>
 </plist>
-

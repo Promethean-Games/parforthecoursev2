@@ -10,7 +10,7 @@ import howToPlayArt from "@assets/editions/splash-how-to-play.jpg";
 import { ArcadeCarousel } from "@/components/arcade/ArcadeCarousel";
 import { SceneBackdrop } from "@/components/arcade/SceneBackdrop";
 import { hasTestingAccess, setTestingAccess, unlockAllTestEntitlements } from "@/lib/entitlements";
-import { isAppleStoreKitBillingSupported } from "@/lib/appleStoreKitBilling";
+import { getBillingPlatform } from "@/lib/billingPlatform";
 
 // Hidden tester access: tap the header logo this many times, each within the window of the last.
 const SECRET_TAP_COUNT = 7;
@@ -64,7 +64,7 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame, onH
   const secretTaps = useRef({ count: 0, last: 0 });
 
   const handleLogoTap = () => {
-    if (isAppleStoreKitBillingSupported()) return;
+    if (getBillingPlatform() === "ios") return;
     const now = Date.now();
     const taps = secretTaps.current;
     taps.count = now - taps.last > SECRET_TAP_WINDOW_MS ? 1 : taps.count + 1;
@@ -188,7 +188,7 @@ export function SplashScreen({ onNewGame, onLoadGame, onStartTournamentGame, onH
           Submit Feedback
         </button>
       </div>
-      <AlertDialog open={testerCodeStep !== null && !isAppleStoreKitBillingSupported()} onOpenChange={(open) => {
+      <AlertDialog open={testerCodeStep !== null && getBillingPlatform() !== "ios"} onOpenChange={(open) => {
         if (!open) {
           resetTesterCodeFlow();
         }

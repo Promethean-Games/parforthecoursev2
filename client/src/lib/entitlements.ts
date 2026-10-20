@@ -47,6 +47,7 @@ import {
   syncAppleStoreTransactions,
   type AppleTransactionRecord,
 } from "@/lib/appleStoreKitBilling";
+import { getBillingPlatform } from "@/lib/billingPlatform";
 
 const STORAGE_KEY = "digitalEditionEntitlements";
 const TEST_ACCESS_STORAGE_KEY = "digitalEditionTestAccess";
@@ -179,7 +180,7 @@ function buildFallbackStorePricing(): DigitalStorePricing {
 }
 
 export function hasTestingAccess(): boolean {
-  if (typeof window === "undefined" || isAppleStoreKitBillingSupported()) return false;
+  if (typeof window === "undefined" || getBillingPlatform() === "ios") return false;
   return localStorage.getItem(TEST_ACCESS_STORAGE_KEY) === "true";
 }
 
@@ -200,7 +201,7 @@ function readEntitlements(): EntitlementMap {
 }
 
 export function setTestingAccess(enabled: boolean): void {
-  if (typeof window === "undefined" || isAppleStoreKitBillingSupported()) return;
+  if (typeof window === "undefined" || getBillingPlatform() === "ios") return;
 
   if (enabled) {
     const baseline = readStoredEntitlements();
@@ -240,7 +241,7 @@ export function setTestingAccess(enabled: boolean): void {
 }
 
 export async function unlockAllTestEntitlements(code: string): Promise<boolean> {
-  if (isAppleStoreKitBillingSupported()) return false;
+  if (getBillingPlatform() === "ios") return false;
   if (code.trim().toUpperCase() !== TEST_ACCESS_CODE) {
     return false;
   }
@@ -409,7 +410,7 @@ async function reconcileServerEntitlements(): Promise<EntitlementMap> {
 
 export async function getDigitalStorePricing(): Promise<DigitalStorePricing> {
   const fallbackPricing = buildFallbackStorePricing();
-  if (isAppleStoreKitBillingSupported()) {
+  if (getBillingPlatform() === "ios") {
     const editionPrices: Partial<Record<EditionId, string>> = {};
     let unlockAllPrice: string | null = null;
     try {
@@ -425,6 +426,14 @@ export async function getDigitalStorePricing(): Promise<DigitalStorePricing> {
       }
     } catch {
       // Do not show estimated non-App-Store pricing in the iOS purchase flow.
+    }
+    if (!isAppleStoreKitBillingSupported()) {
+      return {
+        editionPrices: Object.fromEntries(
+          Object.keys(APPLE_EDITION_PRODUCT_IDS).map((id) => [id, "Unavailable"]),
+        ) as Partial<Record<EditionId, string>>,
+        unlockAllPrice: null,
+      };
     }
     return {
       editionPrices: Object.fromEntries(
@@ -498,7 +507,8 @@ export async function getDigitalStorePricing(): Promise<DigitalStorePricing> {
 }
 
 export async function getDigitalEntitlements(): Promise<EntitlementMap> {
-  if (isAppleStoreKitBillingSupported()) {
+  if (getBillingPlatform() === "ios") {
+    if (!isAppleStoreKitBillingSupported()) return { ...EMPTY_ENTITLEMENTS };
     try {
       return await reconcileAppleStoreTransactions();
     } catch {
@@ -529,7 +539,7 @@ export async function getDigitalEntitlements(): Promise<EntitlementMap> {
 
 // Instant, offline answer from entitlements verified earlier (or tester access). Never grants anything new.
 export function hasCachedDigitalAccess(editionId: EditionId): boolean {
-  if (isAppleStoreKitBillingSupported()) return false;
+  if (getBillingPlatform() === "ios") return false;
   return Boolean(readEntitlements()[editionId]);
 }
 
@@ -546,7 +556,10 @@ export interface RestoreResult {
 // Re-queries Google Play for owned purchases and sends them through the same server-side
 // verification as a fresh purchase. Previously verified entitlements are never cleared by a failure.
 export async function restoreDigitalPurchases(): Promise<RestoreResult> {
-  if (isAppleStoreKitBillingSupported()) {
+  if (getBillingPlatform() === "ios") {
+    if (!isAppleStoreKitBillingSupported()) {
+      return { status: "unavailable", entitlements: { ...EMPTY_ENTITLEMENTS } };
+    }
     try {
       const entitlements = await reconcileAppleStoreTransactions(true);
       return {
@@ -675,18 +688,21 @@ async function purchaseViaStripe(target: PurchaseTarget): Promise<PurchaseOutcom
 }
 
 export async function purchaseDigitalEdition(target: PurchaseTarget): Promise<PurchaseOutcome> {
+  if (getBillingPlatform() === "ios") {
+    if (!isAppleStoreKitBillingSupported()) {
+      throw new Error("Apple in-app purchases are unavailable. Please restart the app or contact support.");
+    }
+    return purchaseViaApple(target);
+  }
   if (isGooglePlayBillingSupported()) {
     return purchaseViaGooglePlay(target);
-  }
-  if (isAppleStoreKitBillingSupported()) {
-    return purchaseViaApple(target);
   }
 
   return purchaseViaStripe(target);
 }
 
 export async function finalizeStripeCheckoutFromUrl(): Promise<void> {
-  if (typeof window === "undefined" || isAppleStoreKitBillingSupported()) return;
+  if (typeof window === "undefined" || getBillingPlatform() === "ios") return;
 
   const url = new URL(window.location.href);
   const checkoutState = url.searchParams.get("checkout");
@@ -712,7 +728,7 @@ export async function finalizeStripeCheckoutFromUrl(): Promise<void> {
 }
 
 export async function setMockDigitalAccess(editionId: EditionId, unlocked: boolean): Promise<void> {
-  if (isAppleStoreKitBillingSupported()) return;
+  if (getBillingPlatform() === "ios") return;
   const entitlements = readEntitlements();
   entitlements[editionId] = unlocked;
   writeEntitlements(entitlements);

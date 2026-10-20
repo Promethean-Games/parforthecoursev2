@@ -35,6 +35,17 @@ struct WebViewContainer: UIViewRepresentable {
 		controller.addUserScript(
 			WKUserScript(source: bridgeScript, injectionTime: .atDocumentStart, forMainFrameOnly: true)
 		)
+		let platformFlag = AppConfig.isIOSProductionBuild ? "true" : "false"
+		let platformScript = """
+		Object.defineProperty(window, '__PFTC_IOS_PRODUCTION__', {
+		  value: \(platformFlag),
+		  writable: false,
+		  configurable: false
+		});
+		"""
+		controller.addUserScript(
+			WKUserScript(source: platformScript, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+		)
 		controller.add(context.coordinator, name: "AndroidScreenSecurity")
 		controller.add(context.coordinator, name: "PFTCiOSBilling")
 
@@ -270,4 +281,3 @@ struct WebViewContainer: UIViewRepresentable {
 		}
 	}
 }
-

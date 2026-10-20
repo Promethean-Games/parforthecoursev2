@@ -42,14 +42,6 @@ interface NativeMessageHandler {
   postMessage(message: string): void;
 }
 
-interface AppleBridgeWindow extends Window {
-  webkit?: {
-    messageHandlers?: {
-      PFTCiOSBilling?: NativeMessageHandler;
-    };
-  };
-}
-
 const EVENT_NAME = "pftc-ios-billing";
 const REQUEST_TIMEOUT_MS = 30_000;
 
@@ -61,7 +53,7 @@ function requestId(): string {
 
 function getHandler(): NativeMessageHandler | null {
   if (typeof window === "undefined") return null;
-  return (window as AppleBridgeWindow).webkit?.messageHandlers?.PFTCiOSBilling ?? null;
+  return window.webkit?.messageHandlers?.PFTCiOSBilling as NativeMessageHandler | null ?? null;
 }
 
 function parseEnvelope(event: Event): BridgeEnvelope | null {

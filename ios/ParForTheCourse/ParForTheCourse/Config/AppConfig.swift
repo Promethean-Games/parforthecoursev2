@@ -12,6 +12,12 @@ enum AppConfig {
 		URL(string: appURLString)!
 	}
 
+	static var isIOSProductionBuild: Bool {
+		(Bundle.main.object(forInfoDictionaryKey: "IOSProductionBuild") as? String)?
+			.trimmingCharacters(in: .whitespacesAndNewlines)
+			.uppercased() == "YES"
+	}
+
 	static func isAllowedAppURL(_ url: URL) -> Bool {
 		guard
 			let expected = URL(string: appURLString),
@@ -45,4 +51,3 @@ enum AppConfig {
 		return "\(version) (\(build))"
 	}
 }
-
