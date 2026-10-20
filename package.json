@@ -8,7 +8,7 @@
     "build": "vite build && esbuild server/index-prod.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js",
     "start": "node dist/index.js",
     "check": "tsc",
-    "test": "tsx --test client/src/data/edition-rules.test.ts client/src/lib/play-products.test.ts client/src/lib/play-verification.test.ts",
+    "test": "tsx --test client/src/data/edition-rules.test.ts client/src/lib/play-products.test.ts client/src/lib/play-verification.test.ts client/src/lib/apple-products.test.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
